@@ -10,6 +10,7 @@ cabal-version:       >=1.10
 
 executable sweeper-ai
   main-is:             Main.hs
+  other-modules:       Colors
   build-depends:       base >=4.8 && <4.9,
                        text >= 1.1 && < 1.3,
                        blank-canvas == 0.6,

@@ -3,13 +3,9 @@
 
 module Main where
 
-import Data.Colour (Colour)
-import Data.Colour.SRGB (sRGB24show)
-import qualified Data.Colour.Names as Color
-
-import Data.Text (Text, pack)
-
 import Graphics.Blank
+
+import Colors
 
 data Game =
   Game { rows    :: Int
@@ -25,17 +21,14 @@ data Rect =
        }
   deriving Show
 
-showColor :: Colour Double -> Text
-showColor = pack . sRGB24show
+bgColor :: Color
+bgColor = dimgrey
 
-bgColor :: Text
-bgColor = showColor Color.dimgrey
+boxColor :: Color
+boxColor = grey
 
-boxColor :: Text
-boxColor = showColor Color.grey
-
-black :: Text
-black = showColor Color.black
+strokeColor :: Color
+strokeColor = black
 
 drawBox :: Rect -> Int -> Int -> Int -> Canvas ()
 drawBox (Rect {..}) w i j = do
@@ -48,7 +41,7 @@ drawBox (Rect {..}) w i j = do
   fillStyle boxColor
   fillRect box
 
-  strokeStyle black
+  strokeStyle strokeColor
   strokeRect box
 
 boxWidth :: Game -> Int -> Int -> Int

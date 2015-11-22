@@ -1,23 +1,16 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Main where
 
-import Graphics.Blank
+import Graphics.Blank (DeviceContext, blankCanvas, send)
 
 import Colors
+import Draw
 
 data Game =
   Game { rows    :: Int
        , columns :: Int
-       }
-  deriving Show
-
-data Rect =
-  Rect { rectX :: Int
-       , rectY :: Int
-       , rectW :: Int
-       , rectH :: Int
        }
   deriving Show
 
@@ -30,47 +23,49 @@ boxColor = grey
 strokeColor :: Color
 strokeColor = black
 
-drawBox :: Rect -> Int -> Int -> Int -> Canvas ()
-drawBox (Rect {..}) w i j = do
-  let boxX = rectX + w * j
-  let boxY = rectY + w * i
+boardRect :: Game -> Draw Rect
+boardRect (Game {..}) = do
+  aspect <- aspectRatio
 
-  let boxW = fromIntegral w
-  let box = (fromIntegral boxX, fromIntegral boxY, boxW, boxW)
+  let columns' = fromIntegral columns
+  let rows'    = fromIntegral rows
 
-  fillStyle boxColor
-  fillRect box
+  let boxSide = min (aspect / columns') (1 / rows')
 
-  strokeStyle strokeColor
-  strokeRect box
+  let w = (columns' * boxSide) / aspect
+  let h = rows' * boxSide
+  let x = (1 - w) / 2
+  let y = (1 - h) / 2
 
-boxWidth :: Game -> Int -> Int -> Int
-boxWidth (Game {..}) w h = min (w `div` columns) (h `div` rows)
+  return (x, y, w, h)
 
-boardRect :: Game -> Int -> Int -> Int -> Rect
-boardRect (Game {..}) w h boxW = Rect boardX boardY boardW boardH
-  where boardW = boxW * columns
-        boardH = boxW * rows
-        boardX = (w - boardW) `div` 2
-        boardY = (h - boardH) `div` 2
+drawBoard :: Game -> Draw ()
+drawBoard game@(Game {..}) = do
+  rect <- boardRect game
 
-drawGame :: Game -> DeviceContext -> Canvas ()
-drawGame game@(Game {..}) context = do
-  let w = width context
-  let h = height context
+  restrict rect $
+    sequence_ [drawBox game i j | i <- [0..rows - 1], j <- [0..columns-1]]
 
-  let w' = truncate w
-  let h' = truncate h
+drawBox :: Game -> Int -> Int -> Draw ()
+drawBox (Game {..}) i j = do
+  setFillColor boxColor
+  fillRect rect
 
-  let boxW  = boxWidth game w' h'
-  let board = boardRect game w' h' boxW
+  setStrokeColor strokeColor
+  strokeRect rect
 
-  fillStyle bgColor
-  fillRect (0, 0, w, h)
+  where w = 1 / fromIntegral columns
+        h = 1 / fromIntegral rows
+        x = w * fromIntegral j
+        y = h * fromIntegral i
 
-  sequence_ [drawBox board boxW i j | i <- [0..rows - 1], j <- [0..columns-1]]
+        rect = (x, y, w, h)
 
-  return ()
+drawGame :: Game -> Draw ()
+drawGame game@(Game {..}) = do
+  setFillColor bgColor
+  fillRect (0, 0, 1, 1)
+  restrict (0.1, 0.1, 0.8, 0.8) $ drawBoard game
 
 main :: IO ()
 main = do
@@ -78,4 +73,4 @@ main = do
   blankCanvas 3000 loop
 
 loop :: DeviceContext -> IO ()
-loop context = send context $ drawGame (Game 16 30) context
+loop context = send context $ runDraw context $ drawGame (Game 16 30)

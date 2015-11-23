@@ -56,20 +56,22 @@ drawBoard game@(Game {..}) = do
   restrict rect $
     sequence_ [drawBox game p | p <- range ((0, 0), (rows-1, columns-1))]
 
-drawBox :: Game -> (Int, Int) -> Draw ()
-drawBox (Game {..}) (i, j) = do
-  setFillColor boxColor
-  fillRect rect
-
-  setStrokeColor strokeColor
-  strokeRect rect
-
+withBox :: Game -> (Int, Int) -> Draw a -> Draw a
+withBox (Game {..}) (i, j) = restrict rect
   where w = 1 / fromIntegral columns
         h = 1 / fromIntegral rows
         x = w * fromIntegral j
         y = h * fromIntegral i
 
         rect = (x, y, w, h)
+
+drawBox :: Game -> (Int, Int) -> Draw ()
+drawBox game p = withBox game p $ do
+  setFillColor boxColor
+  fill
+
+  setStrokeColor strokeColor
+  stroke
 
 drawGame :: Game -> Draw ()
 drawGame game@(Game {..}) = do

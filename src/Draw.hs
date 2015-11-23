@@ -10,6 +10,8 @@ module Draw
        , setFillColor
        , strokeRect
        , fillRect
+       , stroke
+       , fill
        ) where
 
 import Control.Monad.Trans.Class (lift)
@@ -72,3 +74,9 @@ strokeRect = liftRect Blank.strokeRect
 
 fillRect :: Rect -> Draw ()
 fillRect = liftRect Blank.fillRect
+
+stroke :: Draw ()
+stroke = strokeRect (0, 0, 1, 1)
+
+fill :: Draw ()
+fill = fillRect (0, 0, 1, 1)

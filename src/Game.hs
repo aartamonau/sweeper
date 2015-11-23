@@ -1,6 +1,6 @@
 module Game
        (
-         Game (Game, rows, columns, field)
+         Game (Game, rows, columns, field, mines)
        , MineField
        , Pos
        , Item (Mine, Empty)
@@ -15,6 +15,7 @@ import System.Random.Shuffle (shuffleM)
 data Game =
   Game { rows    :: Int
        , columns :: Int
+       , mines   :: Int
        , field   :: MineField
        }
   deriving Show
@@ -37,6 +38,7 @@ randomGame rows columns numMines start = do
 
   return $ Game { rows    = rows
                 , columns = columns
+                , mines   = numMines
                 , field   = mkMineField bounds mines
                 }
 

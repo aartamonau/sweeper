@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Game
        (
          Game (Game, rows, columns, field, mines)
@@ -6,6 +8,7 @@ module Game
        , Item (Mine, Empty)
        , randomGame
        , gameItem
+       , gameBounds
        ) where
 
 import Data.Array (Array, (!), inRange, range, accumArray, listArray)
@@ -29,6 +32,9 @@ data Item = Mine
 
 gameItem :: Game -> Pos -> Item
 gameItem game p = field game ! p
+
+gameBounds :: Game -> (Pos, Pos)
+gameBounds (Game {..}) = ((0, 0), (rows-1, columns-1))
 
 randomGame :: Int -> Int -> Int -> Pos -> IO Game
 randomGame rows columns numMines start = do

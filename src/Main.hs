@@ -18,7 +18,8 @@ data Game =
        }
   deriving Show
 
-type MineField = Array (Int, Int) Item
+type Pos = (Int, Int)
+type MineField = Array Pos Item
 
 data Item = Mine
           | Empty Int
@@ -56,7 +57,7 @@ drawBoard game@(Game {..}) = do
   restrict rect $
     sequence_ [drawBox game p | p <- range ((0, 0), (rows-1, columns-1))]
 
-withBox :: Game -> (Int, Int) -> Draw a -> Draw a
+withBox :: Game -> Pos -> Draw a -> Draw a
 withBox (Game {..}) (i, j) = restrict rect
   where w = 1 / fromIntegral columns
         h = 1 / fromIntegral rows
@@ -65,7 +66,7 @@ withBox (Game {..}) (i, j) = restrict rect
 
         rect = (x, y, w, h)
 
-drawBox :: Game -> (Int, Int) -> Draw ()
+drawBox :: Game -> Pos -> Draw ()
 drawBox game p = withBox game p $ do
   setFillColor boxColor
   fill
@@ -93,7 +94,7 @@ main = do
 loop :: Game -> DeviceContext -> IO ()
 loop game context = send context $ runDraw context $ drawGame game
 
-genGame :: Int -> Int -> Int -> (Int, Int) -> IO Game
+genGame :: Int -> Int -> Int -> Pos -> IO Game
 genGame rows columns numMines start = do
   let bounds    = ((0, 0), (rows-1, columns-1))
   let positions = [p | p <- range bounds, p /= start]
@@ -104,7 +105,7 @@ genGame rows columns numMines start = do
                 , field   = mkMineField bounds mines
                 }
 
-mkMineField :: ((Int, Int), (Int, Int))  -> [(Int, Int)] -> MineField
+mkMineField :: (Pos, Pos)  -> [Pos] -> MineField
 mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]
   where mineMap = accumArray (||) False bounds [(p, True) | p <- mines]
 

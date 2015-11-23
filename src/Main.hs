@@ -1,10 +1,13 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Main where
 
 import Data.Array (Array, (!), inRange, range, accumArray, listArray)
-import Graphics.Blank (DeviceContext, blankCanvas, send)
+import Graphics.Blank (DeviceContext, blankCanvas, send,
+                       Event (Event, eType, eWhich),
+                       events, wait, flush)
 
 import System.Random.Shuffle (shuffleM)
 
@@ -105,7 +108,6 @@ drawMine = do
   setFillColor grey
   fillCircle (0.3, 0.3, 0.2, 0.2)
 
-
 drawGame :: Game -> Draw ()
 drawGame game@(Game {..}) = do
   setFillColor dimgrey
@@ -116,15 +118,30 @@ main :: IO ()
 main = do
   putStrLn "Go to http://127.0.0.1:3000/"
 
-  let cols  = 16
-  let rows  = 30
-  let mines = 99
+  blankCanvas 3000 {events = ["keydown", "mousedown"]} loop
 
-  game <- genGame cols rows mines (rows `div` 2, cols `div` 2)
-  blankCanvas 3000 (loop game)
+loop :: DeviceContext -> IO ()
+loop context =
+  do let cols  = 16
+     let rows  = 30
+     let mines = 99
 
-loop :: Game -> DeviceContext -> IO ()
-loop game context = send context $ runDraw context $ drawGame game
+     game <- genGame cols rows mines (rows `div` 2, cols `div` 2)
+     send context $ runDraw context $ drawGame game
+
+     waitEvent
+     loop context
+
+  where waitEvent =
+          do ev <- wait context
+             if likeEvent ev
+               then flush context >> return ()
+               else waitEvent
+
+        likeEvent (Event {eType, eWhich})
+          | eType == "mousedown" = True
+          | eType == "keydown"   = eWhich == Just 32 -- space
+          | otherwise            = error "can't happen"
 
 genGame :: Int -> Int -> Int -> Pos -> IO Game
 genGame rows columns numMines start = do

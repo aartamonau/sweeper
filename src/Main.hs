@@ -28,15 +28,6 @@ data Item = Mine
 gameItem :: Game -> Pos -> Item
 gameItem game p = field game ! p
 
-bgColor :: Color
-bgColor = dimgrey
-
-boxColor :: Color
-boxColor = grey
-
-strokeColor :: Color
-strokeColor = black
-
 boardRect :: Game -> Draw Rect
 boardRect (Game {..}) = do
   aspect <- aspectRatio
@@ -72,10 +63,9 @@ withBox (Game {..}) (i, j) = restrict rect
 
 drawBox :: Game -> Pos -> Draw ()
 drawBox game p = withBox game p $ do
-  setFillColor boxColor
+  setStrokeColor black
+  setFillColor grey
   fill
-
-  setStrokeColor strokeColor
   stroke
 
 drawBoxItem :: Game -> Pos -> Draw ()
@@ -115,7 +105,7 @@ drawMine = do
 
 drawGame :: Game -> Draw ()
 drawGame game@(Game {..}) = do
-  setFillColor bgColor
+  setFillColor dimgrey
   fillRect (0, 0, 1, 1)
   restrict (0.1, 0.1, 0.8, 0.8) $ drawBoard game
 

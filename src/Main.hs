@@ -54,10 +54,10 @@ drawBoard game@(Game {..}) = do
   rect <- boardRect game
 
   restrict rect $
-    sequence_ [drawBox game i j | i <- [0..rows - 1], j <- [0..columns-1]]
+    sequence_ [drawBox game p | p <- range ((0, 0), (rows-1, columns-1))]
 
-drawBox :: Game -> Int -> Int -> Draw ()
-drawBox (Game {..}) i j = do
+drawBox :: Game -> (Int, Int) -> Draw ()
+drawBox (Game {..}) (i, j) = do
   setFillColor boxColor
   fillRect rect
 

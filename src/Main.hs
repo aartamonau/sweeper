@@ -103,7 +103,15 @@ drawEmpty mines = do
         color _ = error "can't happen"
 
 drawMine :: Draw ()
-drawMine = return ()
+drawMine = do
+  setStrokeColor black
+  setFillColor black
+  fillCircle (0.2, 0.2, 0.6, 0.6)
+
+  setStrokeColor dimgrey
+  setFillColor dimgrey
+  fillCircle (0.3, 0.3, 0.2, 0.2)
+
 
 drawGame :: Game -> Draw ()
 drawGame game@(Game {..}) = do

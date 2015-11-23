@@ -14,6 +14,7 @@ module Draw
        , fill
        , setFont
        , fillText
+       , fillCircle
        ) where
 
 import Control.Monad.Trans.Class (lift)
@@ -99,3 +100,16 @@ fillText text = liftPoint $ \(x, y) ->
   do Blank.textBaseline Blank.MiddleBaseline
      Blank.textAlign Blank.CenterAnchor
      Blank.fillText (pack text, x, y)
+
+fillCircle :: Rect -> Draw ()
+fillCircle = liftRect $ \(x, y, w, h) ->
+  do let rx = w / 2
+     let ry = h / 2
+     let cx = x + rx
+     let cy = y + ry
+     let r  = min rx ry
+
+     Blank.beginPath ()
+     Blank.arc (cx, cy, r, 0, 360, False)
+     Blank.fill ()
+     Blank.closePath ()

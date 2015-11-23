@@ -78,9 +78,10 @@ drawBoxItem game p = withBox game p (draw item)
 drawEmpty :: Int -> Draw ()
 drawEmpty 0     = return ()
 drawEmpty mines = do
-  setFont "monospace" 0.4
+  setFont "monospace" 0.7
+  setStrokeColor dimgrey
   setFillColor (color mines)
-  fillText (show mines) (0.5, 0.5)
+  drawText (show mines) (0.5, 0.5)
 
   where color 1 = blue
         color 2 = green

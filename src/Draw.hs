@@ -13,7 +13,7 @@ module Draw
        , stroke
        , fill
        , setFont
-       , fillText
+       , drawText
        , fillCircle
        ) where
 
@@ -95,11 +95,12 @@ setFont font sz = do
   let fontSpec = pack $ show px ++ "px " ++ font
   lift $ Blank.font fontSpec
 
-fillText :: String -> Point -> Draw ()
-fillText text = liftPoint $ \(x, y) ->
+drawText :: String -> Point -> Draw ()
+drawText text = liftPoint $ \(x, y) ->
   do Blank.textBaseline Blank.MiddleBaseline
      Blank.textAlign Blank.CenterAnchor
      Blank.fillText (pack text, x, y)
+     Blank.strokeText (pack text, x, y)
 
 fillCircle :: Rect -> Draw ()
 fillCircle = liftRect $ \(x, y, w, h) ->

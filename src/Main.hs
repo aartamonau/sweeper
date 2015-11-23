@@ -12,13 +12,14 @@ import Graphics.Blank (DeviceContext, blankCanvas, send,
 import Colors
 import Draw
 import Game
+import Play
 
-boardRect :: Game -> Draw Rect
-boardRect (Game {..}) = do
+boardRect :: Play -> Draw Rect
+boardRect play = do
   aspect <- aspectRatio
 
-  let columns' = fromIntegral columns
-  let rows'    = fromIntegral rows
+  let columns' = fromIntegral (playColumns play)
+  let rows'    = fromIntegral (playRows play)
 
   let boxSide = min (aspect / columns') (1 / rows')
 
@@ -29,37 +30,45 @@ boardRect (Game {..}) = do
 
   return (x, y, w, h)
 
-drawBoard :: Game -> Draw ()
-drawBoard game@(Game {..}) = do
-  rect <- boardRect game
+drawBoard :: Play -> Draw ()
+drawBoard play = do
+  rect <- boardRect play
 
   restrict rect $
-    sequence_ [drawBox game p >> drawOpenBox game p |
-               p <- range ((0, 0), (rows-1, columns-1))]
+    sequence_ [drawBox play p | p <- range (playBounds play)]
 
-withBox :: Game -> Pos -> Draw a -> Draw a
-withBox (Game {..}) (i, j) = restrict rect
-  where w = 1 / fromIntegral columns
-        h = 1 / fromIntegral rows
+withBox :: Play -> Pos -> Draw a -> Draw a
+withBox play (i, j) = restrict rect
+  where w = 1 / fromIntegral (playColumns play)
+        h = 1 / fromIntegral (playRows play)
         x = w * fromIntegral j
         y = h * fromIntegral i
 
         rect = (x, y, w, h)
 
-drawBox :: Game -> Pos -> Draw ()
-drawBox game p = withBox game p $ do
+drawBox :: Play -> Pos -> Draw ()
+drawBox play p = withBox play p (draw maybeItem)
+  where maybeItem = playItem play p
+
+        draw Nothing     = drawClosedBox
+        draw (Just item) = drawOpenBox item
+
+drawClosedBox :: Draw ()
+drawClosedBox = do
   setStrokeColor black
   setFillColor grey
   fill
   stroke
 
-drawOpenBox :: Game -> Pos -> Draw ()
-drawOpenBox game p = withBox game p (drawBg >> draw item)
-  where item = gameItem game p
+drawOpenBox :: Item -> Draw ()
+drawOpenBox item = do
+  setStrokeColor black
+  setFillColor lightgrey
+  fill
+  stroke
+  draw item
 
-        drawBg = setFillColor lightgrey >> fill
-
-        draw Mine      = drawMine
+  where draw Mine      = drawMine
         draw (Empty m) = drawEmpty m
 
 drawEmpty :: Int -> Draw ()
@@ -90,11 +99,11 @@ drawMine = do
   setFillColor grey
   fillCircle (0.3, 0.3, 0.2, 0.2)
 
-drawGame :: Game -> Draw ()
-drawGame game@(Game {..}) = do
+drawPlay :: Play -> Draw ()
+drawPlay play = do
   setFillColor dimgrey
   fillRect (0, 0, 1, 1)
-  restrict (0.1, 0.1, 0.8, 0.8) $ drawBoard game
+  restrict (0.1, 0.1, 0.8, 0.8) $ drawBoard play
 
 main :: IO ()
 main = do
@@ -104,12 +113,15 @@ main = do
 
 loop :: DeviceContext -> IO ()
 loop context =
-  do let cols  = 16
-     let rows  = 30
+  do let cols  = 30
+     let rows  = 16
      let mines = 99
+     let start = (rows `div` 2, cols `div` 2)
 
-     game <- randomGame cols rows mines (rows `div` 2, cols `div` 2)
-     send context $ runDraw context $ drawGame game
+     game <- randomGame rows cols mines start
+     let Right (_, play) = openEmpty (newPlay game) start
+
+     send context $ runDraw context $ drawPlay play
 
      waitEvent
      loop context

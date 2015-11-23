@@ -82,22 +82,28 @@ drawBoxItem :: Game -> Pos -> Draw ()
 drawBoxItem game p = withBox game p (draw item)
   where item = gameItem game p
 
-        draw Mine      = return ()
-        draw (Empty 0) = return ()
-        draw (Empty m) = do
-          setFont "monospace" 0.4
-          setFillColor (countColor m)
-          fillText (show m) (0.5, 0.5)
+        draw Mine      = drawMine
+        draw (Empty m) = drawEmpty m
 
-        countColor 1 = blue
-        countColor 2 = green
-        countColor 3 = khaki
-        countColor 4 = purple
-        countColor 5 = red
-        countColor 6 = darkred
-        countColor 7 = brown
-        countColor 8 = black
-        countColor _ = error "can't happen"
+drawEmpty :: Int -> Draw ()
+drawEmpty 0     = return ()
+drawEmpty mines = do
+  setFont "monospace" 0.4
+  setFillColor (color mines)
+  fillText (show mines) (0.5, 0.5)
+
+  where color 1 = blue
+        color 2 = green
+        color 3 = khaki
+        color 4 = purple
+        color 5 = red
+        color 6 = darkred
+        color 7 = brown
+        color 8 = black
+        color _ = error "can't happen"
+
+drawMine :: Draw ()
+drawMine = return ()
 
 drawGame :: Game -> Draw ()
 drawGame game@(Game {..}) = do

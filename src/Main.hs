@@ -25,6 +25,9 @@ data Item = Mine
           | Empty Int
           deriving Show
 
+gameItem :: Game -> Pos -> Item
+gameItem game p = field game ! p
+
 bgColor :: Color
 bgColor = dimgrey
 
@@ -55,7 +58,8 @@ drawBoard game@(Game {..}) = do
   rect <- boardRect game
 
   restrict rect $
-    sequence_ [drawBox game p | p <- range ((0, 0), (rows-1, columns-1))]
+    sequence_ [drawBox game p >> drawBoxItem game p |
+               p <- range ((0, 0), (rows-1, columns-1))]
 
 withBox :: Game -> Pos -> Draw a -> Draw a
 withBox (Game {..}) (i, j) = restrict rect
@@ -73,6 +77,17 @@ drawBox game p = withBox game p $ do
 
   setStrokeColor strokeColor
   stroke
+
+drawBoxItem :: Game -> Pos -> Draw ()
+drawBoxItem game p = withBox game p (draw item)
+  where item = gameItem game p
+
+        draw Mine      = return ()
+        draw (Empty 0) = return ()
+        draw (Empty m) = do
+          setFont "monospace" 0.4
+          setFillColor red
+          fillText (show m) (0.5, 0.5)
 
 drawGame :: Game -> Draw ()
 drawGame game@(Game {..}) = do

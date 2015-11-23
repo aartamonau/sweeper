@@ -4,6 +4,7 @@ module Colors
        , dimgrey
        , grey
        , black
+       , red
        ) where
 
 import Data.Colour (Colour)
@@ -26,3 +27,6 @@ grey = showColor Names.grey
 
 black :: Color
 black = showColor Names.black
+
+red :: Color
+red = showColor Names.red

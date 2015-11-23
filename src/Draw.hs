@@ -12,10 +12,14 @@ module Draw
        , fillRect
        , stroke
        , fill
+       , setFont
+       , fillText
        ) where
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT, asks, local)
+
+import Data.Text (pack)
 
 import Graphics.Blank (Canvas, DeviceContext)
 import qualified Graphics.Blank as Blank
@@ -64,6 +68,9 @@ transRect (tx, ty, w, h) = do
 liftCanvas :: (a -> Draw a) -> (a -> Canvas b) -> a -> Draw b
 liftCanvas trans op x = trans x >>= lift . op
 
+liftPoint :: (Point -> Canvas a) -> Point -> Draw a
+liftPoint = liftCanvas transPoint
+
 liftRect :: (Rect -> Canvas a) -> Rect -> Draw a
 liftRect = liftCanvas transRect
 
@@ -78,3 +85,17 @@ stroke = strokeRect (0, 0, 1, 1)
 
 fill :: Draw ()
 fill = fillRect (0, 0, 1, 1)
+
+setFont :: String -> Double -> Draw ()
+setFont font sz = do
+  (_, _, _, y) <- transRect (0, 0, 0, sz)
+
+  let px = round y :: Int
+  let fontSpec = pack $ show px ++ "px " ++ font
+  lift $ Blank.font fontSpec
+
+fillText :: String -> Point -> Draw ()
+fillText text = liftPoint $ \(x, y) ->
+  do Blank.textBaseline Blank.MiddleBaseline
+     Blank.textAlign Blank.CenterAnchor
+     Blank.fillText (pack text, x, y)

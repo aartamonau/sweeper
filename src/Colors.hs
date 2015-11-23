@@ -14,10 +14,10 @@ showColor = pack . sRGB24show
 
 dimgrey, grey, black, red  :: Color
 blue, green, khaki, purple :: Color
-darkred, brown             :: Color
+darkred, brown, lightgrey  :: Color
 [dimgrey, grey, black, red,
  blue, green, khaki, purple,
- darkred, brown] =
+ darkred, brown, lightgrey] =
   map showColor [Names.dimgrey, Names.grey, Names.black, Names.red,
                  Names.blue, Names.green, Names.khaki, Names.purple,
-                 Names.darkred, Names.brown]
+                 Names.darkred, Names.brown, Names.lightgrey]

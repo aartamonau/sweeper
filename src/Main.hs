@@ -49,7 +49,7 @@ drawBoard game@(Game {..}) = do
   rect <- boardRect game
 
   restrict rect $
-    sequence_ [drawBox game p >> drawBoxItem game p |
+    sequence_ [drawBox game p >> drawOpenBox game p |
                p <- range ((0, 0), (rows-1, columns-1))]
 
 withBox :: Game -> Pos -> Draw a -> Draw a
@@ -68,9 +68,11 @@ drawBox game p = withBox game p $ do
   fill
   stroke
 
-drawBoxItem :: Game -> Pos -> Draw ()
-drawBoxItem game p = withBox game p (draw item)
+drawOpenBox :: Game -> Pos -> Draw ()
+drawOpenBox game p = withBox game p (drawBg >> draw item)
   where item = gameItem game p
+
+        drawBg = setFillColor lightgrey >> fill
 
         draw Mine      = drawMine
         draw (Empty m) = drawEmpty m

@@ -101,8 +101,8 @@ drawMine = do
   setFillColor black
   fillCircle (0.2, 0.2, 0.6, 0.6)
 
-  setStrokeColor dimgrey
-  setFillColor dimgrey
+  setStrokeColor grey
+  setFillColor grey
   fillCircle (0.3, 0.3, 0.2, 0.2)
 
 

@@ -86,8 +86,18 @@ drawBoxItem game p = withBox game p (draw item)
         draw (Empty 0) = return ()
         draw (Empty m) = do
           setFont "monospace" 0.4
-          setFillColor red
+          setFillColor (countColor m)
           fillText (show m) (0.5, 0.5)
+
+        countColor 1 = blue
+        countColor 2 = green
+        countColor 3 = khaki
+        countColor 4 = purple
+        countColor 5 = red
+        countColor 6 = darkred
+        countColor 7 = brown
+        countColor 8 = black
+        countColor _ = error "can't happen"
 
 drawGame :: Game -> Draw ()
 drawGame game@(Game {..}) = do

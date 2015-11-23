@@ -1,11 +1,4 @@
-module Colors
-       (
-         Color
-       , dimgrey
-       , grey
-       , black
-       , red
-       ) where
+module Colors where
 
 import Data.Colour (Colour)
 import Data.Colour.SRGB (sRGB24show)
@@ -19,14 +12,12 @@ type Color = Text
 showColor :: Colour Double -> Text
 showColor = pack . sRGB24show
 
-dimgrey :: Color
-dimgrey = showColor Names.dimgrey
-
-grey :: Color
-grey = showColor Names.grey
-
-black :: Color
-black = showColor Names.black
-
-red :: Color
-red = showColor Names.red
+dimgrey, grey, black, red  :: Color
+blue, green, khaki, purple :: Color
+darkred, brown             :: Color
+[dimgrey, grey, black, red,
+ blue, green, khaki, purple,
+ darkred, brown] =
+  map showColor [Names.dimgrey, Names.grey, Names.black, Names.red,
+                 Names.blue, Names.green, Names.khaki, Names.purple,
+                 Names.darkred, Names.brown]

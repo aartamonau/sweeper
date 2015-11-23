@@ -13,6 +13,9 @@ import Colors
 import Draw
 import Game
 import Play
+import Player
+
+import qualified DummyPlayer (newPlayer)
 
 boardRect :: Play -> Draw Rect
 boardRect play = do
@@ -119,14 +122,20 @@ loop context =
      let start = (rows `div` 2, cols `div` 2)
 
      game <- randomGame rows cols mines start
-     let Right (_, play) = openEmpty (newPlay game) start
 
-     send context $ runDraw context $ drawPlay play
+     let play   = newPlay game
+     let player = DummyPlayer.newPlayer start
 
+     loopGame play player context
+
+loopGame :: Play -> (Player ()) -> DeviceContext -> IO ()
+loopGame play player context =
+  do draw
      waitEvent
-     loop context
+     loopPlayer play player context
 
-  where waitEvent =
+  where draw = send context $ runDraw context $ drawPlay play
+        waitEvent =
           do ev <- wait context
              if likeEvent ev
                then flush context >> return ()
@@ -136,3 +145,29 @@ loop context =
           | eType == "mousedown" = True
           | eType == "keydown"   = eWhich == Just 32 -- space
           | otherwise            = error "can't happen"
+
+loopPlayer :: Play -> (Player ()) -> DeviceContext -> IO ()
+loopPlayer play player context =
+  do step <- runFreeT player
+     case step of
+      Pure _ ->
+        do putStrLn "player surrenderred; starting new game"
+           loop context
+      Free (OpenEmpty p k) ->
+        handleOpenEmpty p k (openEmpty play p)
+      Free (OpenMine p player') ->
+        handleOpenMine p player' (openMine play p)
+      Free (GetPlay k) ->
+        loopPlayer play (k play) context
+
+  where handleOpenEmpty p _ (Left err) =
+          do putStrLn $ "openEmpty errored: (" ++ show p ++ ") " ++ show err
+             loop context
+        handleOpenEmpty _ k (Right (r, play)) =
+          loopGame play (k r) context
+
+        handleOpenMine p _ (Left err) =
+          do putStrLn $ "openMine errored: (" ++ show p ++ ")" ++  show err
+             loop context
+        handleOpenMine _ player (Right play) =
+          loopGame play player context

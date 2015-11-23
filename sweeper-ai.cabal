@@ -12,6 +12,7 @@ executable sweeper-ai
   main-is:             Main.hs
   other-modules:       Colors
                        Draw
+                       Game
   build-depends:       base >= 4.8 && < 4.9,
                        array >= 0.5 && < 0.6,
                        text >= 1.1 && < 1.3,

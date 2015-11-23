@@ -42,10 +42,8 @@ restrict (rx, ry, rw, rh) = local (.trans)
 
 aspectRatio :: Draw Double
 aspectRatio = do
-  (zx, zy) <- transPoint (0, 0)
-  (x, y)   <- transPoint (1, 1)
-
-  return $ (x - zx) / (y - zy)
+  (_, _, x, y) <- transRect (0, 0, 1, 1)
+  return (x / y)
 
 setStrokeColor :: Color -> Draw ()
 setStrokeColor = lift . Blank.strokeStyle

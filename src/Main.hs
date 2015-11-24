@@ -54,6 +54,7 @@ drawBox play p = withBox play p (draw maybeItem)
 
 drawClosedBox :: Draw ()
 drawClosedBox = do
+  setLineWidth 0.075
   setStrokeColor black
   setFillColor grey
   fill
@@ -61,6 +62,7 @@ drawClosedBox = do
 
 drawOpenBox :: Item -> Draw ()
 drawOpenBox item = do
+  setLineWidth 0.05
   setStrokeColor black
   setFillColor lightgrey
   fill
@@ -74,6 +76,7 @@ drawEmpty :: Int -> Draw ()
 drawEmpty 0     = return ()
 drawEmpty mines = do
   setFont "monospace" 0.7
+  setLineWidth 0.02
   setStrokeColor dimgrey
   setFillColor (color mines)
   drawText (show mines) (0.5, 0.5)

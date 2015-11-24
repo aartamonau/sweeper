@@ -15,6 +15,7 @@ module Draw
        , setFont
        , drawText
        , fillCircle
+       , setLineWidth
        ) where
 
 import Control.Monad.Trans.Class (lift)
@@ -114,3 +115,8 @@ fillCircle = liftRect $ \(x, y, w, h) ->
      Blank.arc (cx, cy, r, 0, 360, False)
      Blank.fill ()
      Blank.closePath ()
+
+setLineWidth :: Double -> Draw ()
+setLineWidth w = do
+  (_, _, x, y) <- transRect (0, 0, w, w)
+  lift $ Blank.lineWidth (min x y)

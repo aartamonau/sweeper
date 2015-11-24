@@ -96,11 +96,20 @@ drawMine :: Draw ()
 drawMine = do
   setStrokeColor black
   setFillColor black
-  fillCircle (0.2, 0.2, 0.6, 0.6)
+  setLineWidth 0.125
 
-  setStrokeColor grey
-  setFillColor grey
-  fillCircle (0.3, 0.3, 0.2, 0.2)
+  restrict (0.1, 0.1, 0.8, 0.8) $
+    do fillCircle (0.1, 0.1, 0.8, 0.8)
+
+       strokeLine (0.5, 0.025) (0.5, 0.975)
+       strokeLine (0.025, 0.5) (0.975, 0.5)
+
+       strokeLine (0.15, 0.15) (0.85, 0.85)
+       strokeLine (0.15, 0.85) (0.85, 0.15)
+
+       setStrokeColor grey
+       setFillColor grey
+       fillCircle (0.2, 0.2, 0.3, 0.3)
 
 withBoard :: Play -> Draw () -> Draw ()
 withBoard play drawing =

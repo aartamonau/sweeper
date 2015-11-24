@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Draw
        (
          Draw
@@ -129,6 +131,7 @@ strokeLine start end = do
 
   lift $
     do Blank.beginPath ()
+       Blank.lineCap "round"
        Blank.moveTo start'
        Blank.lineTo end'
        Blank.stroke ()

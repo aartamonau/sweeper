@@ -128,7 +128,7 @@ loop context =
 
      loopGame play player context
 
-loopGame :: Play -> (Player ()) -> DeviceContext -> IO ()
+loopGame :: Play -> Player () -> DeviceContext -> IO ()
 loopGame play player context =
   do draw
      waitEvent
@@ -146,7 +146,7 @@ loopGame play player context =
           | eType == "keydown"   = eWhich == Just 32 -- space
           | otherwise            = error "can't happen"
 
-loopPlayer :: Play -> (Player ()) -> DeviceContext -> IO ()
+loopPlayer :: Play -> Player () -> DeviceContext -> IO ()
 loopPlayer play player context =
   do step <- runFreeT player
      case step of

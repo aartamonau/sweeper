@@ -152,25 +152,26 @@ main = do
 
 loop :: DeviceContext -> IO ()
 loop context =
-  do let cols  = 30
-     let rows  = 16
-     let mines = 99
+  do let cols  = 10
+     let rows  = 10
+     let mines = 10
      let start = (rows `div` 2, cols `div` 2)
 
      game <- randomGame rows cols mines start
 
      let play   = newPlay game
      let player = CheaterPlayer.newPlayer game start
+     -- let player = DummyPlayer.newPlayer start
 
      loopGame game play player context
 
 loopGame :: Game -> Play -> Player () -> DeviceContext -> IO ()
 loopGame game play player context =
-  do drawCurrent
+  do draw play
      waitEvent
      loopPlayer play player successCont errorCont surrenderCont
 
-  where drawCurrent = display context (drawPlay play)
+  where draw play = display context (drawPlay play)
         waitEvent =
           do ev <- wait context
              if likeEvent ev
@@ -190,7 +191,13 @@ loopGame game play player context =
              waitEvent
              loop context
 
-        successCont (play', player') = loopGame game play' player' context
+        successCont (play', player')
+          | anyMinesLeft play' = loopGame game play' player' context
+          | otherwise          =
+              do putStrLn "player won"
+                 draw play'
+                 waitEvent
+                 loop context
 
 type Cont r = r -> IO ()
 

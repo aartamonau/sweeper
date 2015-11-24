@@ -34,11 +34,7 @@ boardRect play = do
   return (x, y, w, h)
 
 drawBoard :: Play -> Draw ()
-drawBoard play = do
-  rect <- boardRect play
-
-  restrict rect $
-    sequence_ [drawBox play p | p <- range (playBounds play)]
+drawBoard play = sequence_ [drawBox play p | p <- range (playBounds play)]
 
 withBox :: Play -> Pos -> Draw a -> Draw a
 withBox play (i, j) = restrict rect
@@ -102,11 +98,19 @@ drawMine = do
   setFillColor grey
   fillCircle (0.3, 0.3, 0.2, 0.2)
 
+withBoard :: Play -> Draw () -> Draw ()
+withBoard play drawing =
+  restrict margins $
+    do rect <- boardRect play
+       restrict rect drawing
+
+  where margins = (0.1, 0.1, 0.8, 0.8)
+
 drawPlay :: Play -> Draw ()
 drawPlay play = do
   setFillColor dimgrey
   fillRect (0, 0, 1, 1)
-  restrict (0.1, 0.1, 0.8, 0.8) $ drawBoard play
+  withBoard play (drawBoard play)
 
 main :: IO ()
 main = do

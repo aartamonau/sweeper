@@ -112,6 +112,17 @@ drawPlay play = do
   fillRect (0, 0, 1, 1)
   withBoard play (drawBoard play)
 
+drawErrorBox :: Play -> Pos -> Item -> Draw ()
+drawErrorBox play p item =
+  withBoard play $ withBox play p (drawOpenBox item)
+
+drawErrorPlay :: Game -> Play -> Pos -> Draw ()
+drawErrorPlay game play p = drawPlay play >> drawErrorBox play p item
+  where item = gameItem game p
+
+display :: DeviceContext -> Draw () -> IO ()
+display context drawing = send context (runDraw context drawing)
+
 main :: IO ()
 main = do
   putStrLn "Go to http://127.0.0.1:3000/"
@@ -130,15 +141,15 @@ loop context =
      let play   = newPlay game
      let player = DummyPlayer.newPlayer start
 
-     loopGame play player context
+     loopGame game play player context
 
-loopGame :: Play -> Player () -> DeviceContext -> IO ()
-loopGame play player context =
-  do draw
+loopGame :: Game -> Play -> Player () -> DeviceContext -> IO ()
+loopGame game play player context =
+  do drawCurrent
      waitEvent
-     loopPlayer play player successCont errorCont
+     loopPlayer play player successCont errorCont surrenderCont
 
-  where draw = send context $ runDraw context $ drawPlay play
+  where drawCurrent = display context (drawPlay play)
         waitEvent =
           do ev <- wait context
              if likeEvent ev
@@ -150,28 +161,42 @@ loopGame play player context =
           | eType == "keydown"   = eWhich == Just 32 -- space
           | otherwise            = error "can't happen"
 
-        errorCont msg                = putStrLn msg >> loop context
-        successCont (play', player') = loopGame play' player' context
+        surrenderCont = putStrLn "player surrenderred" >> loop context
+
+        errorCont (p, msg) =
+          do putStrLn msg
+             display context (drawErrorPlay game play p)
+             waitEvent
+             loop context
+
+        successCont (play', player') = loopGame game play' player' context
 
 type Cont r = r -> IO ()
-type ErrorCont = Cont String
-type SuccessCont = Cont (Play, Player ())
 
-loopPlayer :: Play -> Player () -> SuccessCont -> ErrorCont -> IO ()
-loopPlayer play player success error =
+type SurrenderCont = IO ()
+type ErrorCont     = Cont (Pos, String)
+type SuccessCont   = Cont (Play, Player ())
+
+loopPlayer :: Play -> Player () ->
+              SuccessCont -> ErrorCont -> SurrenderCont -> IO ()
+loopPlayer play player successCont errorCont surrender =
   do step <- runFreeT player
      case step of
-      Pure _                    -> error "player surrenderred; starting new game"
+      Pure _                    -> surrender
       Free (OpenEmpty p k)      -> handleOpenEmpty p k (openEmpty play p)
       Free (OpenMine p player') -> handleOpenMine p player' (openMine play p)
-      Free (GetPlay k)          -> loopPlayer play (k play) success error
+      Free (GetPlay k)          ->
+        loopPlayer play (k play) successCont errorCont surrender
 
   where handleOpenEmpty p _ (Left err) =
-          error $ "openEmpty errored: (" ++ show p ++ ") " ++ show err
+          error p ("openEmpty errored: (" ++ show p ++ ") " ++ show err)
         handleOpenEmpty _ k (Right (r, play)) =
-          success (play, k r)
+          success play (k r)
 
         handleOpenMine p _ (Left err) =
-          error $ "openMine errored: (" ++ show p ++ ")" ++  show err
+          error p ("openMine errored: (" ++ show p ++ ")" ++  show err)
         handleOpenMine _ player (Right play) =
-          success (play, player)
+          success play player
+
+        success = curry successCont
+        error   = curry errorCont

@@ -132,7 +132,7 @@ loopGame :: Play -> Player () -> DeviceContext -> IO ()
 loopGame play player context =
   do draw
      waitEvent
-     loopPlayer play player context
+     loopPlayer play player successCont errorCont
 
   where draw = send context $ runDraw context $ drawPlay play
         waitEvent =
@@ -146,28 +146,28 @@ loopGame play player context =
           | eType == "keydown"   = eWhich == Just 32 -- space
           | otherwise            = error "can't happen"
 
-loopPlayer :: Play -> Player () -> DeviceContext -> IO ()
-loopPlayer play player context =
+        errorCont msg                = putStrLn msg >> loop context
+        successCont (play', player') = loopGame play' player' context
+
+type Cont r = r -> IO ()
+type ErrorCont = Cont String
+type SuccessCont = Cont (Play, Player ())
+
+loopPlayer :: Play -> Player () -> SuccessCont -> ErrorCont -> IO ()
+loopPlayer play player success error =
   do step <- runFreeT player
      case step of
-      Pure _ ->
-        do putStrLn "player surrenderred; starting new game"
-           loop context
-      Free (OpenEmpty p k) ->
-        handleOpenEmpty p k (openEmpty play p)
-      Free (OpenMine p player') ->
-        handleOpenMine p player' (openMine play p)
-      Free (GetPlay k) ->
-        loopPlayer play (k play) context
+      Pure _                    -> error "player surrenderred; starting new game"
+      Free (OpenEmpty p k)      -> handleOpenEmpty p k (openEmpty play p)
+      Free (OpenMine p player') -> handleOpenMine p player' (openMine play p)
+      Free (GetPlay k)          -> loopPlayer play (k play) success error
 
   where handleOpenEmpty p _ (Left err) =
-          do putStrLn $ "openEmpty errored: (" ++ show p ++ ") " ++ show err
-             loop context
+          error $ "openEmpty errored: (" ++ show p ++ ") " ++ show err
         handleOpenEmpty _ k (Right (r, play)) =
-          loopGame play (k r) context
+          success (play, k r)
 
         handleOpenMine p _ (Left err) =
-          do putStrLn $ "openMine errored: (" ++ show p ++ ")" ++  show err
-             loop context
+          error $ "openMine errored: (" ++ show p ++ ")" ++  show err
         handleOpenMine _ player (Right play) =
-          loopGame play player context
+          success (play, player)

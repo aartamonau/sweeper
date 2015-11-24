@@ -15,7 +15,8 @@ module Play
        ) where
 
 
-import Data.Array (Array, (!), (//), listArray)
+import Data.Array (Array, (!), (//), listArray, inRange)
+import Data.List (foldl')
 
 import Game (Game(Game, mines, rows, columns),
              Item(Mine, Empty),
@@ -57,10 +58,26 @@ playItem play p
 
 openEmpty :: Play -> Pos -> PlayResult ([Pos], Play)
 openEmpty play@(Play {..}) p
-  | isOpened play p            = Left ErrorAlreadyOpened
--- TODO: recursive open
-  | Empty _ <- gameItem game p = Right ([p], openBox play p)
-  | otherwise                  = Left ErrorKilled
+  | isOpened play p                = Left ErrorAlreadyOpened
+  | Empty mines <- gameItem game p = Right (openEmptyLoop (p, mines) ([], play))
+  | otherwise                      = Left ErrorKilled
+
+openEmptyLoop :: (Pos, Int) -> ([Pos], Play) -> ([Pos], Play)
+openEmptyLoop (p, mines) (acc, play)
+  | mines == 0 = foldl' (flip openEmptyLoop) (acc', play') neighbors
+  | otherwise  = (acc', play')
+  where acc'  = p : acc
+        play' = openBox play p
+
+        (i, j)    = p
+        bounds    = playBounds play
+        neighbors = [(np, count) | di <- [-1, 0, 1],
+                                   dj <- [-1, 0, 1],
+                                   let np = (i + di, j + dj),
+                                   np /= p,
+                                   inRange bounds np,
+                                   not (isOpened play np),
+                                   let Empty count = gameItem (game play) np]
 
 openMine :: Play -> Pos -> PlayResult Play
 openMine play@(Play {..}) p

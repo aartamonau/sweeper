@@ -16,6 +16,7 @@ module Draw
        , drawText
        , fillCircle
        , setLineWidth
+       , strokeLine
        ) where
 
 import Control.Monad.Trans.Class (lift)
@@ -120,3 +121,15 @@ setLineWidth :: Double -> Draw ()
 setLineWidth w = do
   (_, _, x, y) <- transRect (0, 0, w, w)
   lift $ Blank.lineWidth (min x y)
+
+strokeLine :: Point -> Point -> Draw ()
+strokeLine start end = do
+  start' <- transPoint start
+  end'   <- transPoint end
+
+  lift $
+    do Blank.beginPath ()
+       Blank.moveTo start'
+       Blank.lineTo end'
+       Blank.stroke ()
+       Blank.closePath ()

@@ -115,9 +115,17 @@ drawPlay play = do
   fillRect (0, 0, 1, 1)
   withBoard play (drawBoard play)
 
+drawX :: Draw ()
+drawX =
+  restrict (0.1, 0.1, 0.8, 0.8) $
+    do setLineWidth 0.1
+       setStrokeColor red
+       strokeLine (0, 0) (1, 1)
+       strokeLine (1, 0) (0, 1)
+
 drawErrorBox :: Play -> Pos -> Item -> Draw ()
 drawErrorBox play p item =
-  withBoard play $ withBox play p (drawOpenBox item)
+  withBoard play $ withBox play p (drawOpenBox item >> drawX)
 
 drawErrorPlay :: Game -> Play -> Pos -> Draw ()
 drawErrorPlay game play p = drawPlay play >> drawErrorBox play p item

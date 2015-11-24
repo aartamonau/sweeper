@@ -16,6 +16,7 @@ import Play
 import Player
 
 import qualified DummyPlayer (newPlayer)
+import qualified CheaterPlayer (newPlayer)
 
 boardRect :: Play -> Draw Rect
 boardRect play = do
@@ -150,7 +151,7 @@ loop context =
      game <- randomGame rows cols mines start
 
      let play   = newPlay game
-     let player = DummyPlayer.newPlayer start
+     let player = CheaterPlayer.newPlayer game start
 
      loopGame game play player context
 

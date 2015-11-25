@@ -19,6 +19,7 @@ module Draw
        , fillCircle
        , setLineWidth
        , strokeLine
+       , dimRect
        ) where
 
 import Control.Monad.Trans.Class (lift)
@@ -137,3 +138,11 @@ strokeLine start end = do
        Blank.lineTo end'
        Blank.stroke ()
        Blank.closePath ()
+
+dimRect :: Double -> Rect -> Draw ()
+dimRect alpha = liftRect $ \rect ->
+  do Blank.save ()
+     Blank.fillStyle "black"
+     Blank.globalAlpha alpha
+     Blank.fillRect rect
+     Blank.restore ()

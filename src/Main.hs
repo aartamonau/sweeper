@@ -77,7 +77,6 @@ drawEmpty :: Int -> Draw ()
 drawEmpty 0     = return ()
 drawEmpty mines = do
   setFont "monospace" 0.7
-  setLineWidth 0.02
   setStrokeColor dimgrey
   setFillColor (color mines)
   drawText (show mines) (0.5, 0.5)
@@ -131,7 +130,6 @@ drawPlayInfo :: Play -> Draw ()
 drawPlayInfo play =
   restrict rect $
     do setFont "monospace" 0.4
-       setLineWidth 0.01
        setStrokeColor black
        setFillColor black
 

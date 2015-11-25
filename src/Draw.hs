@@ -103,6 +103,7 @@ drawText :: String -> Point -> Draw ()
 drawText text = liftPoint $ \(x, y) ->
   do Blank.textBaseline Blank.MiddleBaseline
      Blank.textAlign Blank.CenterAnchor
+     Blank.lineWidth 1
      Blank.fillText (pack text, x, y)
      Blank.strokeText (pack text, x, y)
 

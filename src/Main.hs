@@ -211,7 +211,9 @@ loopGame game play player context =
           | otherwise            = error "can't happen"
 
         surrenderCont =
-          display context (drawError "Player surrenders") >> loop context
+          do display context (drawError "Player surrenders")
+             waitEvent
+             loop context
 
         errorCont (p, msg) =
           do display context (drawErrorPlay game play p >> drawError msg)

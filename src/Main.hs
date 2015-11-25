@@ -111,19 +111,33 @@ drawMine = do
        setFillColor grey
        fillCircle (0.2, 0.2, 0.3, 0.3)
 
+margins :: Rect
+margins = (0.1, 0.1, 0.8, 0.8)
+
 withBoard :: Play -> Draw () -> Draw ()
 withBoard play drawing =
   restrict margins $
     do rect <- boardRect play
        restrict rect drawing
 
-  where margins = (0.1, 0.1, 0.8, 0.8)
-
 drawPlay :: Play -> Draw ()
 drawPlay play = do
   setFillColor dimgrey
   fillRect (0, 0, 1, 1)
   withBoard play (drawBoard play)
+  drawPlayInfo play
+
+drawPlayInfo :: Play -> Draw ()
+drawPlayInfo play =
+  restrict rect $
+    do setFont "monospace" 0.4
+       setLineWidth 0.01
+       setStrokeColor black
+       setFillColor black
+
+       drawText ("Mines left: " ++ show (minesLeft play)) (0.5, 0.5)
+  where (mx, my, mw, _) = margins
+        rect            = (mx, 0, mw, my)
 
 drawX :: Draw ()
 drawX =

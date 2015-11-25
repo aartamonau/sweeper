@@ -137,6 +137,22 @@ drawPlayInfo play =
   where (mx, my, mw, _) = margins
         rect            = (mx, 0, mw, my)
 
+drawMsg :: Color -> String -> Draw ()
+drawMsg color msg =
+  do dimRect 0.8 (0, 0, 1, 1)
+     restrict margins $
+       do setFont "monospace" 0.1
+          setStrokeColor color
+          setFillColor color
+
+          drawText msg (0.5, 0.5)
+
+drawError :: String -> Draw ()
+drawError = drawMsg red
+
+drawWinMsg :: String -> Draw ()
+drawWinMsg = drawMsg lightgrey
+
 drawX :: Draw ()
 drawX =
   restrict (0.1, 0.1, 0.8, 0.8) $
@@ -179,12 +195,11 @@ loop context =
 
 loopGame :: Game -> Play -> Player () -> DeviceContext -> IO ()
 loopGame game play player context =
-  do draw play
+  do display context (drawPlay play)
      waitEvent
      loopPlayer play player successCont errorCont surrenderCont
 
-  where draw play = display context (drawPlay play)
-        waitEvent =
+  where waitEvent =
           do ev <- wait context
              if likeEvent ev
                then flush context >> return ()
@@ -195,19 +210,18 @@ loopGame game play player context =
           | eType == "keydown"   = eWhich == Just 32 -- space
           | otherwise            = error "can't happen"
 
-        surrenderCont = putStrLn "player surrenderred" >> loop context
+        surrenderCont =
+          display context (drawError "Player surrenders") >> loop context
 
         errorCont (p, msg) =
-          do putStrLn msg
-             display context (drawErrorPlay game play p)
+          do display context (drawErrorPlay game play p >> drawError msg)
              waitEvent
              loop context
 
         successCont (play', player')
           | anyMinesLeft play' = loopGame game play' player' context
           | otherwise          =
-              do putStrLn "player won"
-                 draw play'
+              do display context (drawPlay play' >> drawWinMsg "Player wins")
                  waitEvent
                  loop context
 

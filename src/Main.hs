@@ -242,15 +242,15 @@ loopPlayer play player successCont errorCont surrender =
       Free (GetPlay k)          ->
         loopPlayer play (k play) successCont errorCont surrender
 
-  where handleOpenEmpty p _ (Left err) =
-          error p ("openEmpty errored: (" ++ show p ++ ") " ++ show err)
-        handleOpenEmpty _ k (Right (r, play)) =
-          success play (k r)
+  where handleOpenEmpty p _ (Left err)        = error p (describeError err)
+        handleOpenEmpty _ k (Right (r, play)) = success play (k r)
 
-        handleOpenMine p _ (Left err) =
-          error p ("openMine errored: (" ++ show p ++ ")" ++  show err)
-        handleOpenMine _ player (Right play) =
-          success play player
+        handleOpenMine p _ (Left err)        = error p (describeError err)
+        handleOpenMine _ player (Right play) = success play player
+
+        describeError ErrorAlreadyOpened = "Player attempts to open an opened box"
+        describeError ErrorKilled        = "Player explodes on a mine"
+        describeError ErrorFired         = "Player is fired due to incompetence"
 
         success = curry successCont
         error   = curry errorCont

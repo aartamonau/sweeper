@@ -3,6 +3,7 @@
 module Play
        (
          Play (minesLeft, openedBoxes)
+       , PlayError (ErrorAlreadyOpened, ErrorFired, ErrorKilled)
        , newPlay
        , playRows
        , playColumns

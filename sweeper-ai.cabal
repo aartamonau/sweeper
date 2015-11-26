@@ -18,6 +18,7 @@ executable sweeper-ai
                        Player.API
                        Player.Dummy
                        Player.Cheater
+                       Player.Smart
   build-depends:       base >= 4.8 && < 4.9,
                        array >= 0.5 && < 0.6,
                        random >= 1.1 && < 1.2,

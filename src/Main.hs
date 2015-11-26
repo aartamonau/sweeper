@@ -218,12 +218,18 @@ loopPlayer :: Game -> Play -> Player () -> DeviceContext -> IO ()
 loopPlayer game play player context =
   do step <- runFreeT player
      case step of
-      Pure _                    -> surrender
-      Free (OpenEmpty p k)      -> handleOpenEmpty p k (openEmpty play p)
-      Free (OpenMine p player') -> handleOpenMine p player' (openMine play p)
-      Free (GetPlay k)          -> loopPlayer game play (k play) context
+      Pure _                           -> surrender
+      Free (BoxDraw p drawing player') -> handleBoxDraw p drawing player'
+      Free (OpenEmpty p k)             -> handleOpenEmpty p k (openEmpty play p)
+      Free (OpenMine p player')        -> handleOpenMine p player' (openMine play p)
+      Free (GetPlay k)                 -> nextStep (k play)
 
-  where handleOpenEmpty p _ (Left err)        = error p err
+  where handleBoxDraw p drawing player =
+          do display context (withBoard play $ withBox play p drawing)
+             waitKeypress context
+             nextStep player
+
+        handleOpenEmpty p _ (Left err)        = error p err
         handleOpenEmpty _ k (Right (r, play)) = success play (k r)
 
         handleOpenMine p _ (Left err)        = error p err
@@ -231,6 +237,7 @@ loopPlayer game play player context =
 
         restart              = loop context
         continue play player = loopGame game play player context
+        nextStep player      = loopPlayer game play player context
 
         surrender =
           do display context (drawError "Player surrenders")

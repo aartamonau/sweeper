@@ -5,6 +5,7 @@ module Player.API
        , openMine
        , getPlay
        , surrender
+       , boxDraw
        , io
        ) where
 
@@ -12,6 +13,7 @@ module Player.API
 import Control.Monad.Trans.Free (liftF)
 import Control.Monad.IO.Class (liftIO)
 
+import Draw (Draw)
 import Game (Pos)
 import Play (Play)
 import Player (Player, Move (..))
@@ -27,6 +29,9 @@ getPlay = liftF (GetPlay id)
 
 surrender :: Player ()
 surrender = return ()
+
+boxDraw :: Pos -> Draw () -> Player ()
+boxDraw p drawing = liftF (BoxDraw p drawing ())
 
 io :: IO a -> Player a
 io = liftIO

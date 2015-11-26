@@ -15,8 +15,9 @@ executable sweeper-ai
                        Game
                        Play
                        Player
-                       DummyPlayer
-                       CheaterPlayer
+                       Player.API
+                       Player.Dummy
+                       Player.Cheater
   build-depends:       base >= 4.8 && < 4.9,
                        array >= 0.5 && < 0.6,
                        random >= 1.1 && < 1.2,

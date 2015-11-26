@@ -1,4 +1,4 @@
-module CheaterPlayer
+module Player.Cheater
        (
          newPlayer
        ) where
@@ -8,7 +8,7 @@ import Data.List ((\\))
 import System.Random.Shuffle (shuffleM)
 
 import Game (Game, Pos, Item(Empty, Mine), gameBounds, gameItem)
-import PlayerAPI (Player, openEmpty, openMine, io)
+import Player.API (Player, openEmpty, openMine, io)
 
 newPlayer :: Game -> Pos -> Player ()
 newPlayer game start =

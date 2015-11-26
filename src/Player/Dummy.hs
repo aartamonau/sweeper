@@ -1,4 +1,4 @@
-module DummyPlayer
+module Player.Dummy
        (
          newPlayer
        ) where
@@ -7,7 +7,7 @@ import System.Random (randomRIO)
 
 import Game (Pos)
 import Play (playRows, playColumns)
-import PlayerAPI (Player, openEmpty, getPlay, io)
+import Player.API (Player, openEmpty, getPlay, io)
 
 newPlayer :: Pos -> Player ()
 newPlayer startHint = do

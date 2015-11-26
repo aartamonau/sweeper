@@ -1,4 +1,4 @@
-module PlayerAPI
+module Player.API
        (
          Player
        , openEmpty

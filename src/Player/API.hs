@@ -6,6 +6,7 @@ module Player.API
        , getPlay
        , surrender
        , boxDraw
+       , prompt
        , io
        ) where
 
@@ -32,6 +33,9 @@ surrender = return ()
 
 boxDraw :: Pos -> Draw () -> Player ()
 boxDraw p drawing = liftF (BoxDraw p drawing ())
+
+prompt :: Player ()
+prompt = liftF (Prompt ())
 
 io :: IO a -> Player a
 io = liftIO

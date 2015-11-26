@@ -219,6 +219,7 @@ loopPlayer game play player context =
   do step <- runFreeT player
      case step of
       Pure _                           -> surrender
+      Free (Prompt player')            -> handlePrompt player'
       Free (BoxDraw p drawing player') -> handleBoxDraw p drawing player'
       Free (OpenEmpty p k)             -> handleOpenEmpty p k (openEmpty play p)
       Free (OpenMine p player')        -> handleOpenMine p player' (openMine play p)
@@ -226,8 +227,9 @@ loopPlayer game play player context =
 
   where handleBoxDraw p drawing player =
           do display context (withBoard play $ withBox play p drawing)
-             waitKeypress context
              nextStep player
+
+        handlePrompt player = waitKeypress context >> nextStep player
 
         handleOpenEmpty p _ (Left err)        = error p err
         handleOpenEmpty _ k (Right (r, play)) = success play (k r)

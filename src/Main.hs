@@ -1,6 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Main where
 
@@ -193,66 +194,59 @@ loop context =
 
      loopGame game play player context
 
-loopGame :: Game -> Play -> Player () -> DeviceContext -> IO ()
-loopGame game play player context =
-  do display context (drawPlay play)
-     waitEvent
-     loopPlayer play player successCont errorCont surrenderCont
-
-  where waitEvent =
-          do ev <- wait context
-             if likeEvent ev
-               then flush context >> return ()
-               else waitEvent
-
-        likeEvent (Event {eType, eWhich})
+waitKeypress :: DeviceContext -> IO ()
+waitKeypress context =
+  do ev <- wait context
+     if likeEvent ev
+       then flush context >> return ()
+       else waitKeypress context
+  where likeEvent (Event {eType, eWhich})
           | eType == "mousedown" = True
           | eType == "keydown"   = eWhich == Just 32 -- space
           | otherwise            = error "can't happen"
 
-        surrenderCont =
-          do display context (drawError "Player surrenders")
-             waitEvent
-             loop context
+loopGame :: Game -> Play -> Player () -> DeviceContext -> IO ()
+loopGame game play player context =
+  do display context (drawPlay play)
+     waitKeypress context
 
-        errorCont (p, msg) =
-          do display context (drawErrorPlay game play p >> drawError msg)
-             waitEvent
-             loop context
+     loopPlayer game play player context
 
-        successCont (play', player')
-          | anyMinesLeft play' = loopGame game play' player' context
-          | otherwise          =
-              do display context (drawPlay play' >> drawWinMsg "Player wins")
-                 waitEvent
-                 loop context
-
-type Cont r = r -> IO ()
-
-type SurrenderCont = IO ()
-type ErrorCont     = Cont (Pos, String)
-type SuccessCont   = Cont (Play, Player ())
-
-loopPlayer :: Play -> Player () ->
-              SuccessCont -> ErrorCont -> SurrenderCont -> IO ()
-loopPlayer play player successCont errorCont surrender =
+loopPlayer :: Game -> Play -> Player () -> DeviceContext -> IO ()
+loopPlayer game play player context =
   do step <- runFreeT player
      case step of
       Pure _                    -> surrender
       Free (OpenEmpty p k)      -> handleOpenEmpty p k (openEmpty play p)
       Free (OpenMine p player') -> handleOpenMine p player' (openMine play p)
-      Free (GetPlay k)          ->
-        loopPlayer play (k play) successCont errorCont surrender
+      Free (GetPlay k)          -> loopPlayer game play (k play) context
 
-  where handleOpenEmpty p _ (Left err)        = error p (describeError err)
+  where handleOpenEmpty p _ (Left err)        = error p err
         handleOpenEmpty _ k (Right (r, play)) = success play (k r)
 
-        handleOpenMine p _ (Left err)        = error p (describeError err)
+        handleOpenMine p _ (Left err)        = error p err
         handleOpenMine _ player (Right play) = success play player
+
+        restart              = loop context
+        continue play player = loopGame game play player context
+
+        surrender =
+          do display context (drawError "Player surrenders")
+             waitKeypress context
+             restart
+
+        error p (describeError -> msg) =
+          do display context (drawErrorPlay game play p >> drawError msg)
+             waitKeypress context
+             restart
 
         describeError ErrorAlreadyOpened = "Player attempts to open an opened box"
         describeError ErrorKilled        = "Player explodes on a mine"
         describeError ErrorFired         = "Player is fired due to incompetence"
 
-        success = curry successCont
-        error   = curry errorCont
+        success play player
+          | anyMinesLeft play = continue play player
+          | otherwise         =
+              do display context (drawPlay play >> drawWinMsg "Player wins")
+                 waitKeypress context
+                 restart

@@ -25,7 +25,7 @@ module Player.Smart.Cells
 
 import Control.Monad (when)
 
-import Data.List (nub, delete)
+import Data.List ((\\), nub, delete)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef)
 import Data.Typeable (Typeable, cast)
 
@@ -131,24 +131,20 @@ addFormula cell@(MkCell _ ref) newFormula =
                           }
      writeIORef ref newState
 
-     updateDeps cell newValue (deps formula')
+     updateRDeps newValue (deps formula) (deps formula')
      mapM_ invalidateDep rdeps
 
-updateDeps :: (Typeable k, CellValue a) => Cell k a -> Value a -> [Dep] -> IO ()
-updateDeps cell value =
-  case value of
-   Undecided _ -> updateDepsWith insert
-   Decided   _ -> updateDepsWith remove
+  where updateRDeps (Decided _) oldDeps _         = updateRDepsWith remove oldDeps
+        updateRDeps (Undecided _) oldDeps newDeps =
+          updateRDepsWith insert (newDeps \\ oldDeps)
 
-  where dep = Dep cell
-
-        insert rdeps | dep `elem` rdeps = rdeps
-                     | otherwise        = dep:rdeps
+        dep = Dep cell
 
         remove = delete dep
+        insert = (dep:)
 
-updateDepsWith :: ([Dep] -> [Dep]) -> [Dep] -> IO ()
-updateDepsWith op deps = mapM_ updateOneDep deps
+updateRDepsWith :: ([Dep] -> [Dep]) -> [Dep] -> IO ()
+updateRDepsWith op deps = mapM_ updateOneDep deps
   where updateOneDep (Dep (MkCell _ depCell)) = modifyIORef depCell updateRDeps
           where updateRDeps state@(CellState {..}) = state { rdeps = op rdeps }
 
@@ -176,8 +172,15 @@ setValueInternal cell@(MkCell _ ref) v =
 
         set state =
           do writeIORef ref (state {value = newValue})
-             updateDeps cell newValue (deps $ formula state)
+             updateRDeps newValue (deps $ formula state)
              mapM_ invalidateDep (rdeps state)
+
+        updateRDeps (Decided _) deps = updateRDepsWith (delete dep) deps
+        -- a formula can't change its dependencies, so we can simply do
+        -- nothing here
+        updateRDeps (Undecided _) _  = return ()
+
+        dep = Dep cell
 
 invalidateDep :: Dep -> IO ()
 invalidateDep (Dep cell) = invalidate cell

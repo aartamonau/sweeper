@@ -60,18 +60,22 @@ playItem play p
 openEmpty :: Play -> Pos -> PlayResult ([Pos], Play)
 openEmpty play@(Play {..}) p
   | isOpened play p                = Left ErrorAlreadyOpened
-  | Empty mines <- gameItem game p = Right (openEmptyLoop (p, mines) ([], play))
+  | Empty mines <- gameItem game p = Right (openEmptyLoopEnter (p, mines) play)
   | otherwise                      = Left ErrorKilled
 
-openEmptyLoop :: (Pos, Int) -> ([Pos], Play) -> ([Pos], Play)
-openEmptyLoop (p, mines) (acc, play)
-  | mines == 0 = foldl' (flip openEmptyLoop) (acc', play') neighbors
-  | otherwise  = (acc', play')
-  where acc'  = p : acc
-        play' = openBox play p
+openEmptyLoopEnter :: (Pos, Int) -> Play -> ([Pos], Play)
+openEmptyLoopEnter start@(p, _) play = openEmptyLoop start ([p], openBox play p)
 
-        (i, j)    = p
+openEmptyLoop :: (Pos, Int) -> ([Pos], Play) -> ([Pos], Play)
+openEmptyLoop (p, mines) acc@(seen, play)
+  | mines == 0 = foldl' (flip openEmptyLoop) (acc', play') neighbors
+  | otherwise  = acc
+  where (i, j)    = p
         bounds    = playBounds play
+
+        acc'      = map fst neighbors ++ seen
+        play'     = foldl' openBox play (map fst neighbors)
+
         neighbors = [(np, count) | di <- [-1, 0, 1],
                                    dj <- [-1, 0, 1],
                                    let np = (i + di, j + dj),

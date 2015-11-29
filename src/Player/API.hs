@@ -5,8 +5,7 @@ module Player.API
        , openMine
        , getPlay
        , surrender
-       , boxDraw
-       , prompt
+       , draw
        , io
        ) where
 
@@ -31,11 +30,8 @@ getPlay = liftF (GetPlay id)
 surrender :: Player ()
 surrender = return ()
 
-boxDraw :: Pos -> Draw () -> Player ()
-boxDraw p drawing = liftF (BoxDraw p drawing ())
-
-prompt :: Player ()
-prompt = liftF (Prompt ())
+draw :: [(Pos, Draw ())] -> Player ()
+draw ds = liftF (Draw ds ())
 
 io :: IO a -> Player a
 io = liftIO

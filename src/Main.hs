@@ -5,6 +5,7 @@
 
 module Main where
 
+import Control.Monad (forM_)
 import Data.Ix (range)
 import Graphics.Blank (DeviceContext, blankCanvas, send,
                        Event (Event, eType, eWhich),
@@ -218,18 +219,18 @@ loopPlayer :: Game -> Play -> Player () -> DeviceContext -> IO ()
 loopPlayer game play player context =
   do step <- runFreeT player
      case step of
-      Pure _                           -> surrender
-      Free (Prompt player')            -> handlePrompt player'
-      Free (BoxDraw p drawing player') -> handleBoxDraw p drawing player'
-      Free (OpenEmpty p k)             -> handleOpenEmpty p k (openEmpty play p)
-      Free (OpenMine p player')        -> handleOpenMine p player' (openMine play p)
-      Free (GetPlay k)                 -> nextStep (k play)
+      Pure _                    -> surrender
+      Free (Draw ds player')    -> handleDraw ds player'
+      Free (OpenEmpty p k)      -> handleOpenEmpty p k (openEmpty play p)
+      Free (OpenMine p player') -> handleOpenMine p player' (openMine play p)
+      Free (GetPlay k)          -> nextStep (k play)
 
-  where handleBoxDraw p drawing player =
-          do display context (withBoard play $ withBox play p drawing)
+  where handleDraw ds player =
+          do display context $
+               forM_ ds $ \(p, drawing) ->
+                 withBoard play $ withBox play p drawing
+             waitKeypress context
              nextStep player
-
-        handlePrompt player = waitKeypress context >> nextStep player
 
         handleOpenEmpty p _ (Left err)        = error p err
         handleOpenEmpty _ k (Right (r, play)) = success play (k r)

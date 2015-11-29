@@ -11,6 +11,7 @@ module Player.Smart.Cells
        (
          Formula
        , Cell
+       , CellType (IOCell, ComputedCell)
        , CellValue(merge, isFinal)
        , v
        , computedCell

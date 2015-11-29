@@ -2,7 +2,7 @@
 
 module Player
        (
-         Move (OpenEmpty, OpenMine, GetPlay, BoxDraw, Prompt)
+         Move (OpenEmpty, OpenMine, GetPlay, Draw)
        , Player
 
        , module Control.Monad.Trans.Free
@@ -17,8 +17,7 @@ import Play (Play)
 data Move next = OpenEmpty Pos ([Pos] -> next)
                | OpenMine Pos next
                | GetPlay (Play -> next)
-               | BoxDraw Pos (Draw ()) next
-               | Prompt next
+               | Draw [(Pos, Draw ())] next
                deriving Functor
 
 type Player a = FreeT Move IO a

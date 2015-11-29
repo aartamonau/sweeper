@@ -1,4 +1,7 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -8,11 +11,17 @@ module Player.Smart
          newPlayer
        ) where
 
-import Data.Ratio (Ratio, (%))
+import Control.Arrow (second)
+import Control.Monad (forM, replicateM)
 
-import Draw (dimRect)
+import Data.Array (Array, listArray, assocs, rangeSize)
+import Data.Ratio (Ratio, (%), numerator, denominator)
+
+import Colors (black)
+import Draw (drawText, setFillColor, setFont)
 import Game (Pos)
-import Player.API (Player, openEmpty, boxDraw, prompt)
+import Play (Play, minesLeft, playBounds)
+import Player.API (Player, openEmpty, draw, getPlay, io)
 
 import Player.Smart.Cells
 
@@ -22,30 +31,44 @@ instance CellValue Prob where
   merge   = max
   isFinal = (== 1)
 
-test :: IO (Prob, Prob, Prob, Prob)
-test =
-  do minesLeft   <- ioCell 10
-     numUnopened <- ioCell 100
+data State = State { minesLeftCell   :: Cell 'IOCell Int
+                   , numUnopenedCell :: Cell 'IOCell Int
 
-     prob <- computedCell ((%) <$> v minesLeft <*> v numUnopened)
+                   , fieldCells :: Array Pos (Cell 'ComputedCell Prob)
+                   }
 
-     v1 <- getValue prob
+makeState :: Play -> Player State
+makeState play = io $
+  do minesLeftCell   <- ioCell (minesLeft play)
+     numUnopenedCell <- ioCell size
 
-     setValue numUnopened 90
+     let formula = (%) <$> v minesLeftCell <*> v numUnopenedCell
+     fieldCells <- listArray bounds <$> replicateM size (computedCell formula)
 
-     v2 <- getValue prob
+     return $ State { minesLeftCell, numUnopenedCell, fieldCells }
+  where bounds = playBounds play
+        size   = rangeSize bounds
 
-     addFormula prob (pure 1)
+drawProbs :: State -> Player ()
+drawProbs (State {fieldCells}) =
+  do probs <- forM (assocs fieldCells) $ \(p, cell) -> (p,) <$> io (getValue cell)
+     draw $ map (second drawProb) probs
+  where drawProb prob =
+          do let num   = numerator prob
+             let denom = denominator prob
+             let text  = show num ++ "/" ++ show denom
 
-     v3 <- getValue prob
+             setFillColor black
+             setFont "monospace" 0.2
 
-     setValue minesLeft 9
-     setValue numUnopened 89
-
-     v4 <- getValue prob
-
-     return (v1, v2, v3, v4)
+             drawText text (0.5, 0.5)
 
 newPlayer :: Pos -> Player ()
-newPlayer start = dim start >> dim (0, 0) >> prompt >> openEmpty start >> return ()
-  where dim p = boxDraw p (dimRect 0.5 (0,0,1,1))
+newPlayer start =
+  do play  <- getPlay
+     state <- makeState play
+
+     drawProbs state
+
+     _ <- openEmpty start
+     return ()

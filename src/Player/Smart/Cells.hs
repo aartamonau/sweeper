@@ -162,10 +162,8 @@ setValueInternal :: CellValue a => Cell k a -> a -> IO ()
 setValueInternal cell@(MkCell _ ref) v =
   do state@CellState {..} <- readIORef ref
 
-     case value of
-      Decided _   -> error "attempting to overwrite decided value"
-      _           ->
-        when (newValue /= value) $ set state
+     assertUndecided value "attempting to overwrite decided value"
+     when (newValue /= value) $ set state
 
   where newValue = makeValue v
 
@@ -183,3 +181,7 @@ invalidate cell@(MkCell _ ref) =
 
      newValue <- compute formula
      setValueInternal cell newValue
+
+assertUndecided :: Value a -> String -> IO ()
+assertUndecided (Decided _) msg = error msg
+assertUndecided _ _             = return ()

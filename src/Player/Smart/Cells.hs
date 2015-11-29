@@ -19,6 +19,7 @@ module Player.Smart.Cells
        , ioCell
        , getValue
        , setValue
+       , modifyValue
        )
        where
 
@@ -153,6 +154,9 @@ getValue (MkCell _ cell) = readIORef cell >>= return . extractValue . value
 
 setValue :: CellValue a => Cell 'IOCell a -> a -> IO ()
 setValue = setValueInternal
+
+modifyValue :: CellValue a => Cell 'IOCell a -> (a -> a) -> IO ()
+modifyValue cell f = getValue cell >>= setValue cell . f
 
 setValueInternal :: CellValue a => Cell k a -> a -> IO ()
 setValueInternal cell@(MkCell _ ref) v =

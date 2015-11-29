@@ -20,7 +20,7 @@ import Data.Ratio (Ratio, (%), numerator, denominator)
 import Colors (black)
 import Draw (drawText, setFillColor, setFont)
 import Game (Pos)
-import Play (Play, minesLeft, playBounds)
+import Play (Play, minesLeft, isOpened, playBounds)
 import Player.API (Player, openEmpty, draw, getPlay, io)
 
 import Player.Smart.Cells
@@ -49,9 +49,12 @@ makeState play = io $
   where bounds = playBounds play
         size   = rangeSize bounds
 
-drawProbs :: State -> Player ()
-drawProbs (State {fieldCells}) =
-  do probs <- forM (assocs fieldCells) $ \(p, cell) -> (p,) <$> io (getValue cell)
+drawProbs :: Play -> State -> Player ()
+drawProbs play (State {fieldCells}) =
+  do let unopened = [(p, cell) | (p, cell) <- assocs fieldCells,
+                                 not (isOpened play p)]
+
+     probs <- forM unopened $ \(p, cell) -> (p,) <$> io (getValue cell)
      draw $ map (second drawProb) probs
   where drawProb prob =
           do let num   = numerator prob
@@ -68,7 +71,12 @@ newPlayer start =
   do play  <- getPlay
      state <- makeState play
 
-     drawProbs state
+     drawProbs play state
 
      _ <- openEmpty start
+
+
+     play' <- getPlay
+     drawProbs play' state
+
      return ()

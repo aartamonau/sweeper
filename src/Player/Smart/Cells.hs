@@ -108,12 +108,19 @@ computedCell f =
 
      ref <- newIORef state
      let cell = MkCell Proxy ref
-     updateDeps cell value (deps f)
+     insertAsRDep cell (deps f)
      return cell
+
+  where insertAsRDep cell = updateRDepsWith insert
+          where dep          = Dep cell
+                insert rdeps = dep:rdeps
 
 addFormula :: CellValue a => Cell 'ComputedCell a -> Formula a -> IO ()
 addFormula cell@(MkCell _ ref) newFormula =
   do state@CellState{..} <- readIORef ref
+
+     assertUndecided value "attempting to add formula to a decided cell"
+
      let formula' = merge <$> formula <*> newFormula
 
      v <- compute formula'

@@ -29,7 +29,7 @@ import Data.List (nub, delete)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef)
 import Data.Typeable (Typeable, cast)
 
-import Data.Proxy
+import Data.Proxy (Proxy(Proxy))
 
 data Dep = forall k a. (Typeable k, CellValue a) => Dep (Cell k a)
 

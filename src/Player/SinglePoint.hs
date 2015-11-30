@@ -1,7 +1,9 @@
 {-# LANGUAGE MultiWayIf #-}
 
 module Player.SinglePoint
-       where
+       (
+         newPlayer
+       ) where
 
 import Data.Ix (inRange, range)
 import Data.List (foldl')

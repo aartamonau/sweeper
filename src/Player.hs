@@ -3,7 +3,10 @@
 module Player
        (
          Move (OpenEmpty, OpenMine, GetPlay, Draw)
-       , Player
+       , Player(Player, name, strategy)
+       , Strategy
+       , Name
+       , makePlayer
 
        , module Control.Monad.Trans.Free
        ) where
@@ -20,4 +23,13 @@ data Move next = OpenEmpty Pos ([Pos] -> next)
                | Draw [(Pos, Draw ())] next
                deriving Functor
 
-type Player a = FreeT Move IO a
+type Name       = String
+type Strategy a = FreeT Move IO a
+
+data Player =
+  Player { name     :: Name
+         , strategy :: Strategy ()
+         }
+
+makePlayer :: Name -> Strategy () -> Player
+makePlayer = Player

@@ -1,6 +1,9 @@
 module Player.API
        (
          Player
+       , Strategy
+       , makePlayer
+
        , openEmpty
        , openMine
        , getPlay
@@ -16,22 +19,22 @@ import Control.Monad.IO.Class (liftIO)
 import Draw (Draw)
 import Game (Pos)
 import Play (Play)
-import Player (Player, Move (..))
+import Player (Player, Strategy, Move (..), makePlayer)
 
-openEmpty :: Pos -> Player [Pos]
+openEmpty :: Pos -> Strategy [Pos]
 openEmpty p = liftF (OpenEmpty p id)
 
-openMine :: Pos -> Player ()
+openMine :: Pos -> Strategy ()
 openMine p = liftF (OpenMine p ())
 
-getPlay :: Player Play
+getPlay :: Strategy Play
 getPlay = liftF (GetPlay id)
 
-surrender :: Player ()
+surrender :: Strategy ()
 surrender = return ()
 
-draw :: [(Pos, Draw ())] -> Player ()
+draw :: [(Pos, Draw ())] -> Strategy ()
 draw ds = liftF (Draw ds ())
 
-io :: IO a -> Player a
+io :: IO a -> Strategy a
 io = liftIO

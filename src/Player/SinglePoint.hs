@@ -16,7 +16,9 @@ import System.Random (randomRIO)
 
 import Game (Pos, Item(Empty, Mine))
 import Play (Play, playBounds, playItem)
-import Player.API (Player, openEmpty, openMine, getPlay, io)
+import Player.API (Player, Strategy,
+                   makePlayer,
+                   openEmpty, openMine, getPlay, io)
 
 data Move = OpenEmpty Pos
           | OpenMine Pos
@@ -55,10 +57,13 @@ neighbors play p@(pi, pj) =
 
   where bounds = playBounds play
 
-newPlayer :: Pos -> Player ()
-newPlayer start = openEmpty start >> loop
+newPlayer :: Pos -> Player
+newPlayer pos = makePlayer "single-point" (newStrategy pos)
 
-loop :: Player ()
+newStrategy :: Pos -> Strategy ()
+newStrategy start = openEmpty start >> loop
+
+loop :: Strategy ()
 loop =
   do play <- getPlay
      let moves = findMoves play
@@ -68,7 +73,7 @@ loop =
 
      loop
 
-playRandom :: Play -> Player ()
+playRandom :: Play -> Strategy ()
 playRandom play =
   do r <- io $ randomRIO (0, n-1)
      _ <- openEmpty (unopened !! r)
@@ -78,7 +83,7 @@ playRandom play =
         unopened = [p | p <- range bounds, isNothing (playItem play p)]
         n        = length unopened
 
-loopMoves :: [Move] -> Player ()
+loopMoves :: [Move] -> Strategy ()
 loopMoves = mapM_ play
   where play (OpenEmpty p) = openEmpty p >> return ()
         play (OpenMine p)  = openMine p

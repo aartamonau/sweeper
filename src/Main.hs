@@ -196,7 +196,9 @@ loop context =
      -- let player = Smart.newPlayer start
      let player = SinglePoint.newPlayer start
 
-     loopGame game play player context
+     let Player {..} = player
+
+     loopGame game play strategy context
 
 waitKeypress :: DeviceContext -> IO ()
 waitKeypress context =
@@ -209,47 +211,47 @@ waitKeypress context =
           | eType == "keydown"   = eWhich == Just 32 -- space
           | otherwise            = error "can't happen"
 
-loopGame :: Game -> Play -> Player () -> DeviceContext -> IO ()
-loopGame game play player context =
+loopGame :: Game -> Play -> Strategy () -> DeviceContext -> IO ()
+loopGame game play strategy context =
   do display context (drawPlay play)
      waitKeypress context
 
-     loopPlayer game play player context
+     loopStrategy game play strategy context
 
-loopPlayer :: Game -> Play -> Player () -> DeviceContext -> IO ()
-loopPlayer game play player context =
-  do step <- runFreeT player
+loopStrategy :: Game -> Play -> Strategy () -> DeviceContext -> IO ()
+loopStrategy game play strategy context =
+  do step <- runFreeT strategy
      case step of
-      Pure _                    -> surrender
-      Free (Draw ds player')    -> handleDraw ds player'
-      Free (OpenEmpty p k)      -> handleOpenEmpty p k (openEmpty play p)
-      Free (OpenMine p player') -> handleOpenMine p player' (openMine play p)
-      Free (GetPlay k)          -> nextStep (k play)
+      Pure _                      -> surrender
+      Free (Draw ds strategy')    -> handleDraw ds strategy'
+      Free (OpenEmpty p k)        -> handleOpenEmpty p k (openEmpty play p)
+      Free (OpenMine p strategy') -> handleOpenMine p strategy' (openMine play p)
+      Free (GetPlay k)            -> nextStep (k play)
 
-  where handleDraw ds player =
+  where handleDraw ds strategy =
           do display context $
                forM_ ds $ \(p, drawing) ->
                  withBoard play $ withBox play p drawing
              waitKeypress context
-             nextStep player
+             nextStep strategy
 
         handleOpenEmpty p k (Left err)        = handleError p err (k [])
         handleOpenEmpty _ k (Right (r, play)) = success play (k r)
 
-        handleOpenMine p player (Left err)   = handleError p err player
-        handleOpenMine _ player (Right play) = success play player
+        handleOpenMine p strategy (Left err)   = handleError p err strategy
+        handleOpenMine _ strategy (Right play) = success play strategy
 
-        restart              = loop context
-        continue play player = loopGame game play player context
-        nextStep player      = loopPlayer game play player context
+        restart                = loop context
+        continue play strategy = loopGame game play strategy context
+        nextStep strategy      = loopStrategy game play strategy context
 
         surrender =
           do display context (drawError "Player surrenders")
              waitKeypress context
              restart
 
-        handleError p ErrorNoChange player = nextStep player
-        handleError p err           _      =
+        handleError p ErrorNoChange strategy = nextStep strategy
+        handleError p err _                  =
           do display context (drawErrorPlay game play p >>
                               drawError (describeError err))
              waitKeypress context
@@ -259,8 +261,8 @@ loopPlayer game play player context =
         describeError ErrorFired         = "Player is fired due to incompetence"
         describeError _                  = error "can't happen"
 
-        success play player
-          | anyMinesLeft play = continue play player
+        success play strategy
+          | anyMinesLeft play = continue play strategy
           | otherwise         =
               do display context (drawPlay play >> drawWinMsg "Player wins")
                  waitKeypress context

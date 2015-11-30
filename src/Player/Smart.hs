@@ -21,7 +21,9 @@ import Colors (black)
 import Draw (drawText, setFillColor, setFont)
 import Game (Pos)
 import Play (Play, minesLeft, isOpened, playBounds)
-import Player.API (Player, openEmpty, draw, getPlay, io)
+import Player.API (Player, Strategy,
+                   makePlayer,
+                   openEmpty, draw, getPlay, io)
 
 import Player.Smart.Cells
 
@@ -37,7 +39,7 @@ data State = State { minesLeftCell   :: Cell 'IOCell Int
                    , fieldCells :: Array Pos (Cell 'ComputedCell Prob)
                    }
 
-makeState :: Play -> Player State
+makeState :: Play -> Strategy State
 makeState play = io $
   do minesLeftCell   <- ioCell (minesLeft play)
      numUnopenedCell <- ioCell size
@@ -49,7 +51,7 @@ makeState play = io $
   where bounds = playBounds play
         size   = rangeSize bounds
 
-drawProbs :: Play -> State -> Player ()
+drawProbs :: Play -> State -> Strategy ()
 drawProbs play (State {fieldCells}) =
   do let unopened = [(p, cell) | (p, cell) <- assocs fieldCells,
                                  not (isOpened play p)]
@@ -66,8 +68,11 @@ drawProbs play (State {fieldCells}) =
 
              drawText text (0.5, 0.5)
 
-newPlayer :: Pos -> Player ()
-newPlayer start =
+newPlayer :: Pos -> Player
+newPlayer start = makePlayer "smart" (newStrategy start)
+
+newStrategy :: Pos -> Strategy ()
+newStrategy start =
   do play  <- getPlay
      state <- makeState play
 

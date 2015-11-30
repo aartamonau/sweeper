@@ -250,7 +250,7 @@ loopStrategy game play strategy context =
              waitKeypress context
              restart
 
-        handleError p ErrorNoChange strategy = nextStep strategy
+        handleError _ ErrorNoChange strategy = nextStep strategy
         handleError p err _                  =
           do display context (drawErrorPlay game play p >>
                               drawError (describeError err))

@@ -24,13 +24,14 @@ data Move = OpenEmpty Pos
           | OpenMine Pos
           deriving (Eq, Ord)
 
-findMoves :: Play -> Set Move
-findMoves play =
-  foldl' Set.union Set.empty $ map (posMovesSet play) (range bounds)
-  where bounds = playBounds play
+findMoves :: Play -> [Pos] -> (Set Move, [Pos])
+findMoves play = foldl' f z
+  where z = (Set.empty, [])
 
-posMovesSet :: Play -> Pos -> Set Move
-posMovesSet play = Set.fromList . posMoves play
+        f (moves, ps) p | null thisMoves = (moves, p:ps)
+                        | otherwise      = (Set.union moves thisSet, ps)
+          where thisMoves = posMoves play p
+                thisSet   = Set.fromList thisMoves
 
 posMoves :: Play -> Pos -> [Move]
 posMoves play p
@@ -61,29 +62,27 @@ newPlayer :: Pos -> Player
 newPlayer pos = makePlayer "single-point" (newStrategy pos)
 
 newStrategy :: Pos -> Strategy ()
-newStrategy start = openEmpty start >> loop
+newStrategy start = openEmpty start >>= loop
 
-loop :: Strategy ()
-loop =
+loop :: [Pos] -> Strategy ()
+loop opened =
   do play <- getPlay
-     let moves = findMoves play
+     let (moves, opened') = findMoves play opened
 
-     if | Set.null moves -> playRandom play
-        | otherwise      -> loopMoves (Set.toList moves)
+     newOpened <- if | Set.null moves -> playRandom play
+                     | otherwise      -> loopMoves (Set.toList moves)
 
-     loop
+     loop (newOpened ++ opened')
 
-playRandom :: Play -> Strategy ()
+playRandom :: Play -> Strategy [Pos]
 playRandom play =
   do r <- io $ randomRIO (0, n-1)
-     _ <- openEmpty (unopened !! r)
-
-     return ()
+     openEmpty (unopened !! r)
   where bounds   = playBounds play
         unopened = [p | p <- range bounds, isNothing (playItem play p)]
         n        = length unopened
 
-loopMoves :: [Move] -> Strategy ()
-loopMoves = mapM_ play
-  where play (OpenEmpty p) = openEmpty p >> return ()
-        play (OpenMine p)  = openMine p
+loopMoves :: [Move] -> Strategy [Pos]
+loopMoves moves = concat <$> mapM play moves
+  where play (OpenEmpty p) = openEmpty p
+        play (OpenMine p)  = openMine p >> return []

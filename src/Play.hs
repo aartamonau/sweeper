@@ -3,7 +3,7 @@
 module Play
        (
          Play (minesLeft, openedBoxes)
-       , PlayError (ErrorAlreadyOpened, ErrorFired, ErrorKilled)
+       , PlayError (ErrorFired, ErrorKilled)
        , newPlay
        , playRows
        , playColumns
@@ -31,8 +31,7 @@ data Play =
        , openedBoxes :: Array Pos Bool
        }
 
-data PlayError = ErrorAlreadyOpened
-               | ErrorFired
+data PlayError = ErrorFired
                | ErrorKilled
                deriving Show
 
@@ -59,9 +58,14 @@ playItem play p
 
 openEmpty :: Play -> Pos -> PlayResult ([Pos], Play)
 openEmpty play@(Play {..}) p
-  | isOpened play p                = Left ErrorAlreadyOpened
-  | Empty mines <- gameItem game p = Right (openEmptyLoopEnter (p, mines) play)
-  | otherwise                      = Left ErrorKilled
+  | isOpened play p     =
+      case item of
+       Empty _ -> Right ([], play)
+       _       -> Left ErrorKilled
+  | Empty mines <- item = Right (openEmptyLoopEnter (p, mines) play)
+  | otherwise           = Left ErrorKilled
+
+  where item = gameItem game p
 
 openEmptyLoopEnter :: (Pos, Int) -> Play -> ([Pos], Play)
 openEmptyLoopEnter start@(p, _) play = openEmptyLoop start ([p], openBox play p)
@@ -86,9 +90,14 @@ openEmptyLoop (p, mines) acc@(seen, play)
 
 openMine :: Play -> Pos -> PlayResult Play
 openMine play@(Play {..}) p
-  | isOpened play p         = Left ErrorAlreadyOpened
-  | Mine <- gameItem game p = Right (decMines $ openBox play p)
-  | otherwise               = Left ErrorFired
+  | isOpened play p =
+      case item of
+       Mine -> Right play
+       _    -> Left ErrorFired
+  | Mine <- item    = Right (decMines $ openBox play p)
+  | otherwise       = Left ErrorFired
+
+  where item = gameItem game p
 
 anyMinesLeft :: Play -> Bool
 anyMinesLeft (Play {..}) = minesLeft /= 0

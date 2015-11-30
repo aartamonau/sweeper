@@ -252,7 +252,6 @@ loopPlayer game play player context =
              waitKeypress context
              restart
 
-        describeError ErrorAlreadyOpened = "Player attempts to open an opened box"
         describeError ErrorKilled        = "Player explodes on a mine"
         describeError ErrorFired         = "Player is fired due to incompetence"
 

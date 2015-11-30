@@ -1,7 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE ViewPatterns #-}
 
 module Main where
 
@@ -234,10 +233,10 @@ loopPlayer game play player context =
              waitKeypress context
              nextStep player
 
-        handleOpenEmpty p _ (Left err)        = error p err
+        handleOpenEmpty p k (Left err)        = handleError p err (k [])
         handleOpenEmpty _ k (Right (r, play)) = success play (k r)
 
-        handleOpenMine p _ (Left err)        = error p err
+        handleOpenMine p player (Left err)   = handleError p err player
         handleOpenMine _ player (Right play) = success play player
 
         restart              = loop context
@@ -249,13 +248,16 @@ loopPlayer game play player context =
              waitKeypress context
              restart
 
-        error p (describeError -> msg) =
-          do display context (drawErrorPlay game play p >> drawError msg)
+        handleError p ErrorNoChange player = nextStep player
+        handleError p err           _      =
+          do display context (drawErrorPlay game play p >>
+                              drawError (describeError err))
              waitKeypress context
              restart
 
         describeError ErrorKilled        = "Player explodes on a mine"
         describeError ErrorFired         = "Player is fired due to incompetence"
+        describeError _                  = error "can't happen"
 
         success play player
           | anyMinesLeft play = continue play player

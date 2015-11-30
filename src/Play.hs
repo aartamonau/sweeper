@@ -3,7 +3,7 @@
 module Play
        (
          Play (minesLeft, openedBoxes)
-       , PlayError (ErrorFired, ErrorKilled)
+       , PlayError (ErrorNoChange, ErrorFired, ErrorKilled)
        , newPlay
        , playRows
        , playColumns
@@ -33,6 +33,7 @@ data Play =
 
 data PlayError = ErrorFired
                | ErrorKilled
+               | ErrorNoChange
                deriving Show
 
 type PlayResult r = Either PlayError r
@@ -60,7 +61,7 @@ openEmpty :: Play -> Pos -> PlayResult ([Pos], Play)
 openEmpty play@(Play {..}) p
   | isOpened play p     =
       case item of
-       Empty _ -> Right ([], play)
+       Empty _ -> Left ErrorNoChange
        _       -> Left ErrorKilled
   | Empty mines <- item = Right (openEmptyLoopEnter (p, mines) play)
   | otherwise           = Left ErrorKilled
@@ -92,7 +93,7 @@ openMine :: Play -> Pos -> PlayResult Play
 openMine play@(Play {..}) p
   | isOpened play p =
       case item of
-       Mine -> Right play
+       Mine -> Left ErrorNoChange
        _    -> Left ErrorFired
   | Mine <- item    = Right (decMines $ openBox play p)
   | otherwise       = Left ErrorFired

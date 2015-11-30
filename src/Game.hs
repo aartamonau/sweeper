@@ -28,7 +28,7 @@ type MineField = Array Pos Item
 
 data Item = Mine
           | Empty Int
-          deriving Show
+          deriving (Show, Eq)
 
 gameItem :: Game -> Pos -> Item
 gameItem game p = field game ! p

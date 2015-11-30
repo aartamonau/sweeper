@@ -13,6 +13,7 @@ module Play
        , isOpened
        , playItem
        , playBounds
+       , playNeighbors
        ) where
 
 
@@ -56,6 +57,16 @@ playItem :: Play -> Pos -> Maybe Item
 playItem play p
   | isOpened play p = Just (gameItem (game play) p)
   | otherwise       = Nothing
+
+playNeighbors :: Play -> Pos -> [Pos]
+playNeighbors play p@(pi, pj) =
+  [q | di <- [-1, 0, 1],
+       dj <- [-1, 0, 1],
+       let q = (pi + di, pj + dj),
+       q /= p, inRange bounds q]
+
+  where bounds = playBounds play
+
 
 openEmpty :: Play -> Pos -> PlayResult ([Pos], Play)
 openEmpty play@(Play {..}) p

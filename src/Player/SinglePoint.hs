@@ -5,7 +5,7 @@ module Player.SinglePoint
          newPlayer
        ) where
 
-import Data.Ix (inRange, range)
+import Data.Ix (range)
 import Data.List (foldl')
 import Data.Maybe (isNothing)
 
@@ -15,7 +15,7 @@ import qualified Data.Set as Set
 import System.Random (randomRIO)
 
 import Game (Pos, Item(Empty, Mine))
-import Play (Play, playBounds, playItem)
+import Play (Play, playBounds, playItem, playNeighbors)
 import Player.API (Player, Strategy,
                    makePlayer,
                    openEmpty, openMine, getPlay, io)
@@ -42,21 +42,13 @@ posMoves play p
          | otherwise                   -> []
   | otherwise              = []
   where item     = playItem play p
-        ns       = neighbors play p
+        ns       = playNeighbors play p
         unopened = filter (isNothing . playItem play) ns
         mines    = [p | p <- ns,
                         Just Mine == playItem play p]
 
         numMines    = length mines
         numUnopened = length unopened
-
-neighbors :: Play -> Pos -> [Pos]
-neighbors play p@(pi, pj) =
-  [q | di <- [-1, 0, 1], dj <- [-1, 0, 1],
-       let q = (pi + di, pj + dj),
-       q /= p, inRange bounds q]
-
-  where bounds = playBounds play
 
 newPlayer :: Pos -> Player
 newPlayer pos = makePlayer "single-point" (newStrategy pos)

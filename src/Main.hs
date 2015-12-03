@@ -262,8 +262,8 @@ loopStrategy game play strategy context =
         describeError _                  = error "can't happen"
 
         success play strategy
-          | anyMinesLeft play = continue play strategy
-          | otherwise         =
+          | isFinished play =
               do display context (drawPlay play >> drawWinMsg "Player wins")
                  waitKeypress context
                  restart
+          | otherwise       = continue play strategy

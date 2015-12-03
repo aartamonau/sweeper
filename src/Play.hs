@@ -9,7 +9,7 @@ module Play
        , playColumns
        , openEmpty
        , openMine
-       , anyMinesLeft
+       , isFinished
        , isOpened
        , playItem
        , playBounds
@@ -111,8 +111,8 @@ openMine play@(Play {..}) p
 
   where item = gameItem game p
 
-anyMinesLeft :: Play -> Bool
-anyMinesLeft (Play {..}) = minesLeft /= 0
+isFinished :: Play -> Bool
+isFinished (Play {..}) = minesLeft == 0
 
 isOpened :: Play -> Pos -> Bool
 isOpened (Play {..}) = (openedBoxes !)

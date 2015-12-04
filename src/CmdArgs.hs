@@ -13,11 +13,16 @@ import Options.Applicative (Parser, ReadM,
                             (<>),
                             execParser,
                             helper, info, fullDesc,
-                            long, short, metavar, help, value,
+                            long, short, metavar, help, value, showDefault,
                             option, eitherReader)
 
 data Field = Easy | Medium | Hard | Custom Int Int Int
-           deriving Show
+
+instance Show Field where
+  show Easy           = "easy"
+  show Medium         = "medium"
+  show Hard           = "hard"
+  show (Custom r c m) = show r ++ "x" ++ show c ++ "x" ++ show m
 
 data Cfg =
   Cfg { field :: Field }
@@ -52,6 +57,7 @@ cfgParser =
                        <> short 'f'
                        <> metavar "SPEC"
                        <> value Easy
+                       <> showDefault
                        <> help "field specification (easy, medium, hard)")
 
 runWithCfg :: (Cfg -> IO ()) -> IO ()

@@ -7,7 +7,6 @@ module Player.SinglePoint
        ) where
 
 import Data.List (foldl')
-import Data.Maybe (isNothing)
 import Data.Ratio (Ratio, (%), numerator, denominator)
 
 import qualified Data.Map.Strict as Map
@@ -20,7 +19,7 @@ import System.Random (randomRIO)
 import Colors (black)
 import Draw (Draw, drawText, setStrokeColor, setFillColor, setFont)
 import Game (Pos, Item(Empty, Mine))
-import Play (Play, playItem, playNeighbors)
+import Play (Play, playItem, playNeighbors, isOpened)
 import Player.API (Player, Strategy,
                    makePlayer,
                    openEmpty, markMine, getPlay, draw, io)
@@ -48,7 +47,7 @@ posMoves play p
   | otherwise              = []
   where item     = playItem play p
         ns       = playNeighbors play p
-        unopened = filter (isNothing . playItem play) ns
+        unopened = filter (not . isOpened play) ns
         mines    = [p | p <- ns,
                         Just Mine == playItem play p]
 
@@ -91,7 +90,7 @@ posProbs play p
   where item = playItem play p
         ns   = playNeighbors play p
 
-        unopened = filter (isNothing . playItem play) ns
+        unopened = filter (not . isOpened play) ns
         mines    = [p | p <- ns,
                         Just Mine == playItem play p]
 

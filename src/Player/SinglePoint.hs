@@ -6,6 +6,7 @@ module Player.SinglePoint
          newPlayer
        ) where
 
+import Data.Ix (range)
 import Data.List (foldl')
 import Data.Ratio (Ratio, (%), numerator, denominator)
 
@@ -19,7 +20,7 @@ import System.Random (randomRIO)
 import Colors (black)
 import Draw (Draw, drawText, setStrokeColor, setFillColor, setFont)
 import Game (Pos, Item(Empty, Mine))
-import Play (Play, playItem, playNeighbors, isOpened)
+import Play (Play, playItem, playNeighbors, playBounds, isOpened)
 import Player.API (Player, Strategy,
                    makePlayer,
                    openEmpty, markMine, getPlay, draw, io)
@@ -103,19 +104,30 @@ computeProbs play = Map.toList . foldl' f z . concatMap (posProbs play)
         f acc (p, prob) = Map.insertWith max p prob acc
 
 playGreedy :: Play -> [Pos] -> Strategy [Pos]
-playGreedy play opened =
-  do draw [(p, drawProb prob) | (p, prob) <- probs]
-     randomMove
+playGreedy play opened
+  | null probs = playRandom play
+  | otherwise  =
+      do draw [(p, drawProb prob) | (p, prob) <- probs]
+         randomGreedyMove
   where probs = computeProbs play opened
 
         minProb = minimum (map snd probs)
         mins    = filter ((== minProb) . snd) probs
 
-        randomMove =
+        randomGreedyMove =
           do i <- io $ randomRIO (0, n-1)
              let (p, _) = mins !! i
              playMove (OpenEmpty p)
           where n = length mins
+
+playRandom :: Play -> Strategy [Pos]
+playRandom play =
+  do i <- io $ randomRIO (0, n-1)
+     playMove (OpenEmpty $ unopened !! i)
+
+  where bounds   = playBounds play
+        unopened = filter (not . isOpened play) (range bounds)
+        n        = length unopened
 
 drawProb :: Prob -> Draw ()
 drawProb prob =

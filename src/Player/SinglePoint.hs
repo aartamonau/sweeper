@@ -17,13 +17,11 @@ import qualified Data.Set as Set
 
 import System.Random (randomRIO)
 
-import Colors (black)
-import Draw (Draw, drawText, setStrokeColor, setFillColor, setFont)
 import Game (Pos, Item(Empty, Mine))
 import Play (Play, playItem, playNeighbors, playBounds, isOpened)
 import Player.API (Player, Strategy,
                    makePlayer,
-                   openEmpty, markMine, getPlay, draw, io)
+                   openEmpty, markMine, getPlay, posInfo, io)
 
 data Move = OpenEmpty Pos
           | MarkMine Pos
@@ -107,7 +105,7 @@ playGreedy :: Play -> [Pos] -> Strategy [Pos]
 playGreedy play opened
   | null probs = playRandom play
   | otherwise  =
-      do draw [(p, drawProb prob) | (p, prob) <- probs]
+      do posInfo [(p, showProb prob) | (p, prob) <- probs]
          randomGreedyMove
   where probs = computeProbs play opened
 
@@ -120,6 +118,8 @@ playGreedy play opened
              playMove (OpenEmpty p)
           where n = length mins
 
+        showProb prob = show (numerator prob) ++ "/" ++ show (denominator prob)
+
 playRandom :: Play -> Strategy [Pos]
 playRandom play =
   do i <- io $ randomRIO (0, n-1)
@@ -128,13 +128,3 @@ playRandom play =
   where bounds   = playBounds play
         unopened = filter (not . isOpened play) (range bounds)
         n        = length unopened
-
-drawProb :: Prob -> Draw ()
-drawProb prob =
-  do let num   = numerator prob
-     let denom = denominator prob
-     let text  = show num ++ "/" ++ show denom
-     setFont "monospace" 0.4
-     setFillColor black
-     setStrokeColor black
-     drawText text (0.5,0.5)

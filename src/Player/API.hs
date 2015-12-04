@@ -8,7 +8,7 @@ module Player.API
        , markMine
        , getPlay
        , surrender
-       , draw
+       , posInfo
        , io
        ) where
 
@@ -16,7 +16,6 @@ module Player.API
 import Control.Monad.Trans.Free (liftF)
 import Control.Monad.IO.Class (liftIO)
 
-import Draw (Draw)
 import Game (Pos)
 import Play (Play)
 import Player (Player, Strategy, Move (..), makePlayer)
@@ -33,8 +32,8 @@ getPlay = liftF (GetPlay id)
 surrender :: Strategy ()
 surrender = return ()
 
-draw :: [(Pos, Draw ())] -> Strategy ()
-draw ds = liftF (Draw ds ())
+posInfo :: [(Pos, String)] -> Strategy ()
+posInfo ps = liftF (PosInfo ps ())
 
 io :: IO a -> Strategy a
 io = liftIO

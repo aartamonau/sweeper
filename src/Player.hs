@@ -2,7 +2,7 @@
 
 module Player
        (
-         Move (OpenEmpty, MarkMine, GetPlay, Draw)
+         Move (OpenEmpty, MarkMine, GetPlay, PosInfo)
        , Player(Player, name, strategy)
        , Strategy
        , Name
@@ -13,14 +13,13 @@ module Player
 
 import Control.Monad.Trans.Free (FreeT, FreeF(Pure, Free), runFreeT)
 
-import Draw (Draw)
 import Game (Pos)
 import Play (Play)
 
 data Move next = OpenEmpty Pos ([Pos] -> next)
                | MarkMine Pos next
                | GetPlay (Play -> next)
-               | Draw [(Pos, Draw ())] next
+               | PosInfo [(Pos, String)] next
                deriving Functor
 
 type Name       = String

@@ -2,7 +2,7 @@
 
 module Player
        (
-         Move (OpenEmpty, OpenMine, GetPlay, Draw)
+         Move (OpenEmpty, MarkMine, GetPlay, Draw)
        , Player(Player, name, strategy)
        , Strategy
        , Name
@@ -18,7 +18,7 @@ import Game (Pos)
 import Play (Play)
 
 data Move next = OpenEmpty Pos ([Pos] -> next)
-               | OpenMine Pos next
+               | MarkMine Pos next
                | GetPlay (Play -> next)
                | Draw [(Pos, Draw ())] next
                deriving Functor

@@ -23,10 +23,10 @@ import Game (Pos, Item(Empty, Mine))
 import Play (Play, playItem, playNeighbors)
 import Player.API (Player, Strategy,
                    makePlayer,
-                   openEmpty, openMine, getPlay, draw, io)
+                   openEmpty, markMine, getPlay, draw, io)
 
 data Move = OpenEmpty Pos
-          | OpenMine Pos
+          | MarkMine Pos
           deriving (Eq, Ord)
 
 findMoves :: Play -> [Pos] -> (Set Move, [Pos])
@@ -43,7 +43,7 @@ posMoves play p
   | Just (Empty 0) <- item = []
   | Just (Empty c) <- item =
       if | numMines == c               -> map OpenEmpty unopened
-         | numMines + numUnopened == c -> map OpenMine unopened
+         | numMines + numUnopened == c -> map MarkMine unopened
          | otherwise                   -> []
   | otherwise              = []
   where item     = playItem play p
@@ -76,7 +76,7 @@ loopMoves moves = concat <$> mapM playMove moves
 
 playMove :: Move -> Strategy [Pos]
 playMove (OpenEmpty p) = openEmpty p
-playMove (OpenMine p)  = openMine p >> return []
+playMove (MarkMine p)  = markMine p >> return []
 
 type Prob  = Ratio Int
 type Probs = [(Pos, Prob)]
@@ -106,23 +106,17 @@ computeProbs play = Map.toList . foldl' f z . concatMap (posProbs play)
 playGreedy :: Play -> [Pos] -> Strategy [Pos]
 playGreedy play opened =
   do draw [(p, drawProb prob) | (p, prob) <- probs]
-     doMove
+     randomMove
   where probs = computeProbs play opened
 
         minProb = minimum (map snd probs)
-        maxProb = maximum (map snd probs)
+        mins    = filter ((== minProb) . snd) probs
 
-        maxs = filter ((== maxProb) . snd) probs
-        mins = filter ((== minProb) . snd) probs
-
-        randomMove f xs =
+        randomMove =
           do i <- io $ randomRIO (0, n-1)
-             let (p, _) = xs !! i
-             playMove (f p)
-          where n = length xs
-
-        doMove | maxProb > (1 - minProb) = randomMove OpenMine maxs
-               | otherwise               = randomMove OpenEmpty mins
+             let (p, _) = mins !! i
+             playMove (OpenEmpty p)
+          where n = length mins
 
 drawProb :: Prob -> Draw ()
 drawProb prob =

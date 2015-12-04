@@ -2,13 +2,13 @@
 
 module Play
        (
-         Play (minesLeft, openedBoxes)
+         Play (numMines, numMinesMarked, numUncovered)
        , PlayError (ErrorNoChange, ErrorFired, ErrorKilled)
        , newPlay
        , playRows
        , playColumns
        , openEmpty
-       , openMine
+       , markMine
        , isFinished
        , isOpened
        , playItem
@@ -19,6 +19,7 @@ module Play
 
 import Data.Array (Array, (!), (//), listArray, inRange)
 import Data.List (foldl')
+import Data.Maybe (isJust)
 
 import Game (Game(Game, mines, rows, columns),
              Item(Mine, Empty),
@@ -28,8 +29,11 @@ import Game (Game(Game, mines, rows, columns),
 data Play =
   Play { game :: Game
 
-       , minesLeft   :: Int
-       , openedBoxes :: Array Pos Bool
+       , numMines       :: Int
+       , numMinesMarked :: Int
+       , numUncovered   :: Int
+
+       , field     :: Array Pos (Maybe Item)
        }
 
 data PlayError = ErrorFired
@@ -40,8 +44,14 @@ data PlayError = ErrorFired
 type PlayResult r = Either PlayError r
 
 newPlay :: Game -> Play
-newPlay game@(Game {..}) = Play game mines allClosed
-  where allClosed = listArray bounds $ repeat False
+newPlay game@(Game {..}) =
+  Play { game           = game
+       , numMines       = mines
+       , numMinesMarked = 0
+       , numUncovered   = 0
+       , field          = allClosed
+       }
+  where allClosed = listArray bounds $ repeat Nothing
         bounds    = gameBounds game
 
 playRows :: Play -> Int
@@ -54,9 +64,7 @@ playBounds :: Play -> (Pos, Pos)
 playBounds = gameBounds . game
 
 playItem :: Play -> Pos -> Maybe Item
-playItem play p
-  | isOpened play p = Just (gameItem (game play) p)
-  | otherwise       = Nothing
+playItem (Play {..}) p  = field ! p
 
 playNeighbors :: Play -> Pos -> [Pos]
 playNeighbors play p@(pi, pj) =
@@ -70,17 +78,17 @@ playNeighbors play p@(pi, pj) =
 
 openEmpty :: Play -> Pos -> PlayResult ([Pos], Play)
 openEmpty play@(Play {..}) p
-  | isOpened play p     =
-      case item of
-       Empty _ -> Left ErrorNoChange
-       _       -> Left ErrorKilled
-  | Empty mines <- item = Right (openEmptyLoopEnter (p, mines) play)
-  | otherwise           = Left ErrorKilled
+  | Just Mine <- item = Left ErrorFired
+  | Just _    <- item = Left ErrorNoChange
+  | otherwise         =
+      case gameItem game p of
+       Mine          -> Left ErrorKilled
+       (Empty mines) -> Right (openEmptyLoopEnter (p, mines) play)
 
-  where item = gameItem game p
+  where item = playItem play p
 
 openEmptyLoopEnter :: (Pos, Int) -> Play -> ([Pos], Play)
-openEmptyLoopEnter start@(p, _) play = openEmptyLoop start ([p], openBox play p)
+openEmptyLoopEnter start@(p, _) play = openEmptyLoop start ([p], uncoverBox play p)
 
 openEmptyLoop :: (Pos, Int) -> ([Pos], Play) -> ([Pos], Play)
 openEmptyLoop (p, mines) acc@(seen, play)
@@ -90,7 +98,7 @@ openEmptyLoop (p, mines) acc@(seen, play)
         bounds    = playBounds play
 
         acc'      = map fst neighbors ++ seen
-        play'     = foldl' openBox play (map fst neighbors)
+        play'     = foldl' uncoverBox play (map fst neighbors)
 
         neighbors = [(np, count) | di <- [-1, 0, 1],
                                    dj <- [-1, 0, 1],
@@ -100,25 +108,33 @@ openEmptyLoop (p, mines) acc@(seen, play)
                                    not (isOpened play np),
                                    let Empty count = gameItem (game play) np]
 
-openMine :: Play -> Pos -> PlayResult Play
-openMine play@(Play {..}) p
-  | isOpened play p =
-      case item of
-       Mine -> Left ErrorNoChange
-       _    -> Left ErrorFired
-  | Mine <- item    = Right (decMines $ openBox play p)
-  | otherwise       = Left ErrorFired
+markMine :: Play -> Pos -> PlayResult Play
+markMine play p
+  | Just Mine <- item = Left ErrorNoChange
+  | Just _    <- item = Left ErrorFired
+  | otherwise         = Right (markBox play p)
 
-  where item = gameItem game p
+  where item = playItem play p
 
 isFinished :: Play -> Bool
-isFinished (Play {..}) = minesLeft == 0
+isFinished (Play {..}) = numUncovered == numEmpty
+  where numEmpty = rows game * columns game - mines game
 
 isOpened :: Play -> Pos -> Bool
-isOpened (Play {..}) = (openedBoxes !)
+isOpened (Play {..}) p = isJust (field ! p)
 
-openBox :: Play -> Pos -> Play
-openBox play@(Play {..}) p = play {openedBoxes = openedBoxes // [(p, True)]}
+uncoverBox :: Play -> Pos -> Play
+uncoverBox play@(Play {..}) p =
+  incNumUncovered $ setBox play p (gameItem game p)
 
-decMines :: Play -> Play
-decMines play@(Play {..}) = play {minesLeft = minesLeft - 1}
+markBox :: Play -> Pos -> Play
+markBox play p = incMarkedMines $ setBox play p Mine
+
+setBox :: Play -> Pos -> Item -> Play
+setBox play@(Play {..}) p item = play {field = field // [(p, Just item)]}
+
+incMarkedMines :: Play -> Play
+incMarkedMines play@(Play {..}) = play {numMinesMarked = numMinesMarked + 1}
+
+incNumUncovered :: Play -> Play
+incNumUncovered play@(Play {..}) = play {numUncovered = numUncovered + 1}

@@ -10,7 +10,7 @@ import System.Random.Shuffle (shuffleM)
 import Game (Game, Pos, Item(Empty, Mine), gameBounds, gameItem)
 import Player.API (Player, Strategy,
                    makePlayer,
-                   openEmpty, openMine, io)
+                   openEmpty, markMine, io)
 
 newPlayer :: Game -> Pos -> Player
 newPlayer game start = makePlayer "cheater" (newStrategy game start)
@@ -30,4 +30,4 @@ loop game (p:ps) =
      do opened <- openEmpty p
         loop game (ps \\ opened)
    Mine ->
-     openMine p >> loop game ps
+     markMine p >> loop game ps

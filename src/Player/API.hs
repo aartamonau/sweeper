@@ -5,7 +5,7 @@ module Player.API
        , makePlayer
 
        , openEmpty
-       , openMine
+       , markMine
        , getPlay
        , surrender
        , draw
@@ -24,8 +24,8 @@ import Player (Player, Strategy, Move (..), makePlayer)
 openEmpty :: Pos -> Strategy [Pos]
 openEmpty p = liftF (OpenEmpty p id)
 
-openMine :: Pos -> Strategy ()
-openMine p = liftF (OpenMine p ())
+markMine :: Pos -> Strategy ()
+markMine p = liftF (MarkMine p ())
 
 getPlay :: Strategy Play
 getPlay = liftF (GetPlay id)

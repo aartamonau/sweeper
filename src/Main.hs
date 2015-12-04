@@ -135,9 +135,11 @@ drawPlayInfo play =
        setStrokeColor black
        setFillColor black
 
-       drawText ("Mines left: " ++ show (minesLeft play)) (0.5, 0.5)
+       drawText ("Mines: " ++ mines) (0.5, 0.5)
   where (mx, my, mw, _) = margins
         rect            = (mx, 0, mw, my)
+
+        mines = (show $ numMinesMarked play) ++ "/" ++ (show $ numMines play)
 
 drawMsg :: Color -> String -> Draw ()
 drawMsg color msg =
@@ -223,7 +225,7 @@ loopStrategy game play strategy context =
       Pure _                      -> surrender
       Free (Draw ds strategy')    -> handleDraw ds strategy'
       Free (OpenEmpty p k)        -> handleOpenEmpty p k (openEmpty play p)
-      Free (OpenMine p strategy') -> handleOpenMine p strategy' (openMine play p)
+      Free (MarkMine p strategy') -> handleMarkMine p strategy' (markMine play p)
       Free (GetPlay k)            -> nextStep (k play)
 
   where handleDraw ds strategy =
@@ -236,8 +238,8 @@ loopStrategy game play strategy context =
         handleOpenEmpty p k (Left err)        = handleError p err (k [])
         handleOpenEmpty _ k (Right (r, play)) = success play (k r)
 
-        handleOpenMine p strategy (Left err)   = handleError p err strategy
-        handleOpenMine _ strategy (Right play) = success play strategy
+        handleMarkMine p strategy (Left err)   = handleError p err strategy
+        handleMarkMine _ strategy (Right play) = success play strategy
 
         restart                = loop context
         continue play strategy = loopGame game play strategy context

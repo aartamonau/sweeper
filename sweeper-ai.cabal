@@ -18,7 +18,6 @@ executable sweeper-ai
                        Player
                        Player.API
                        Player.Dummy
-                       Player.Cheater
                        Player.SinglePoint
                        UI
   build-depends:       base >= 4.8 && < 4.9,

@@ -13,7 +13,6 @@ import CmdArgs
 import UI
 
 import qualified Player.Dummy as Dummy
-import qualified Player.Cheater as Cheater
 import qualified Player.SinglePoint as SinglePoint
 
 main :: IO ()
@@ -49,7 +48,6 @@ loop context =
      game <- randomGame rows cols mines start
 
      let play   = newPlay game
-     -- let player = Cheater.newPlayer game start
      -- let player = Dummy.newPlayer start
      let player = SinglePoint.newPlayer start
 

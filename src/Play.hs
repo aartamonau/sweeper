@@ -117,7 +117,7 @@ markMine play p
   where item = playItem play p
 
 isFinished :: Play -> Bool
-isFinished (Play {..}) = numUncovered == numEmpty
+isFinished (Play {..}) = numUncovered == numEmpty && numMinesMarked == numMines
   where numEmpty = rows game * columns game - mines game
 
 isOpened :: Play -> Pos -> Bool

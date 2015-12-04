@@ -19,7 +19,6 @@ import Player
 import qualified Player.Dummy as Dummy
 import qualified Player.Cheater as Cheater
 import qualified Player.SinglePoint as SinglePoint
-import qualified Player.Smart as Smart
 
 boardRect :: Play -> Draw Rect
 boardRect play = do
@@ -193,7 +192,6 @@ loop context =
      let play   = newPlay game
      -- let player = Cheater.newPlayer game start
      -- let player = Dummy.newPlayer start
-     -- let player = Smart.newPlayer start
      let player = SinglePoint.newPlayer start
 
      let Player {..} = player

@@ -29,6 +29,11 @@ withPosInfo ps ui = ui { posInfo = ps }
 withPlay :: Play -> UI -> UI
 withPlay play ui = ui { play = play }
 
+redraw :: DeviceContext -> UI -> IO ()
+redraw context ui =
+  do drawUI context ui
+     waitKeypress context
+
 enterLoop :: Cfg -> DeviceContext -> IO ()
 enterLoop cfg = let ?cfg = cfg in loop
 
@@ -56,8 +61,7 @@ loop context =
 
 loopGame :: (?cfg :: Cfg) => UI -> Strategy () -> DeviceContext -> IO ()
 loopGame ui strategy context =
-  do drawUI context ui
-     waitKeypress context
+  do redraw context ui
      loopStrategy ui strategy context
 
 loopStrategy :: (?cfg :: Cfg) => UI -> Strategy () -> DeviceContext -> IO ()
@@ -71,8 +75,7 @@ loopStrategy ui@(UI {..}) strategy context =
       Free (GetPlay k)            -> nextStep (k play)
 
   where handlePosInfo ps strategy =
-          do drawUI context (withPosInfo ps ui)
-             waitKeypress context
+          do redraw context (withPosInfo ps ui)
              nextStep strategy
 
         handleOpenEmpty p k (Left err)        = handleError p err (k [])
@@ -86,14 +89,12 @@ loopStrategy ui@(UI {..}) strategy context =
         nextStep strategy      = loopStrategy ui strategy context
 
         surrender =
-          do drawUI context (withErrorMsg Nothing "Player surrenders" ui)
-             waitKeypress context
+          do redraw context (withErrorMsg Nothing "Player surrenders" ui)
              restart
 
         handleError _ ErrorNoChange strategy = nextStep strategy
         handleError p err _                  =
-          do drawUI context (withErrorMsg (Just p) (describeError err) ui)
-             waitKeypress context
+          do redraw context (withErrorMsg (Just p) (describeError err) ui)
              restart
 
         describeError ErrorKilled        = "Player explodes on a mine"
@@ -102,7 +103,6 @@ loopStrategy ui@(UI {..}) strategy context =
 
         success play strategy
           | isFinished play =
-              do drawUI context (withWinMsg "Player wins" (withPlay play ui))
-                 waitKeypress context
+              do redraw context (withWinMsg "Player wins" (withPlay play ui))
                  restart
           | otherwise       = continue play strategy

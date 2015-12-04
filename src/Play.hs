@@ -2,7 +2,7 @@
 
 module Play
        (
-         Play (numMines, numMinesMarked, numUncovered)
+         Play (numMinesMarked, numUncovered)
        , PlayError (ErrorNoChange, ErrorFired, ErrorKilled)
        , newPlay
        , playRows
@@ -14,6 +14,7 @@ module Play
        , playItem
        , playBounds
        , playNeighbors
+       , playNumMines
        ) where
 
 
@@ -21,7 +22,7 @@ import Data.Array (Array, (!), (//), listArray, inRange)
 import Data.List (foldl')
 import Data.Maybe (isJust)
 
-import Game (Game(Game, mines, rows, columns),
+import Game (Game(mines, rows, columns),
              Item(Mine, Empty),
              Pos,
              gameItem, gameBounds)
@@ -29,7 +30,6 @@ import Game (Game(Game, mines, rows, columns),
 data Play =
   Play { game :: Game
 
-       , numMines       :: Int
        , numMinesMarked :: Int
        , numUncovered   :: Int
 
@@ -44,9 +44,8 @@ data PlayError = ErrorFired
 type PlayResult r = Either PlayError r
 
 newPlay :: Game -> Play
-newPlay game@(Game {..}) =
+newPlay game =
   Play { game           = game
-       , numMines       = mines
        , numMinesMarked = 0
        , numUncovered   = 0
        , field          = allClosed
@@ -75,6 +74,8 @@ playNeighbors play p@(pi, pj) =
 
   where bounds = playBounds play
 
+playNumMines :: Play -> Int
+playNumMines = mines . game
 
 openEmpty :: Play -> Pos -> PlayResult ([Pos], Play)
 openEmpty play@(Play {..}) p
@@ -117,7 +118,8 @@ markMine play p
   where item = playItem play p
 
 isFinished :: Play -> Bool
-isFinished (Play {..}) = numUncovered == numEmpty && numMinesMarked == numMines
+isFinished play@(Play {..}) =
+  numUncovered == numEmpty && numMinesMarked == playNumMines play
   where numEmpty = rows game * columns game - mines game
 
 isOpened :: Play -> Pos -> Bool

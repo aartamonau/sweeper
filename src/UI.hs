@@ -28,8 +28,8 @@ import Draw (Draw, Rect,
              drawText, fillRect, setLineWidth,
              fill, stroke, fillCircle, strokeLine, dimRect)
 import Game (Game, Pos, Item(Mine, Empty), gameItem)
-import Play (Play(numMines, numMinesMarked),
-             playRows, playColumns, playBounds, playItem)
+import Play (Play(numMinesMarked),
+             playRows, playColumns, playBounds, playItem, playNumMines)
 
 data Msg = Win String
          | Error (Maybe Pos) String
@@ -194,7 +194,7 @@ drawPlayInfo play =
   where (mx, my, mw, _) = margins
         rect            = (mx, 0, mw, my)
 
-        mines = (show $ numMinesMarked play) ++ "/" ++ (show $ numMines play)
+        mines = (show $ numMinesMarked play) ++ "/" ++ (show $ playNumMines play)
 
 drawMsg :: Color -> String -> Draw ()
 drawMsg color msg =

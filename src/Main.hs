@@ -1,3 +1,4 @@
+{-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Main where
@@ -6,6 +7,7 @@ import Game
 import Play
 import Player
 
+import CmdArgs
 import UI
 
 import qualified Player.Dummy as Dummy
@@ -13,7 +15,7 @@ import qualified Player.Cheater as Cheater
 import qualified Player.SinglePoint as SinglePoint
 
 main :: IO ()
-main = runUI loop
+main = runWithCfg $ \cfg -> runUI (enterLoop cfg)
 
 withWinMsg :: String -> UI -> UI
 withWinMsg msg ui = ui { msg = Just (Win msg) }
@@ -27,11 +29,12 @@ withPosInfo ps ui = ui { posInfo = ps }
 withPlay :: Play -> UI -> UI
 withPlay play ui = ui { play = play }
 
-loop :: DeviceContext -> IO ()
+enterLoop :: Cfg -> DeviceContext -> IO ()
+enterLoop cfg = let ?cfg = cfg in loop
+
+loop :: (?cfg :: Cfg) => DeviceContext -> IO ()
 loop context =
-  do let cols  = 10
-     let rows  = 10
-     let mines = 10
+  do let (rows, cols, mines) = fieldSpec ?cfg
      let start = (rows `div` 2, cols `div` 2)
 
      game <- randomGame rows cols mines start
@@ -51,13 +54,13 @@ loop context =
 
      loopGame ui strategy context
 
-loopGame :: UI -> Strategy () -> DeviceContext -> IO ()
+loopGame :: (?cfg :: Cfg) => UI -> Strategy () -> DeviceContext -> IO ()
 loopGame ui strategy context =
   do drawUI context ui
      waitKeypress context
      loopStrategy ui strategy context
 
-loopStrategy :: UI -> Strategy () -> DeviceContext -> IO ()
+loopStrategy :: (?cfg :: Cfg) => UI -> Strategy () -> DeviceContext -> IO ()
 loopStrategy ui@(UI {..}) strategy context =
   do step <- runFreeT strategy
      case step of

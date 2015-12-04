@@ -58,7 +58,7 @@ cfgParser =
                        <> metavar "SPEC"
                        <> value Easy
                        <> showDefault
-                       <> help "field specification (easy, medium, hard)")
+                       <> help "field specification (easy, medium, hard or RxCxM)")
 
 runWithCfg :: (Cfg -> IO ()) -> IO ()
 runWithCfg body = execParser (info (helper <*> cfgParser) fullDesc) >>= body

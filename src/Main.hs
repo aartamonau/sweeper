@@ -3,6 +3,8 @@
 
 module Main where
 
+import Control.Concurrent (threadDelay)
+
 import Game
 import Play
 import Player
@@ -29,10 +31,12 @@ withPosInfo ps ui = ui { posInfo = ps }
 withPlay :: Play -> UI -> UI
 withPlay play ui = ui { play = play }
 
-redraw :: DeviceContext -> UI -> IO ()
+redraw :: (?cfg :: Cfg) => DeviceContext -> UI -> IO ()
 redraw context ui =
   do drawUI context ui
-     waitKeypress context
+     if interactive ?cfg
+       then waitKeypress context
+       else threadDelay (1000 * delay ?cfg)
 
 enterLoop :: Cfg -> DeviceContext -> IO ()
 enterLoop cfg = let ?cfg = cfg in loop

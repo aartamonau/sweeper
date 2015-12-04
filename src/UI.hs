@@ -8,6 +8,7 @@ module UI
        , Msg (Win, Error)
        , DeviceContext
        , drawUI
+       , waitKeypress
        , runUI
        )
        where
@@ -47,7 +48,6 @@ drawUI context (UI {..}) =
        do drawPlay play
           drawPosInfo posInfo
           handleMsg msg
-     waitKeypress context
 
   where handleMsg Nothing    = return ()
         handleMsg (Just msg) = handleActualMsg msg

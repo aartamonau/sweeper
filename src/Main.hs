@@ -56,6 +56,7 @@ loop context =
 loopGame :: UI -> Strategy () -> DeviceContext -> IO ()
 loopGame ui strategy context =
   do drawUI context ui
+     waitKeypress context
      loopStrategy ui strategy context
 
 loopStrategy :: UI -> Strategy () -> DeviceContext -> IO ()
@@ -70,6 +71,7 @@ loopStrategy ui@(UI {..}) strategy context =
 
   where handlePosInfo ps strategy =
           do drawUI context (withPosInfo ps ui)
+             waitKeypress context
              nextStep strategy
 
         handleOpenEmpty p k (Left err)        = handleError p err (k [])
@@ -84,11 +86,13 @@ loopStrategy ui@(UI {..}) strategy context =
 
         surrender =
           do drawUI context (withErrorMsg Nothing "Player surrenders" ui)
+             waitKeypress context
              restart
 
         handleError _ ErrorNoChange strategy = nextStep strategy
         handleError p err _                  =
           do drawUI context (withErrorMsg (Just p) (describeError err) ui)
+             waitKeypress context
              restart
 
         describeError ErrorKilled        = "Player explodes on a mine"
@@ -98,5 +102,6 @@ loopStrategy ui@(UI {..}) strategy context =
         success play strategy
           | isFinished play =
               do drawUI context (withWinMsg "Player wins" (withPlay play ui))
+                 waitKeypress context
                  restart
           | otherwise       = continue play strategy

@@ -50,7 +50,7 @@ randomGame rows columns numMines start = do
 
   where isClose (si, sj) (i, j) = abs (si - i) <= 1 && abs (sj - j) <= 1
 
-mkMineField :: (Pos, Pos)  -> [Pos] -> MineField
+mkMineField :: (Pos, Pos) -> [Pos] -> MineField
 mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]
   where mineMap = accumArray (||) False bounds [(p, True) | p <- mines]
 

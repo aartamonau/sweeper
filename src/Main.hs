@@ -99,9 +99,9 @@ loopStrategy ui@(UI {..}) strategy context =
           do redraw context (withErrorMsg (Just p) (describeError err) ui)
              restart
 
-        describeError ErrorKilled        = "Player explodes on a mine"
-        describeError ErrorFired         = "Player is fired due to incompetence"
-        describeError _                  = error "can't happen"
+        describeError ErrorKilled = "Player explodes on a mine"
+        describeError ErrorFired  = "Player is fired due to incompetence"
+        describeError _           = error "can't happen"
 
         success play strategy
           | isFinished play =

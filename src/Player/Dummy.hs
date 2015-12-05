@@ -1,6 +1,6 @@
 module Player.Dummy
        (
-         newPlayer
+         player
        ) where
 
 import System.Random (randomRIO)
@@ -11,11 +11,11 @@ import Player.API (Player, Strategy,
                    makePlayer,
                    openEmpty, getPlay, io)
 
-newPlayer :: Pos -> Player
-newPlayer start = makePlayer "dummy" (newStrategy start)
+player :: Player
+player = makePlayer "dummy" strategy
 
-newStrategy :: Pos -> Strategy ()
-newStrategy start = do
+strategy :: Pos -> Strategy ()
+strategy start = do
   play <- getPlay
   let dims = (playRows play, playColumns play)
 

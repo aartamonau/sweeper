@@ -3,7 +3,7 @@
 
 module Player.SinglePoint
        (
-         newPlayer
+         player
        ) where
 
 import Data.Ix (range)
@@ -53,11 +53,11 @@ posMoves play p
         numMines    = length mines
         numUnopened = length unopened
 
-newPlayer :: Pos -> Player
-newPlayer pos = makePlayer "single-point" (newStrategy pos)
+player :: Player
+player = makePlayer "single-point" strategy
 
-newStrategy :: Pos -> Strategy ()
-newStrategy start = openEmpty start >>= loop
+strategy :: Pos -> Strategy ()
+strategy start = openEmpty start >>= loop
 
 loop :: [Pos] -> Strategy ()
 loop opened =

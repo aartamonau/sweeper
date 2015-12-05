@@ -48,10 +48,8 @@ loop context =
      game <- randomGame rows cols mines start
 
      let play   = newPlay game
-     -- let player = Dummy.newPlayer start
-     let player = SinglePoint.newPlayer start
-
-     let Player {..} = player
+     -- let player = Dummy.player
+     let player = SinglePoint.player
 
      let ui = UI { play    = play
                  , game    = game
@@ -59,7 +57,7 @@ loop context =
                  , posInfo = []
                  }
 
-     loopGame ui strategy context
+     loopGame ui (strategy player start) context
 
 loopGame :: (?cfg :: Cfg) => UI -> Strategy () -> DeviceContext -> IO ()
 loopGame ui strategy context =

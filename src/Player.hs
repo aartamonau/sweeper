@@ -27,8 +27,8 @@ type Strategy a = FreeT Move IO a
 
 data Player =
   Player { name     :: Name
-         , strategy :: Strategy ()
+         , strategy :: Pos -> Strategy ()
          }
 
-makePlayer :: Name -> Strategy () -> Player
+makePlayer :: Name -> (Pos -> Strategy ()) -> Player
 makePlayer = Player

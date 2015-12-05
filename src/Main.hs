@@ -12,9 +12,6 @@ import Player
 import CmdArgs
 import UI
 
-import qualified Player.Dummy as Dummy
-import qualified Player.SinglePoint as SinglePoint
-
 main :: IO ()
 main = runWithCfg $ \cfg -> runUI (enterLoop cfg)
 
@@ -47,9 +44,7 @@ loop context =
 
      game <- randomGame rows cols mines start
 
-     let play   = newPlay game
-     -- let player = Dummy.player
-     let player = SinglePoint.player
+     let play = newPlay game
 
      let ui = UI { play    = play
                  , game    = game
@@ -57,7 +52,7 @@ loop context =
                  , posInfo = []
                  }
 
-     loopGame ui (strategy player start) context
+     loopGame ui (strategy (player ?cfg) start) context
 
 loopGame :: (?cfg :: Cfg) => UI -> Strategy () -> DeviceContext -> IO ()
 loopGame ui strategy context =

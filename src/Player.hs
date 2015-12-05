@@ -30,5 +30,8 @@ data Player =
          , strategy :: Pos -> Strategy ()
          }
 
+instance Show Player where
+  show = name
+
 makePlayer :: Name -> (Pos -> Strategy ()) -> Player
 makePlayer = Player

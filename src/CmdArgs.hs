@@ -1,11 +1,12 @@
 module CmdArgs
        (
-         Cfg(interactive, delay)
+         Cfg(interactive, delay, player)
        , fieldSpec
        , runWithCfg
        )
        where
 
+import Data.List (intercalate, find)
 import Data.List.Split (splitOn)
 import Text.Read (readMaybe)
 
@@ -15,6 +16,17 @@ import Options.Applicative (Parser, ReadM,
                             helper, info, fullDesc,
                             long, short, metavar, help, value, showDefault,
                             option, flag, eitherReader)
+
+import Player (Player(name))
+
+import qualified Player.Dummy as Dummy
+import qualified Player.SinglePoint as SinglePoint
+
+knownPlayers :: [Player]
+knownPlayers = [SinglePoint.player, Dummy.player]
+
+defaultPlayer :: Player
+defaultPlayer = head knownPlayers
 
 data Field = Easy | Medium | Hard | Custom Int Int Int
 
@@ -28,6 +40,7 @@ data Cfg =
   Cfg { field       :: Field
       , interactive :: Bool
       , delay       :: Int
+      , player      :: Player
       }
   deriving Show
 
@@ -62,6 +75,12 @@ delayOpt = eitherReader parse
           | d > 0     = Just d
           | otherwise = Nothing
 
+playerOpt :: ReadM Player
+playerOpt = eitherReader parse
+  where parse s
+          | Just player <- find ((== s) . name) knownPlayers = Right player
+          | otherwise = Left ("unknown player name `" ++ s ++ "`")
+
 cfgParser :: Parser Cfg
 cfgParser =
   Cfg
@@ -80,6 +99,13 @@ cfgParser =
                        <> value 200
                        <> showDefault
                        <> help "Delay (in ms) to use in non-interactive mode")
+  <*> option playerOpt (long "player"
+                        <> short 'p'
+                        <> metavar "PLAYER"
+                        <> value defaultPlayer
+                        <> showDefault
+                        <> help ("Player (known: " ++ names ++ ")"))
+  where names = intercalate ", " (map name knownPlayers)
 
 runWithCfg :: (Cfg -> IO ()) -> IO ()
 runWithCfg body = execParser (info (helper <*> cfgParser) fullDesc) >>= body

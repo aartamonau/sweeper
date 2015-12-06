@@ -2,6 +2,7 @@ module CmdArgs
        (
          Cfg(interactive, delay, player)
        , fieldSpec
+       , startMove
        , runWithCfg
        )
        where
@@ -36,11 +37,18 @@ instance Show Field where
   show Hard           = "hard"
   show (Custom r c m) = show r ++ "x" ++ show c ++ "x" ++ show m
 
+data StartMove = Center | Corner
+
+instance Show StartMove where
+  show Center = "center"
+  show Corner = "corner"
+
 data Cfg =
   Cfg { field       :: Field
       , interactive :: Bool
       , delay       :: Int
       , player      :: Player
+      , start       :: StartMove
       }
   deriving Show
 
@@ -50,6 +58,12 @@ fieldSpec = spec . field
         spec Medium         = (16, 16, 40)
         spec Hard           = (16, 30, 99)
         spec (Custom r c m) = (r, c, m)
+
+startMove :: Cfg -> (Int, Int)
+startMove cfg = go (start cfg)
+  where go Corner = (0, 0)
+        go Center = (rows `div` 2, columns `div` 2)
+          where (rows, columns, _) = fieldSpec cfg
 
 fieldOpt :: ReadM Field
 fieldOpt = eitherReader parse
@@ -81,6 +95,12 @@ playerOpt = eitherReader parse
           | Just player <- find ((== s) . name) knownPlayers = Right player
           | otherwise = Left ("unknown player name `" ++ s ++ "`")
 
+startMoveOpt :: ReadM StartMove
+startMoveOpt = eitherReader parse
+  where parse "center" = Right Center
+        parse "corner" = Right Corner
+        parse s        = Left ("can't understand start position `" ++ s ++ "`")
+
 cfgParser :: Parser Cfg
 cfgParser =
   Cfg
@@ -105,6 +125,12 @@ cfgParser =
                         <> value defaultPlayer
                         <> showDefault
                         <> help ("Player (known: " ++ names ++ ")"))
+  <*> option startMoveOpt (long "start-move"
+                           <> short 's'
+                           <> metavar "START"
+                           <> value Center
+                           <> showDefault
+                           <> help "Start move (center or corner)")
   where names = intercalate ", " (map name knownPlayers)
 
 runWithCfg :: (Cfg -> IO ()) -> IO ()

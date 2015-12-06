@@ -30,7 +30,7 @@ enterLoop cfg = let ?cfg = cfg in loop
 loop :: (?cfg :: Cfg) => DeviceContext -> IO ()
 loop context =
   do let (rows, cols, mines) = fieldSpec ?cfg
-     let start = (rows `div` 2, cols `div` 2)
+     let start               = startMove ?cfg
 
      game <- randomGame rows cols mines start
      loopGame (newPlay game) (strategy (player ?cfg) start) context

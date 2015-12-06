@@ -73,6 +73,17 @@ drawUI (UI {..}) =
                  do setFont "monospace" 0.4
                     drawText info (0.5, 0.5)
 
+waitKeypress :: DeviceContext -> IO ()
+waitKeypress context =
+  do ev <- wait context
+     if likeEvent ev
+       then flush context >> return ()
+       else waitKeypress context
+  where likeEvent (Event {eType, eWhich})
+          | eType == "mousedown" = True
+          | eType == "keydown"   = eWhich == Just 32 -- space
+          | otherwise            = error "can't happen"
+
 runUI :: (DeviceContext -> IO ()) -> IO ()
 runUI loop =
   do putStrLn "To open the UI go to http://127.0.0.1:3000/"
@@ -227,14 +238,3 @@ drawX =
 drawErrorBox :: Play -> Pos -> Item -> Draw ()
 drawErrorBox play p item =
   withBoard play $ withBox play p (drawOpenBox item >> drawX)
-
-waitKeypress :: DeviceContext -> IO ()
-waitKeypress context =
-  do ev <- wait context
-     if likeEvent ev
-       then flush context >> return ()
-       else waitKeypress context
-  where likeEvent (Event {eType, eWhich})
-          | eType == "mousedown" = True
-          | eType == "keydown"   = eWhich == Just 32 -- space
-          | otherwise            = error "can't happen"

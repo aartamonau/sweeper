@@ -80,14 +80,15 @@ fieldOpt = eitherReader parse
            _                      -> err
           where err = Left ("can't understand field description `" ++ s ++ "`")
 
-delayOpt :: ReadM Int
-delayOpt = eitherReader parse
-  where parse s = maybe err Right (readMaybe s >>= validate)
-        err     = Left "delay must be a positive integer"
+intOpt :: (Int -> Bool) -> String -> ReadM Int
+intOpt pred msg = eitherReader parse
+  where parse s = maybe (Left msg) Right (readMaybe s >>= validate)
 
-        validate d
-          | d > 0     = Just d
-          | otherwise = Nothing
+        validate x | pred x    = Just x
+                   | otherwise = Nothing
+
+delayOpt :: ReadM Int
+delayOpt = intOpt (>0) "must be a positive integer"
 
 playerOpt :: ReadM Player
 playerOpt = eitherReader parse

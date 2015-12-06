@@ -9,7 +9,7 @@ module Play
        , playColumns
        , openEmpty
        , markMine
-       , isFinished
+       , isWon
        , isOpened
        , playItem
        , playBounds
@@ -121,8 +121,8 @@ markMine play p
 
   where item = playItem play p
 
-isFinished :: Play -> Bool
-isFinished play@(Play {..}) =
+isWon :: Play -> Bool
+isWon play@(Play {..}) =
   numUncovered == numEmpty && numMinesMarked == playNumMines play
   where numEmpty = rows game * columns game - mines game
 

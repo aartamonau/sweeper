@@ -93,7 +93,7 @@ loopStrategy ui@(UI {..}) strategy context =
         describeError _           = error "can't happen"
 
         success play strategy
-          | isFinished play =
+          | isWon play =
               do draw context (drawUI $ withWinMsg "Player wins" (withPlay play ui))
                  restart
           | otherwise       = continue play strategy

@@ -1,6 +1,6 @@
 module CmdArgs
        (
-         Cfg(interactive, delay, player)
+         Cfg(interactive, delay, player, buffer)
        , fieldSpec
        , startMove
        , runWithCfg
@@ -49,6 +49,7 @@ data Cfg =
       , delay       :: Int
       , player      :: Player
       , start       :: StartMove
+      , buffer      :: Int
       }
   deriving Show
 
@@ -102,6 +103,9 @@ startMoveOpt = eitherReader parse
         parse "corner" = Right Corner
         parse s        = Left ("can't understand start position `" ++ s ++ "`")
 
+bufferOpt :: ReadM Int
+bufferOpt = intOpt (>=0) "must be a non-negative integer"
+
 cfgParser :: Parser Cfg
 cfgParser =
   Cfg
@@ -132,6 +136,12 @@ cfgParser =
                            <> value Center
                            <> showDefault
                            <> help "Start move (center or corner)")
+  <*> option bufferOpt (long "buffer-zone"
+                        <> short 'b'
+                        <> metavar "ROWS"
+                        <> value 0
+                        <> showDefault
+                        <> help "Number of empty boxes surrounding start position")
   where names = intercalate ", " (map name knownPlayers)
 
 runWithCfg :: (Cfg -> IO ()) -> IO ()

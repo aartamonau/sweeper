@@ -36,19 +36,20 @@ gameItem game p = field game ! p
 gameBounds :: Game -> (Pos, Pos)
 gameBounds (Game {..}) = ((0, 0), (rows-1, columns-1))
 
-randomGame :: Int -> Int -> Int -> Pos -> IO Game
-randomGame rows columns numMines start = do
+randomGame :: Int -> Int -> Int -> Pos -> Int -> IO Game
+randomGame rows columns numMines start buffer = do
   let bounds    = ((0, 0), (rows-1, columns-1))
   let positions = [p | p <- range bounds, not (isClose start p)]
   mines <- take numMines <$> shuffleM positions
 
   return $ Game { rows    = rows
                 , columns = columns
-                , mines   = numMines
+                , mines   = length mines
                 , field   = mkMineField bounds mines
                 }
 
-  where isClose (si, sj) (i, j) = abs (si - i) <= 1 && abs (sj - j) <= 1
+  where isClose (si, sj) (i, j) =
+          abs (si - i) <= buffer && abs (sj - j) <= buffer
 
 mkMineField :: (Pos, Pos) -> [Pos] -> MineField
 mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]

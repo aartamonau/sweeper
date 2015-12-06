@@ -31,8 +31,9 @@ loop :: (?cfg :: Cfg) => DeviceContext -> IO ()
 loop context =
   do let (rows, cols, mines) = fieldSpec ?cfg
      let start               = startMove ?cfg
+     let buf                 = buffer ?cfg
 
-     game <- randomGame rows cols mines start
+     game <- randomGame rows cols mines start buf
      loopGame (newPlay game) (strategy (player ?cfg) start) context
 
 loopGame :: (?cfg :: Cfg) => Play -> Strategy () -> DeviceContext -> IO ()

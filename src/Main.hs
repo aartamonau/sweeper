@@ -21,9 +21,6 @@ withWinMsg msg ui = ui { msg = Just (Win msg) }
 withErrorMsg :: Maybe Pos -> String -> UI -> UI
 withErrorMsg p msg ui = ui { msg = Just (Error p msg) }
 
-withPosInfo :: [(Pos, String)] -> UI -> UI
-withPosInfo ps ui = ui { posInfo = ps }
-
 withPlay :: Play -> UI -> UI
 withPlay play ui = ui { play = play }
 
@@ -49,7 +46,6 @@ loop context =
      let ui = UI { play    = play
                  , game    = game
                  , msg     = Nothing
-                 , posInfo = []
                  }
 
      loopGame ui (strategy (player ?cfg) start) context
@@ -70,7 +66,7 @@ loopStrategy ui@(UI {..}) strategy context =
       Free (GetPlay k)            -> nextStep (k play)
 
   where handlePosInfo ps strategy =
-          do draw context (drawUI $ withPosInfo ps ui)
+          do draw context (drawPosInfo ui ps)
              nextStep strategy
 
         handleOpenEmpty p k (Left err)        = handleError p err (k [])

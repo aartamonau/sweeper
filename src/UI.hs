@@ -4,12 +4,13 @@
 
 module UI
        (
-         UI (UI, play, game, msg, posInfo)
+         UI (UI, play, game, msg)
        , Msg (Win, Error)
        , DeviceContext
        , Draw
        , display
        , drawUI
+       , drawPosInfo
        , waitKeypress
        , runUI
        )
@@ -40,8 +41,6 @@ data UI =
   UI { play :: Play
      , game :: Game
      , msg  :: Maybe Msg
-
-     , posInfo :: [(Pos, String)]
      }
 
 display :: DeviceContext -> Draw () -> IO ()
@@ -50,7 +49,6 @@ display context drawing = send context (runDraw context drawing)
 drawUI :: UI -> Draw ()
 drawUI (UI {..}) =
   do drawPlay play
-     drawPosInfo posInfo
      handleMsg msg
 
   where handleMsg Nothing    = return ()
@@ -64,14 +62,15 @@ drawUI (UI {..}) =
         handleLastPos Nothing  = return ()
         handleLastPos (Just p) = drawErrorBox play p (gameItem game p)
 
-        drawPosInfo ps =
-          do setFillColor black
-             setStrokeColor black
+drawPosInfo :: UI -> [(Pos, String)] -> Draw ()
+drawPosInfo (UI {..}) ps =
+  do setFillColor black
+     setStrokeColor black
 
-             forM_ ps $ \(p, info) ->
-               withBoard play $ withBox play p $
-                 do setFont "monospace" 0.4
-                    drawText info (0.5, 0.5)
+     forM_ ps $ \(p, info) ->
+       withBoard play $ withBox play p $
+         do setFont "monospace" 0.4
+            drawText info (0.5, 0.5)
 
 waitKeypress :: DeviceContext -> IO ()
 waitKeypress context =

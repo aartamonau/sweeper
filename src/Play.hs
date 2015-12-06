@@ -4,6 +4,8 @@ module Play
        (
          Play (numMinesMarked, numUncovered)
        , PlayError (ErrorNoChange, ErrorFired, ErrorKilled)
+       , Pos
+       , Item(Mine, Empty)
        , newPlay
        , playRows
        , playColumns

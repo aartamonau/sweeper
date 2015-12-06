@@ -29,8 +29,8 @@ import Draw (Draw, Rect,
              setFont, setFillColor, setStrokeColor,
              drawText, fillRect, setLineWidth,
              fill, stroke, fillCircle, strokeLine, dimRect)
-import Game (Pos, Item(Mine, Empty))
 import Play (Play(numMinesMarked),
+             Pos, Item(Mine, Empty),
              playRows, playColumns, playBounds,
              playItem, playNumMines, errorItem)
 

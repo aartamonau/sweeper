@@ -16,8 +16,8 @@ import qualified Data.Set as Set
 
 import System.Random (randomRIO)
 
-import Game (Pos, Item(Empty, Mine))
-import Play (Play, playItem, playNeighbors, playBounds, isOpened)
+import Play (Play, Pos, Item(Empty, Mine),
+             playItem, playNeighbors, playBounds, isOpened)
 import Player.API (Player, Strategy,
                    makePlayer,
                    openEmpty, markMine, getPlay, posInfo, io)

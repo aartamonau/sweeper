@@ -5,8 +5,7 @@ module Player.Dummy
 
 import System.Random (randomRIO)
 
-import Game (Pos)
-import Play (playRows, playColumns)
+import Play (Pos, playRows, playColumns)
 import Player.API (Player, Strategy,
                    makePlayer,
                    openEmpty, getPlay, io)

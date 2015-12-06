@@ -13,8 +13,7 @@ module Player
 
 import Control.Monad.Trans.Free (FreeT, FreeF(Pure, Free), runFreeT)
 
-import Game (Pos)
-import Play (Play)
+import Play (Play, Pos)
 
 data Move next = OpenEmpty Pos ([Pos] -> next)
                | MarkMine Pos next

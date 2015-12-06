@@ -16,8 +16,7 @@ module Player.API
 import Control.Monad.Trans.Free (liftF)
 import Control.Monad.IO.Class (liftIO)
 
-import Game (Pos)
-import Play (Play)
+import Play (Play, Pos)
 import Player (Player, Strategy, Move (..), makePlayer)
 
 openEmpty :: Pos -> Strategy [Pos]

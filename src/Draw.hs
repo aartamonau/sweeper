@@ -20,6 +20,8 @@ module Draw
        , setLineWidth
        , strokeLine
        , dimRect
+       , (|||)
+       , (///)
        ) where
 
 import Control.Monad.Trans.Class (lift)
@@ -146,3 +148,9 @@ dimRect alpha = liftRect $ \rect ->
      Blank.globalAlpha alpha
      Blank.fillRect rect
      Blank.restore ()
+
+(|||) :: Draw () -> Draw () -> Draw ()
+left ||| right = restrict (0, 0, 0.5, 1) left >> restrict (0.5, 0, 0.5, 1) right
+
+(///) :: Draw () -> Draw () -> Draw ()
+up /// down = restrict (0, 0, 1, 0.5) up >> restrict (0, 0.5, 1, 0.5) down

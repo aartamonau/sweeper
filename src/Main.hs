@@ -14,34 +14,40 @@ import UI
 main :: IO ()
 main = runWithCfg $ \cfg -> runUI (enterLoop cfg)
 
-drawUI :: (?cfg :: Cfg) => Play -> Draw ()
-drawUI play = drawPlay play (name $ player ?cfg)
+data Ctx = Ctx { ctxCfg :: Cfg }
 
-draw :: (?cfg :: Cfg) => DeviceContext -> Draw () -> IO ()
-draw ctx d = display ctx d >> wait ctx
+drawUI :: (?ctx :: Ctx) => Play -> Draw ()
+drawUI play = drawPlay play (name $ player (ctxCfg ?ctx))
 
-wait :: (?cfg :: Cfg) => DeviceContext -> IO ()
-wait context | interactive ?cfg = waitKeypress context
-             | otherwise        = threadDelay (1000 * delay ?cfg)
+draw :: (?ctx :: Ctx) => DeviceContext -> Draw () -> IO ()
+draw context d = display context d >> wait context
+
+wait :: (?ctx :: Ctx) => DeviceContext -> IO ()
+wait context | interactive cfg = waitKeypress context
+             | otherwise       = threadDelay (1000 * delay cfg)
+
+  where cfg = ctxCfg ?ctx
 
 enterLoop :: Cfg -> DeviceContext -> IO ()
-enterLoop cfg = let ?cfg = cfg in loop
+enterLoop cfg = let ?ctx = Ctx cfg in loop
 
-loop :: (?cfg :: Cfg) => DeviceContext -> IO ()
+loop :: (?ctx :: Ctx) => DeviceContext -> IO ()
 loop context =
-  do let (rows, cols, mines) = fieldSpec ?cfg
-     let start               = startMove ?cfg
-     let buf                 = buffer ?cfg
+  do let cfg = ctxCfg ?ctx
+
+     let (rows, cols, mines) = fieldSpec cfg
+     let start               = startMove cfg
+     let buf                 = buffer cfg
 
      game <- randomGame rows cols mines start buf
-     loopGame (newPlay game) (strategy (player ?cfg) start) context
+     loopGame (newPlay game) (strategy (player cfg) start) context
 
-loopGame :: (?cfg :: Cfg) => Play -> Strategy () -> DeviceContext -> IO ()
+loopGame :: (?ctx :: Ctx) => Play -> Strategy () -> DeviceContext -> IO ()
 loopGame play strategy context =
   do draw context (drawUI play)
      loopStrategy play strategy context
 
-loopStrategy :: (?cfg :: Cfg) => Play -> Strategy () -> DeviceContext -> IO ()
+loopStrategy :: (?ctx :: Ctx) => Play -> Strategy () -> DeviceContext -> IO ()
 loopStrategy play strategy context =
   do step <- runFreeT strategy
      case step of

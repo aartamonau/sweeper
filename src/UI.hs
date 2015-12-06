@@ -7,6 +7,8 @@ module UI
          UI (UI, play, game, msg, posInfo)
        , Msg (Win, Error)
        , DeviceContext
+       , Draw
+       , display
        , drawUI
        , waitKeypress
        , runUI
@@ -42,12 +44,14 @@ data UI =
      , posInfo :: [(Pos, String)]
      }
 
-drawUI :: DeviceContext -> UI -> IO ()
-drawUI context (UI {..}) =
-  do display context $
-       do drawPlay play
-          drawPosInfo posInfo
-          handleMsg msg
+display :: DeviceContext -> Draw () -> IO ()
+display context drawing = send context (runDraw context drawing)
+
+drawUI :: UI -> Draw ()
+drawUI (UI {..}) =
+  do drawPlay play
+     drawPosInfo posInfo
+     handleMsg msg
 
   where handleMsg Nothing    = return ()
         handleMsg (Just msg) = handleActualMsg msg
@@ -223,9 +227,6 @@ drawX =
 drawErrorBox :: Play -> Pos -> Item -> Draw ()
 drawErrorBox play p item =
   withBoard play $ withBox play p (drawOpenBox item >> drawX)
-
-display :: DeviceContext -> Draw () -> IO ()
-display context drawing = send context (runDraw context drawing)
 
 waitKeypress :: DeviceContext -> IO ()
 waitKeypress context =

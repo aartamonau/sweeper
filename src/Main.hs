@@ -15,15 +15,6 @@ import UI
 main :: IO ()
 main = runWithCfg $ \cfg -> runUI (enterLoop cfg)
 
-withWinMsg :: String -> UI -> UI
-withWinMsg msg ui = ui { msg = Just (Win msg) }
-
-withErrorMsg :: String -> UI -> UI
-withErrorMsg msg ui = ui { msg = Just (Error msg) }
-
-withPlay :: Play -> UI -> UI
-withPlay play ui = ui { play = play }
-
 draw :: (?cfg :: Cfg) => DeviceContext -> Draw () -> IO ()
 draw ctx d = display ctx d >> wait ctx
 
@@ -40,22 +31,15 @@ loop context =
      let start = (rows `div` 2, cols `div` 2)
 
      game <- randomGame rows cols mines start
+     loopGame (newPlay game) (strategy (player ?cfg) start) context
 
-     let play = newPlay game
+loopGame :: (?cfg :: Cfg) => Play -> Strategy () -> DeviceContext -> IO ()
+loopGame play strategy context =
+  do draw context (drawPlay play)
+     loopStrategy play strategy context
 
-     let ui = UI { play    = play
-                 , msg     = Nothing
-                 }
-
-     loopGame ui (strategy (player ?cfg) start) context
-
-loopGame :: (?cfg :: Cfg) => UI -> Strategy () -> DeviceContext -> IO ()
-loopGame ui strategy context =
-  do draw context (drawUI ui)
-     loopStrategy ui strategy context
-
-loopStrategy :: (?cfg :: Cfg) => UI -> Strategy () -> DeviceContext -> IO ()
-loopStrategy ui@(UI {..}) strategy context =
+loopStrategy :: (?cfg :: Cfg) => Play -> Strategy () -> DeviceContext -> IO ()
+loopStrategy play strategy context =
   do step <- runFreeT strategy
      case step of
       Pure _                      -> surrender
@@ -65,7 +49,7 @@ loopStrategy ui@(UI {..}) strategy context =
       Free (GetPlay k)            -> nextStep (k play)
 
   where handlePosInfo ps strategy =
-          do draw context (drawPosInfo ui ps)
+          do draw context (drawPosInfo play ps)
              nextStep strategy
 
         handleOpenEmpty k (play, Left err) = handleError play err (k [])
@@ -75,18 +59,18 @@ loopStrategy ui@(UI {..}) strategy context =
         handleMarkMine strategy (play, Right ()) = success play strategy
 
         restart                = loop context
-        continue play strategy = loopGame (withPlay play ui) strategy context
-        nextStep strategy      = loopStrategy ui strategy context
+        continue play strategy = loopGame play strategy context
+        nextStep strategy      = loopStrategy play strategy context
 
         surrender =
-          do draw context (drawUI $ withErrorMsg "Player surrenders" ui)
+          do draw context (drawPlay play
+                           >> drawError "Player surrenders")
              restart
 
         handleError _ ErrorNoChange strategy = nextStep strategy
         handleError play err _               =
-          do draw context (drawUI
-                           $ withErrorMsg (describeError err)
-                           $ withPlay play ui)
+          do draw context (drawPlay play
+                           >> drawError (describeError err))
              restart
 
         describeError ErrorKilled = "Player explodes on a mine"
@@ -95,6 +79,7 @@ loopStrategy ui@(UI {..}) strategy context =
 
         success play strategy
           | isWon play =
-              do draw context (drawUI $ withWinMsg "Player wins" (withPlay play ui))
+              do draw context (drawPlay play
+                               >> drawMsg "Player wins")
                  restart
-          | otherwise       = continue play strategy
+          | otherwise  = continue play strategy

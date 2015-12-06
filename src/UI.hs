@@ -4,12 +4,12 @@
 
 module UI
        (
-         UI (UI, play, msg)
-       , Msg (Win, Error)
-       , DeviceContext
+         DeviceContext
        , Draw
        , display
-       , drawUI
+       , drawPlay
+       , drawMsg
+       , drawError
        , drawPosInfo
        , waitKeypress
        , runUI
@@ -35,30 +35,23 @@ import Play (Play(numMinesMarked),
              playRows, playColumns, playBounds,
              playItem, playNumMines, errorItem)
 
-data Msg = Win String
-         | Error String
-
-data UI =
-  UI { play :: Play
-     , msg  :: Maybe Msg
-     }
-
 display :: DeviceContext -> Draw () -> IO ()
 display context drawing = send context (runDraw context drawing)
 
-drawUI :: UI -> Draw ()
-drawUI (UI {..}) =
-  do drawPlay play
-     handleMsg msg
+drawPlay :: Play -> Draw ()
+drawPlay play = do
+  setFillColor dimgrey
+  fillRect (0, 0, 1, 1)
+  withBoard play (drawBoard play)
+  drawPlayInfo play
+  maybeDrawErrorBox
 
-  where handleMsg Nothing    = return ()
-        handleMsg (Just msg) = handleActualMsg msg
+  where maybeDrawErrorBox
+          | Just (p, item) <- errorItem play = drawErrorBox play p item
+          | otherwise                        = return ()
 
-        handleActualMsg (Win msg)   = drawWinMsg msg
-        handleActualMsg (Error msg) = drawError msg
-
-drawPosInfo :: UI -> [(Pos, String)] -> Draw ()
-drawPosInfo (UI {..}) ps =
+drawPosInfo :: Play -> [(Pos, String)] -> Draw ()
+drawPosInfo play ps =
   do setFillColor black
      setStrokeColor black
 
@@ -66,6 +59,12 @@ drawPosInfo (UI {..}) ps =
        withBoard play $ withBox play p $
          do setFont "monospace" 0.4
             drawText info (0.5, 0.5)
+
+drawMsg :: String -> Draw ()
+drawMsg = drawMsgWithColor lightgrey
+
+drawError :: String -> Draw ()
+drawError = drawMsgWithColor red
 
 waitKeypress :: DeviceContext -> IO ()
 waitKeypress context =
@@ -84,18 +83,6 @@ runUI loop =
      blankCanvas 3000 {events = ["keydown", "mousedown"]} loop
 
 -- internal
-drawPlay :: Play -> Draw ()
-drawPlay play = do
-  setFillColor dimgrey
-  fillRect (0, 0, 1, 1)
-  withBoard play (drawBoard play)
-  drawPlayInfo play
-  maybeDrawErrorBox
-
-  where maybeDrawErrorBox
-          | Just (p, item) <- errorItem play = drawErrorBox play p item
-          | otherwise                        = return ()
-
 boardRect :: Play -> Draw Rect
 boardRect play = do
   aspect <- aspectRatio
@@ -210,8 +197,8 @@ drawPlayInfo play =
 
         mines = (show $ numMinesMarked play) ++ "/" ++ (show $ playNumMines play)
 
-drawMsg :: Color -> String -> Draw ()
-drawMsg color msg =
+drawMsgWithColor :: Color -> String -> Draw ()
+drawMsgWithColor color msg =
   do dimRect 0.8 (0, 0, 1, 1)
      restrict margins $
        do setFont "monospace" 0.1
@@ -219,12 +206,6 @@ drawMsg color msg =
           setFillColor color
 
           drawText msg (0.5, 0.5)
-
-drawError :: String -> Draw ()
-drawError = drawMsg red
-
-drawWinMsg :: String -> Draw ()
-drawWinMsg = drawMsg lightgrey
 
 drawX :: Draw ()
 drawX =

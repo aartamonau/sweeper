@@ -15,6 +15,9 @@ import UI
 main :: IO ()
 main = runWithCfg $ \cfg -> runUI (enterLoop cfg)
 
+drawUI :: (?cfg :: Cfg) => Play -> Draw ()
+drawUI play = drawPlay play (name $ player ?cfg)
+
 draw :: (?cfg :: Cfg) => DeviceContext -> Draw () -> IO ()
 draw ctx d = display ctx d >> wait ctx
 
@@ -35,7 +38,7 @@ loop context =
 
 loopGame :: (?cfg :: Cfg) => Play -> Strategy () -> DeviceContext -> IO ()
 loopGame play strategy context =
-  do draw context (drawPlay play)
+  do draw context (drawUI play)
      loopStrategy play strategy context
 
 loopStrategy :: (?cfg :: Cfg) => Play -> Strategy () -> DeviceContext -> IO ()
@@ -63,13 +66,13 @@ loopStrategy play strategy context =
         nextStep strategy      = loopStrategy play strategy context
 
         surrender =
-          do draw context (drawPlay play
+          do draw context (drawUI play
                            >> drawError "Player surrenders")
              restart
 
         handleError _ ErrorNoChange strategy = nextStep strategy
         handleError play err _               =
-          do draw context (drawPlay play
+          do draw context (drawUI play
                            >> drawError (describeError err))
              restart
 
@@ -79,7 +82,7 @@ loopStrategy play strategy context =
 
         success play strategy
           | isWon play =
-              do draw context (drawPlay play
+              do draw context (drawUI play
                                >> drawMsg "Player wins")
                  restart
           | otherwise  = continue play strategy

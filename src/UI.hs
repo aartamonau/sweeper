@@ -38,12 +38,13 @@ import Play (Play(numMinesMarked),
 display :: DeviceContext -> Draw () -> IO ()
 display context drawing = send context (runDraw context drawing)
 
-drawPlay :: Play -> Draw ()
-drawPlay play = do
+drawPlay :: Play -> String -> Draw ()
+drawPlay play player = do
   setFillColor dimgrey
   fillRect (0, 0, 1, 1)
   withBoard play (drawBoard play)
   drawPlayInfo play
+  drawPlayerName player
   maybeDrawErrorBox
 
   where maybeDrawErrorBox
@@ -196,6 +197,17 @@ drawPlayInfo play =
         rect            = (mx, 0, mw, my)
 
         mines = (show $ numMinesMarked play) ++ "/" ++ (show $ playNumMines play)
+
+drawPlayerName :: String -> Draw ()
+drawPlayerName player =
+  restrict rect $
+    do setFont "monospace" 0.4
+       setStrokeColor black
+       setFillColor black
+
+       drawText ("Player: " ++ player) (0.5, 0.5)
+  where (mx, my, mw, mh) = margins
+        rect             = (mx, my + mh, mw, 1 - my - mh)
 
 drawMsgWithColor :: Color -> String -> Draw ()
 drawMsgWithColor color msg =

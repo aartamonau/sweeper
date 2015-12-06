@@ -25,6 +25,7 @@ import Colors (Color,
                black, red, dimgrey, grey, lightgrey,
                blue, green, khaki, purple, darkred, brown)
 import Draw (Draw, Rect,
+             (|||),
              runDraw, restrict, aspectRatio,
              setFont, setFillColor, setStrokeColor,
              drawText, fillRect, setLineWidth,
@@ -42,7 +43,7 @@ drawPlay play player =
   do setFillColor dimgrey
      fillRect (0, 0, 1, 1)
      withBoard play (drawBoard play)
-     drawPlayInfo play
+     drawPlayInfo play (5, 10)
      drawPlayerName player
      maybeDrawErrorBox
 
@@ -184,18 +185,26 @@ withBoard play drawing =
     do rect <- boardRect play
        restrict rect drawing
 
-drawPlayInfo :: Play -> Draw ()
-drawPlayInfo play =
-  restrict rect $
-    do setFont "monospace" 0.4
-       setStrokeColor black
-       setFillColor black
+drawPlayInfo :: Play -> (Int, Int) -> Draw ()
+drawPlayInfo play (won, total) =
+  do setStrokeColor black
+     setFillColor black
 
-       drawText ("Mines: " ++ mines) (0.5, 0.5)
+     restrict rect $ drawStats ||| drawNumMines
   where (mx, my, mw, _) = margins
         rect            = (mx, 0, mw, my)
 
-        mines = (show $ numMinesMarked play) ++ "/" ++ (show $ playNumMines play)
+        frac n d = show n ++ "/" ++ show d
+
+        mines = frac (numMinesMarked play) (playNumMines play)
+
+        drawNumMines =
+          do setFont "monospace" 0.4
+             drawText ("Mines: " ++ mines) (0.5, 0.5)
+
+        drawStats =
+          do setFont "monospace" 0.4
+             drawText ("Games won: " ++ frac won total) (0.5, 0.5)
 
 drawPlayerName :: String -> Draw ()
 drawPlayerName player =

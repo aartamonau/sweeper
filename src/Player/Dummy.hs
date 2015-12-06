@@ -14,12 +14,12 @@ player :: Player
 player = makePlayer "dummy" strategy
 
 strategy :: Pos -> Strategy ()
-strategy start = do
-  play <- getPlay
-  let dims = (playRows play, playColumns play)
+strategy start =
+  do play <- getPlay
+     let dims = (playRows play, playColumns play)
 
-  _ <- openEmpty start
-  loop dims
+     _ <- openEmpty start
+     loop dims
 
 loop :: (Int, Int) -> Strategy ()
 loop dims = randomMove dims >> loop dims

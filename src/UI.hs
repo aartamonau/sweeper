@@ -38,13 +38,13 @@ display :: DeviceContext -> Draw () -> IO ()
 display context drawing = send context (runDraw context drawing)
 
 drawPlay :: Play -> String -> Draw ()
-drawPlay play player = do
-  setFillColor dimgrey
-  fillRect (0, 0, 1, 1)
-  withBoard play (drawBoard play)
-  drawPlayInfo play
-  drawPlayerName player
-  maybeDrawErrorBox
+drawPlay play player =
+  do setFillColor dimgrey
+     fillRect (0, 0, 1, 1)
+     withBoard play (drawBoard play)
+     drawPlayInfo play
+     drawPlayerName player
+     maybeDrawErrorBox
 
   where maybeDrawErrorBox
           | Just (p, item) <- errorItem play = drawErrorBox play p item
@@ -84,20 +84,20 @@ runUI loop =
 
 -- internal
 boardRect :: Play -> Draw Rect
-boardRect play = do
-  aspect <- aspectRatio
+boardRect play =
+  do aspect <- aspectRatio
 
-  let columns' = fromIntegral (playColumns play)
-  let rows'    = fromIntegral (playRows play)
+     let columns' = fromIntegral (playColumns play)
+     let rows'    = fromIntegral (playRows play)
 
-  let boxSide = min (aspect / columns') (1 / rows')
+     let boxSide = min (aspect / columns') (1 / rows')
 
-  let w = (columns' * boxSide) / aspect
-  let h = rows' * boxSide
-  let x = (1 - w) / 2
-  let y = (1 - h) / 2
+     let w = (columns' * boxSide) / aspect
+     let h = rows' * boxSide
+     let x = (1 - w) / 2
+     let y = (1 - h) / 2
 
-  return (x, y, w, h)
+     return (x, y, w, h)
 
 drawBoard :: Play -> Draw ()
 drawBoard play = sequence_ [drawBox play p | p <- range (playBounds play)]
@@ -119,32 +119,32 @@ drawBox play p = withBox play p (draw maybeItem)
         draw (Just item) = drawOpenBox item
 
 drawClosedBox :: Draw ()
-drawClosedBox = do
-  setLineWidth 0.075
-  setStrokeColor black
-  setFillColor grey
-  fill
-  stroke
+drawClosedBox =
+  do setLineWidth 0.075
+     setStrokeColor black
+     setFillColor grey
+     fill
+     stroke
 
 drawOpenBox :: Item -> Draw ()
-drawOpenBox item = do
-  setLineWidth 0.05
-  setStrokeColor black
-  setFillColor lightgrey
-  fill
-  stroke
-  draw item
+drawOpenBox item =
+  do setLineWidth 0.05
+     setStrokeColor black
+     setFillColor lightgrey
+     fill
+     stroke
+     draw item
 
   where draw Mine      = drawMine
         draw (Empty m) = drawEmpty m
 
 drawEmpty :: Int -> Draw ()
 drawEmpty 0     = return ()
-drawEmpty mines = do
-  setFont "monospace" 0.7
-  setStrokeColor dimgrey
-  setFillColor (color mines)
-  drawText (show mines) (0.5, 0.5)
+drawEmpty mines =
+  do setFont "monospace" 0.7
+     setStrokeColor dimgrey
+     setFillColor (color mines)
+     drawText (show mines) (0.5, 0.5)
 
   where color 1 = blue
         color 2 = green
@@ -157,23 +157,23 @@ drawEmpty mines = do
         color _ = error "can't happen"
 
 drawMine :: Draw ()
-drawMine = do
-  setStrokeColor black
-  setFillColor black
-  setLineWidth 0.125
+drawMine =
+  do setStrokeColor black
+     setFillColor black
+     setLineWidth 0.125
 
-  restrict (0.1, 0.1, 0.8, 0.8) $
-    do fillCircle (0.1, 0.1, 0.8, 0.8)
+     restrict (0.1, 0.1, 0.8, 0.8) $
+       do fillCircle (0.1, 0.1, 0.8, 0.8)
 
-       strokeLine (0.5, 0.025) (0.5, 0.975)
-       strokeLine (0.025, 0.5) (0.975, 0.5)
+          strokeLine (0.5, 0.025) (0.5, 0.975)
+          strokeLine (0.025, 0.5) (0.975, 0.5)
 
-       strokeLine (0.15, 0.15) (0.85, 0.85)
-       strokeLine (0.15, 0.85) (0.85, 0.15)
+          strokeLine (0.15, 0.15) (0.85, 0.85)
+          strokeLine (0.15, 0.85) (0.85, 0.15)
 
-       setStrokeColor grey
-       setFillColor grey
-       fillCircle (0.2, 0.2, 0.3, 0.3)
+          setStrokeColor grey
+          setFillColor grey
+          fillCircle (0.2, 0.2, 0.3, 0.3)
 
 margins :: Rect
 margins = (0.1, 0.1, 0.8, 0.8)

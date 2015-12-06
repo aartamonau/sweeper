@@ -51,9 +51,9 @@ restrict (rx, ry, rw, rh) = local (.trans)
   where trans (x, y) = (rx + x * rw, ry + y * rh)
 
 aspectRatio :: Draw Double
-aspectRatio = do
-  (_, _, x, y) <- transRect (0, 0, 1, 1)
-  return (x / y)
+aspectRatio =
+  do (_, _, x, y) <- transRect (0, 0, 1, 1)
+     return (x / y)
 
 setStrokeColor :: Color -> Draw ()
 setStrokeColor = lift . Blank.strokeStyle
@@ -65,11 +65,11 @@ transPoint :: Point -> Draw Point
 transPoint p = asks ($ p)
 
 transRect :: Rect -> Draw Rect
-transRect (tx, ty, w, h) = do
-  (tx', ty') <- transPoint (tx, ty)
-  (bx', by') <- transPoint (tx + w, ty + h)
+transRect (tx, ty, w, h) =
+  do (tx', ty') <- transPoint (tx, ty)
+     (bx', by') <- transPoint (tx + w, ty + h)
 
-  return (tx', ty', bx' - tx', by' - ty')
+     return (tx', ty', bx' - tx', by' - ty')
 
 liftCanvas :: (a -> Draw a) -> (a -> Canvas b) -> a -> Draw b
 liftCanvas trans op x = trans x >>= lift . op
@@ -93,12 +93,12 @@ fill :: Draw ()
 fill = fillRect (0, 0, 1, 1)
 
 setFont :: String -> Double -> Draw ()
-setFont font sz = do
-  (_, _, _, y) <- transRect (0, 0, 0, sz)
+setFont font sz =
+  do (_, _, _, y) <- transRect (0, 0, 0, sz)
 
-  let px = round y :: Int
-  let fontSpec = pack $ show px ++ "px " ++ font
-  lift $ Blank.font fontSpec
+     let px = round y :: Int
+     let fontSpec = pack $ show px ++ "px " ++ font
+     lift $ Blank.font fontSpec
 
 drawText :: String -> Point -> Draw ()
 drawText text = liftPoint $ \(x, y) ->
@@ -122,22 +122,22 @@ fillCircle = liftRect $ \(x, y, w, h) ->
      Blank.closePath ()
 
 setLineWidth :: Double -> Draw ()
-setLineWidth w = do
-  (_, _, x, y) <- transRect (0, 0, w, w)
-  lift $ Blank.lineWidth (min x y)
+setLineWidth w =
+  do (_, _, x, y) <- transRect (0, 0, w, w)
+     lift $ Blank.lineWidth (min x y)
 
 strokeLine :: Point -> Point -> Draw ()
-strokeLine start end = do
-  start' <- transPoint start
-  end'   <- transPoint end
+strokeLine start end =
+  do start' <- transPoint start
+     end'   <- transPoint end
 
-  lift $
-    do Blank.beginPath ()
-       Blank.lineCap "round"
-       Blank.moveTo start'
-       Blank.lineTo end'
-       Blank.stroke ()
-       Blank.closePath ()
+     lift $
+       do Blank.beginPath ()
+          Blank.lineCap "round"
+          Blank.moveTo start'
+          Blank.lineTo end'
+          Blank.stroke ()
+          Blank.closePath ()
 
 dimRect :: Double -> Rect -> Draw ()
 dimRect alpha = liftRect $ \rect ->

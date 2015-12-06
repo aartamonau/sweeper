@@ -4,7 +4,7 @@
 
 module UI
        (
-         UI (UI, play, game, msg)
+         UI (UI, play, msg)
        , Msg (Win, Error)
        , DeviceContext
        , Draw
@@ -30,16 +30,16 @@ import Draw (Draw, Rect,
              setFont, setFillColor, setStrokeColor,
              drawText, fillRect, setLineWidth,
              fill, stroke, fillCircle, strokeLine, dimRect)
-import Game (Game, Pos, Item(Mine, Empty), gameItem)
+import Game (Pos, Item(Mine, Empty))
 import Play (Play(numMinesMarked),
-             playRows, playColumns, playBounds, playItem, playNumMines)
+             playRows, playColumns, playBounds,
+             playItem, playNumMines, errorItem)
 
 data Msg = Win String
-         | Error (Maybe Pos) String
+         | Error String
 
 data UI =
   UI { play :: Play
-     , game :: Game
      , msg  :: Maybe Msg
      }
 
@@ -54,13 +54,8 @@ drawUI (UI {..}) =
   where handleMsg Nothing    = return ()
         handleMsg (Just msg) = handleActualMsg msg
 
-        handleActualMsg (Win msg)     = drawWinMsg msg
-        handleActualMsg (Error p msg) =
-          do handleLastPos p
-             drawError msg
-
-        handleLastPos Nothing  = return ()
-        handleLastPos (Just p) = drawErrorBox play p (gameItem game p)
+        handleActualMsg (Win msg)   = drawWinMsg msg
+        handleActualMsg (Error msg) = drawError msg
 
 drawPosInfo :: UI -> [(Pos, String)] -> Draw ()
 drawPosInfo (UI {..}) ps =
@@ -95,6 +90,11 @@ drawPlay play = do
   fillRect (0, 0, 1, 1)
   withBoard play (drawBoard play)
   drawPlayInfo play
+  maybeDrawErrorBox
+
+  where maybeDrawErrorBox
+          | Just (p, item) <- errorItem play = drawErrorBox play p item
+          | otherwise                        = return ()
 
 boardRect :: Play -> Draw Rect
 boardRect play = do

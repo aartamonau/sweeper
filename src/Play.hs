@@ -15,6 +15,7 @@ module Play
        , playBounds
        , playNeighbors
        , playNumMines
+       , errorItem
        ) where
 
 
@@ -151,3 +152,7 @@ retError play lastMove error = (newPlay, Left error)
 
 ret :: Play -> a -> PlayResult a
 ret play r = (play, Right r)
+
+errorItem :: Play -> Maybe (Pos, Item)
+errorItem (Play {..}) = f <$> errorMove
+  where f p = (p, gameItem game p)

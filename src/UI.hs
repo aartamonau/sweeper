@@ -34,16 +34,17 @@ import Play (Play(numMinesMarked),
              Pos, Item(Mine, Empty),
              playRows, playColumns, playBounds,
              playItem, playNumMines, errorItem)
+import PlayStats (PlayStats, numWon, numPlayed)
 
 display :: DeviceContext -> Draw () -> IO ()
 display context drawing = send context (runDraw context drawing)
 
-drawPlay :: Play -> String -> Draw ()
-drawPlay play player =
+drawPlay :: Play -> PlayStats -> String -> Draw ()
+drawPlay play stats player =
   do setFillColor dimgrey
      fillRect (0, 0, 1, 1)
      withBoard play (drawBoard play)
-     drawPlayInfo play (5, 10)
+     drawPlayInfo play stats
      drawPlayerName player
      maybeDrawErrorBox
 
@@ -185,8 +186,8 @@ withBoard play drawing =
     do rect <- boardRect play
        restrict rect drawing
 
-drawPlayInfo :: Play -> (Int, Int) -> Draw ()
-drawPlayInfo play (won, total) =
+drawPlayInfo :: Play -> PlayStats -> Draw ()
+drawPlayInfo play stats =
   do setStrokeColor black
      setFillColor black
 
@@ -201,6 +202,9 @@ drawPlayInfo play (won, total) =
         drawNumMines =
           do setFont "monospace" 0.4
              drawText ("Mines: " ++ mines) (0.5, 0.5)
+
+        won   = numWon stats
+        total = numPlayed stats
 
         drawStats =
           do setFont "monospace" 0.4

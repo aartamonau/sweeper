@@ -34,6 +34,7 @@ data Play =
        , numUncovered   :: Int
 
        , field     :: Array Pos (Maybe Item)
+       , errorMove :: Maybe Pos
        }
 
 data PlayError = ErrorFired
@@ -41,7 +42,7 @@ data PlayError = ErrorFired
                | ErrorNoChange
                deriving Show
 
-type PlayResult r = Either PlayError r
+type PlayResult r = (Play, Either PlayError r)
 
 newPlay :: Game -> Play
 newPlay game =
@@ -49,6 +50,7 @@ newPlay game =
        , numMinesMarked = 0
        , numUncovered   = 0
        , field          = allClosed
+       , errorMove      = Nothing
        }
   where allClosed = listArray bounds $ repeat Nothing
         bounds    = gameBounds game
@@ -77,14 +79,16 @@ playNeighbors play p@(pi, pj) =
 playNumMines :: Play -> Int
 playNumMines = mines . game
 
-openEmpty :: Play -> Pos -> PlayResult ([Pos], Play)
+openEmpty :: Play -> Pos -> PlayResult [Pos]
 openEmpty play@(Play {..}) p
-  | Just Mine <- item = Left ErrorFired
-  | Just _    <- item = Left ErrorNoChange
+  | Just Mine <- item = retError play p ErrorFired
+  | Just _    <- item = retError play p ErrorNoChange
   | otherwise         =
       case gameItem game p of
-       Mine          -> Left ErrorKilled
-       (Empty mines) -> Right (openEmptyLoopEnter (p, mines) play)
+       Mine          -> retError play p ErrorKilled
+       (Empty mines) ->
+         let (ps, newPlay) = (openEmptyLoopEnter (p, mines) play)
+         in ret newPlay ps
 
   where item = playItem play p
 
@@ -109,11 +113,11 @@ openEmptyLoop (p, mines) acc@(seen, play)
                                    not (isOpened play np),
                                    let Empty count = gameItem (game play) np]
 
-markMine :: Play -> Pos -> PlayResult Play
+markMine :: Play -> Pos -> PlayResult ()
 markMine play p
-  | Just Mine <- item = Left ErrorNoChange
-  | Just _    <- item = Left ErrorFired
-  | otherwise         = Right (markBox play p)
+  | Just Mine <- item = retError play p ErrorNoChange
+  | Just _    <- item = retError play p ErrorFired
+  | otherwise         = ret (markBox play p) ()
 
   where item = playItem play p
 
@@ -140,3 +144,10 @@ incMarkedMines play@(Play {..}) = play {numMinesMarked = numMinesMarked + 1}
 
 incNumUncovered :: Play -> Play
 incNumUncovered play@(Play {..}) = play {numUncovered = numUncovered + 1}
+
+retError :: Play -> Pos -> PlayError -> PlayResult a
+retError play lastMove error = (newPlay, Left error)
+  where newPlay = play { errorMove = Just lastMove }
+
+ret :: Play -> a -> PlayResult a
+ret play r = (play, Right r)

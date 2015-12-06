@@ -69,11 +69,11 @@ loopStrategy ui@(UI {..}) strategy context =
           do draw context (drawPosInfo ui ps)
              nextStep strategy
 
-        handleOpenEmpty p k (Left err)        = handleError p err (k [])
-        handleOpenEmpty _ k (Right (r, play)) = success play (k r)
+        handleOpenEmpty p k (_, Left err)   = handleError p err (k [])
+        handleOpenEmpty _ k (play, Right r) = success play (k r)
 
-        handleMarkMine p strategy (Left err)   = handleError p err strategy
-        handleMarkMine _ strategy (Right play) = success play strategy
+        handleMarkMine p strategy (_, Left err)    = handleError p err strategy
+        handleMarkMine _ strategy (play, Right ()) = success play strategy
 
         restart                = loop context
         continue play strategy = loopGame (withPlay play ui) strategy context

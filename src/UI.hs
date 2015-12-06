@@ -1,4 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -73,7 +72,7 @@ waitKeypress context =
      if likeEvent ev
        then flush context >> return ()
        else waitKeypress context
-  where likeEvent (Event {eType, eWhich})
+  where likeEvent (Event {..})
           | eType == "mousedown" = True
           | eType == "keydown"   = eWhich == Just 32 -- space
           | otherwise            = error "can't happen"

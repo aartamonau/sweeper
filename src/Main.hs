@@ -14,18 +14,20 @@ import CmdArgs
 import UI
 
 main :: IO ()
-main = runWithCfg $ \cfg -> runUI (enterLoop cfg)
+main = runWithCfg (runUI . enterLoop)
 
-data Ctx = Ctx { ctxCfg   :: Cfg
-               , ctxStats :: PlayStats
+data Ctx = Ctx { ctxCfg       :: Cfg
+               , ctxStats     :: PlayStats
+               , ctxDeviceCtx :: DeviceContext
                }
 
 drawUI :: (?ctx :: Ctx) => Play -> Draw ()
 drawUI play = drawPlay play ctxStats (name $ player ctxCfg)
   where Ctx {..} = ?ctx
 
-draw :: (?ctx :: Ctx) => DeviceContext -> Draw () -> IO ()
-draw context d = display context d >> wait context
+draw :: (?ctx :: Ctx) => Draw () -> IO ()
+draw d = display context d >> wait context
+  where Ctx {ctxDeviceCtx = context} = ?ctx
 
 wait :: (?ctx :: Ctx) => DeviceContext -> IO ()
 wait context | interactive cfg = waitKeypress context
@@ -34,13 +36,14 @@ wait context | interactive cfg = waitKeypress context
   where cfg = ctxCfg ?ctx
 
 enterLoop :: Cfg -> DeviceContext -> IO ()
-enterLoop cfg = let ?ctx = ctx in loop
-  where ctx = Ctx { ctxCfg   = cfg
-                  , ctxStats = mempty
+enterLoop cfg deviceCtx = let ?ctx = ctx in loop
+  where ctx = Ctx { ctxCfg       = cfg
+                  , ctxStats     = mempty
+                  , ctxDeviceCtx = deviceCtx
                   }
 
-loop :: (?ctx :: Ctx) => DeviceContext -> IO ()
-loop context =
+loop :: (?ctx :: Ctx) => IO ()
+loop =
   do let cfg = ctxCfg ?ctx
 
      let (rows, cols, mines) = fieldSpec cfg
@@ -48,15 +51,15 @@ loop context =
      let buf                 = buffer cfg
 
      game <- randomGame rows cols mines start buf
-     loopGame (newPlay game) (strategy (player cfg) start) context
+     loopGame (newPlay game) (strategy (player cfg) start)
 
-loopGame :: (?ctx :: Ctx) => Play -> Strategy () -> DeviceContext -> IO ()
-loopGame play strategy context =
-  do draw context (drawUI play)
-     loopStrategy play strategy context
+loopGame :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()
+loopGame play strategy =
+  do draw (drawUI play)
+     loopStrategy play strategy
 
-loopStrategy :: (?ctx :: Ctx) => Play -> Strategy () -> DeviceContext -> IO ()
-loopStrategy play strategy context =
+loopStrategy :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()
+loopStrategy play strategy =
   do step <- runFreeT strategy
      case step of
       Pure _                      -> surrender
@@ -66,7 +69,7 @@ loopStrategy play strategy context =
       Free (GetPlay k)            -> nextStep (k play)
 
   where handlePosInfo ps strategy =
-          do draw context (drawPosInfo play ps)
+          do draw (drawPosInfo play ps)
              nextStep strategy
 
         handleOpenEmpty k (play, Left err) = handleError play err (k [])
@@ -76,21 +79,19 @@ loopStrategy play strategy context =
         handleMarkMine strategy (play, Right ()) = success play strategy
 
         restart :: (?ctx :: Ctx) => (PlayStats -> PlayStats) -> IO ()
-        restart inc = let ?ctx = ?ctx {ctxStats = inc ctxStats} in loop context
+        restart inc = let ?ctx = ?ctx {ctxStats = inc ctxStats} in loop
           where Ctx {..} = ?ctx
 
-        continue play strategy = loopGame play strategy context
-        nextStep strategy      = loopStrategy play strategy context
+        continue play strategy = loopGame play strategy
+        nextStep strategy      = loopStrategy play strategy
 
         surrender =
-          do draw context (drawUI play
-                           >> drawError "Player surrenders")
+          do draw (drawUI play >> drawError "Player surrenders")
              restart incStalled
 
         handleError _ ErrorNoChange strategy = nextStep strategy
         handleError play err _               =
-          do draw context (drawUI play
-                           >> drawError (describeError err))
+          do draw (drawUI play >> drawError (describeError err))
              restart incLost
 
         describeError ErrorKilled = "Player explodes on a mine"
@@ -99,7 +100,6 @@ loopStrategy play strategy context =
 
         success play strategy
           | isWon play =
-              do draw context (drawUI play
-                               >> drawMsg "Player wins")
+              do draw (drawUI play >> drawMsg "Player wins")
                  restart incWon
           | otherwise  = continue play strategy

@@ -22,7 +22,7 @@ import Options.Applicative (Parser, ReadM,
                             (<>),
                             execParser,
                             command, subparser,
-                            helper, info, fullDesc, progDesc,
+                            helper, info, progDesc, fullDesc,
                             long, short, metavar, help, value, showDefault,
                             option, flag, eitherReader)
 
@@ -174,10 +174,12 @@ uiCfg =
 mode :: Parser Mode
 mode = subparser modeUI
   where modeUI = command "ui" (info (ModeUI <$> uiCfg) uiDesc)
-        uiDesc = progDesc "Run UI"
+        uiDesc = progDesc "View a bot play using Web interface"
 
 cfg :: Parser Cfg
 cfg = Cfg <$> gameCfg <*> mode
 
 runWithCfg :: (Cfg -> IO ()) -> IO ()
-runWithCfg body = execParser (info (helper <*> cfg) fullDesc) >>= body
+runWithCfg body = execParser parser >>= body
+  where parser = info (helper <*> cfg) (desc <> fullDesc)
+        desc   = progDesc "View and benchmark minesweeper bots."

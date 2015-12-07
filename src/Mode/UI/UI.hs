@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module UI
+module Mode.UI.UI
        (
          DeviceContext
        , Draw
@@ -21,20 +21,22 @@ import Graphics.Blank (DeviceContext, blankCanvas, send,
                        Event (Event, eType, eWhich),
                        events, wait, flush)
 
-import Colors (Color,
-               black, red, dimgrey, grey, lightgrey,
-               blue, green, khaki, purple, darkred, brown)
-import Draw (Draw, Rect,
-             (|||),
-             runDraw, restrict, aspectRatio,
-             setFont, setFillColor, setStrokeColor,
-             drawText, fillRect, setLineWidth,
-             fill, stroke, fillCircle, strokeLine, dimRect)
 import Play (Play(numMinesMarked),
              Pos, Item(Mine, Empty),
              playRows, playColumns, playBounds,
              playItem, playNumMines, errorItem)
 import PlayStats (PlayStats, numWon, numPlayed)
+
+import Mode.UI.Colors (Color,
+                       black, red, dimgrey, grey, lightgrey,
+                       blue, green, khaki, purple, darkred, brown)
+import Mode.UI.Draw (Draw, Rect,
+                     (|||),
+                     runDraw, restrict, aspectRatio,
+                     setFont, setFillColor, setStrokeColor,
+                     drawText, fillRect, setLineWidth,
+                     fill, stroke, fillCircle, strokeLine, dimRect)
+
 
 display :: DeviceContext -> Draw () -> IO ()
 display context drawing = send context (runDraw context drawing)

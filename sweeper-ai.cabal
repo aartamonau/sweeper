@@ -11,16 +11,17 @@ cabal-version:       >=1.10
 executable sweeper-ai
   main-is:             Main.hs
   other-modules:       CmdArgs
-                       Colors
-                       Draw
                        Game
+                       Mode.UI
+                       Mode.UI.Colors
+                       Mode.UI.Draw
+                       Mode.UI.UI
                        Play
                        Player
                        Player.API
                        Player.Dummy
                        Player.SinglePoint
                        PlayStats
-                       UI
   build-depends:       base >= 4.8 && < 4.9,
                        array >= 0.5 && < 0.6,
                        random >= 1.1 && < 1.2,

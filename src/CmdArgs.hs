@@ -1,8 +1,9 @@
 module CmdArgs
        (
          Cfg
-       , Mode(ModeUI)
+       , Mode(ModeUI, ModeBench)
        , UICfg
+       , BenchCfg
        , cfgPlayer
        , cfgStartMove
        , cfgFieldSpec
@@ -10,6 +11,7 @@ module CmdArgs
        , cfgBuffer
        , uiInteractive
        , uiDelay
+       , benchNumIters
        , runWithCfg
        )
        where
@@ -63,7 +65,11 @@ data UICfg =
         , uiDelay       :: Int
         }
 
-data Mode = ModeUI UICfg
+data BenchCfg =
+  BenchCfg { benchNumIters :: Int
+           }
+
+data Mode = ModeUI UICfg | ModeBench BenchCfg
 
 data Cfg =
   Cfg { cfgGameCfg :: GameCfg
@@ -95,6 +101,9 @@ intOpt pred msg = eitherReader parse
 
         validate x | pred x    = Just x
                    | otherwise = Nothing
+
+posIntOpt :: ReadM Int
+posIntOpt = intOpt (>0) "must be a positive integer"
 
 gameCfg :: Parser GameCfg
 gameCfg =
@@ -161,19 +170,30 @@ uiCfg =
   <$> flag True False (long "non-interactive"
                        <> short 'n'
                        <> help "Run in non-interactive mode")
-  <*> option delayOpt (long "delay"
-                       <> short 'd'
-                       <> metavar "DELAY"
-                       <> value 200
-                       <> showDefault
-                       <> help "Delay (in ms) to use in non-interactive mode")
+  <*> option posIntOpt (long "delay"
+                        <> short 'd'
+                        <> metavar "DELAY"
+                        <> value 200
+                        <> showDefault
+                        <> help "Delay (in ms) to use in non-interactive mode")
 
-  where delayOpt = intOpt (>0) "must be a positive integer"
+benchCfg :: Parser BenchCfg
+benchCfg =
+  BenchCfg
+  <$> option posIntOpt (long "num-iters"
+                        <> short 'n'
+                        <> metavar "ITERS"
+                        <> value 1000
+                        <> showDefault
+                        <> help "Number of games to benchmark the bot on")
 
 mode :: Parser Mode
-mode = subparser modeUI
+mode = subparser (modeUI <> modeBench)
   where modeUI = command "ui" (info (ModeUI <$> uiCfg) uiDesc)
         uiDesc = progDesc "View a bot play using Web interface"
+
+        modeBench = command "bench" (info (ModeBench <$> benchCfg) benchDesc)
+        benchDesc = progDesc "Benchmark bot's performance"
 
 cfg :: Parser Cfg
 cfg = Cfg <$> gameCfg <*> mode

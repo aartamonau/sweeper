@@ -8,9 +8,9 @@ module Mode.UI
 
 import Control.Concurrent (threadDelay)
 
-import CmdArgs (Cfg,
-                player, interactive, delay,
-                fieldSpec, startMove, buffer)
+import CmdArgs (Cfg, UICfg,
+                cfgPlayer, cfgFieldSpec, cfgStartMove, cfgBuffer,
+                uiInteractive, uiDelay)
 import Game (randomGame)
 import Play (Play,
              PlayError(ErrorFired, ErrorKilled, ErrorNoChange),
@@ -29,15 +29,16 @@ import Mode.UI.UI (Draw, DeviceContext,
                    drawMsg, drawError, drawPlay, drawPosInfo)
 
 data Ctx = Ctx { ctxCfg       :: Cfg
+               , ctxUICfg     :: UICfg
                , ctxStats     :: PlayStats
                , ctxDeviceCtx :: DeviceContext
                }
 
-run :: Cfg -> IO ()
-run = runUI . enterLoop
+run :: Cfg -> UICfg -> IO ()
+run cfg = runUI . enterLoop cfg
 
 drawUI :: (?ctx :: Ctx) => Play -> Draw ()
-drawUI play = drawPlay play ctxStats (name $ player ctxCfg)
+drawUI play = drawPlay play ctxStats (name $ cfgPlayer ctxCfg)
   where Ctx {..} = ?ctx
 
 draw :: (?ctx :: Ctx) => Draw () -> IO ()
@@ -45,14 +46,15 @@ draw d = display context d >> wait context
   where Ctx {ctxDeviceCtx = context} = ?ctx
 
 wait :: (?ctx :: Ctx) => DeviceContext -> IO ()
-wait context | interactive cfg = waitKeypress context
-             | otherwise       = threadDelay (1000 * delay cfg)
+wait context | uiInteractive cfg = waitKeypress context
+             | otherwise         = threadDelay (1000 * uiDelay cfg)
 
-  where cfg = ctxCfg ?ctx
+  where cfg = ctxUICfg ?ctx
 
-enterLoop :: Cfg -> DeviceContext -> IO ()
-enterLoop cfg deviceCtx = let ?ctx = ctx in loop
+enterLoop :: Cfg -> UICfg -> DeviceContext -> IO ()
+enterLoop cfg uiCfg deviceCtx = let ?ctx = ctx in loop
   where ctx = Ctx { ctxCfg       = cfg
+                  , ctxUICfg     = uiCfg
                   , ctxStats     = mempty
                   , ctxDeviceCtx = deviceCtx
                   }
@@ -61,12 +63,12 @@ loop :: (?ctx :: Ctx) => IO ()
 loop =
   do let cfg = ctxCfg ?ctx
 
-     let (rows, cols, mines) = fieldSpec cfg
-     let start               = startMove cfg
-     let buf                 = buffer cfg
+     let (rows, cols, mines) = cfgFieldSpec cfg
+     let start               = cfgStartMove cfg
+     let buf                 = cfgBuffer cfg
 
      game <- randomGame rows cols mines start buf
-     loopGame (newPlay game) (strategy (player cfg) start)
+     loopGame (newPlay game) (strategy (cfgPlayer cfg) start)
 
 loopGame :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()
 loopGame play strategy =

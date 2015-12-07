@@ -1,8 +1,15 @@
 module CmdArgs
        (
-         Cfg(interactive, delay, player, buffer)
-       , fieldSpec
-       , startMove
+         Cfg
+       , Mode(ModeUI)
+       , UICfg
+       , cfgPlayer
+       , cfgStartMove
+       , cfgFieldSpec
+       , cfgMode
+       , cfgBuffer
+       , uiInteractive
+       , uiDelay
        , runWithCfg
        )
        where
@@ -14,7 +21,8 @@ import Text.Read (readMaybe)
 import Options.Applicative (Parser, ReadM,
                             (<>),
                             execParser,
-                            helper, info, fullDesc,
+                            command, subparser,
+                            helper, info, fullDesc, progDesc,
                             long, short, metavar, help, value, showDefault,
                             option, flag, eitherReader)
 
@@ -43,28 +51,43 @@ instance Show StartMove where
   show Center = "center"
   show Corner = "corner"
 
-data Cfg =
-  Cfg { field       :: Field
-      , interactive :: Bool
-      , delay       :: Int
-      , player      :: Player
-      , start       :: StartMove
-      , buffer      :: Int
-      }
-  deriving Show
+data GameCfg =
+  GameCfg { field  :: Field
+          , player :: Player
+          , start  :: StartMove
+          , buffer :: Int
+          }
 
-fieldSpec :: Cfg -> (Int, Int, Int)
-fieldSpec = spec . field
+data UICfg =
+  UICfg { uiInteractive :: Bool
+        , uiDelay       :: Int
+        }
+
+data Mode = ModeUI UICfg
+
+data Cfg =
+  Cfg { cfgGameCfg :: GameCfg
+      , cfgMode    :: Mode
+      }
+
+cfgFieldSpec :: Cfg -> (Int, Int, Int)
+cfgFieldSpec = spec . field . cfgGameCfg
   where spec Easy           = (10, 10, 10)
         spec Medium         = (16, 16, 40)
         spec Hard           = (16, 30, 99)
         spec (Custom r c m) = (r, c, m)
 
-startMove :: Cfg -> (Int, Int)
-startMove cfg = go (start cfg)
+cfgStartMove :: Cfg -> (Int, Int)
+cfgStartMove cfg = go (start $ cfgGameCfg cfg)
   where go Corner = (0, 0)
         go Center = (rows `div` 2, columns `div` 2)
-          where (rows, columns, _) = fieldSpec cfg
+          where (rows, columns, _) = cfgFieldSpec cfg
+
+cfgPlayer :: Cfg -> Player
+cfgPlayer = player . cfgGameCfg
+
+cfgBuffer :: Cfg -> Int
+cfgBuffer = buffer . cfgGameCfg
 
 fieldOpt :: ReadM Field
 fieldOpt = eitherReader parse
@@ -106,24 +129,15 @@ startMoveOpt = eitherReader parse
 bufferOpt :: ReadM Int
 bufferOpt = intOpt (>=0) "must be a non-negative integer"
 
-cfgParser :: Parser Cfg
-cfgParser =
-  Cfg
+gameCfg :: Parser GameCfg
+gameCfg =
+  GameCfg
   <$> option fieldOpt (long "field"
                        <> short 'f'
                        <> metavar "SPEC"
                        <> value Easy
                        <> showDefault
                        <> help "Field specification (easy, medium, hard or RxCxM)")
-  <*> flag True False (long "non-interactive"
-                       <> short 'n'
-                       <> help "Run in non-interactive mode")
-  <*> option delayOpt (long "delay"
-                       <> short 'd'
-                       <> metavar "DELAY"
-                       <> value 200
-                       <> showDefault
-                       <> help "Delay (in ms) to use in non-interactive mode")
   <*> option playerOpt (long "player"
                         <> short 'p'
                         <> metavar "PLAYER"
@@ -144,5 +158,26 @@ cfgParser =
                         <> help "Number of empty boxes surrounding start position")
   where names = intercalate ", " (map name knownPlayers)
 
+uiCfg :: Parser UICfg
+uiCfg =
+  UICfg
+  <$> flag True False (long "non-interactive"
+                       <> short 'n'
+                       <> help "Run in non-interactive mode")
+  <*> option delayOpt (long "delay"
+                       <> short 'd'
+                       <> metavar "DELAY"
+                       <> value 200
+                       <> showDefault
+                       <> help "Delay (in ms) to use in non-interactive mode")
+
+mode :: Parser Mode
+mode = subparser modeUI
+  where modeUI = command "ui" (info (ModeUI <$> uiCfg) uiDesc)
+        uiDesc = progDesc "Run UI"
+
+cfg :: Parser Cfg
+cfg = Cfg <$> gameCfg <*> mode
+
 runWithCfg :: (Cfg -> IO ()) -> IO ()
-runWithCfg body = execParser (info (helper <*> cfgParser) fullDesc) >>= body
+runWithCfg body = execParser (info (helper <*> cfg) fullDesc) >>= body

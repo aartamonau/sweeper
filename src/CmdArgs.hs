@@ -89,45 +89,12 @@ cfgPlayer = player . cfgGameCfg
 cfgBuffer :: Cfg -> Int
 cfgBuffer = buffer . cfgGameCfg
 
-fieldOpt :: ReadM Field
-fieldOpt = eitherReader parse
-  where parse "easy"   = Right Easy
-        parse "medium" = Right Medium
-        parse "hard"   = Right Hard
-        parse s        =
-          case splitOn "x" s of
-           [rows, columns, mines] ->
-             maybe err Right (Custom
-                              <$> readMaybe rows
-                              <*> readMaybe columns
-                              <*> readMaybe mines)
-           _                      -> err
-          where err = Left ("can't understand field description `" ++ s ++ "`")
-
 intOpt :: (Int -> Bool) -> String -> ReadM Int
 intOpt pred msg = eitherReader parse
   where parse s = maybe (Left msg) Right (readMaybe s >>= validate)
 
         validate x | pred x    = Just x
                    | otherwise = Nothing
-
-delayOpt :: ReadM Int
-delayOpt = intOpt (>0) "must be a positive integer"
-
-playerOpt :: ReadM Player
-playerOpt = eitherReader parse
-  where parse s
-          | Just player <- find ((== s) . name) knownPlayers = Right player
-          | otherwise = Left ("unknown player name `" ++ s ++ "`")
-
-startMoveOpt :: ReadM StartMove
-startMoveOpt = eitherReader parse
-  where parse "center" = Right Center
-        parse "corner" = Right Corner
-        parse s        = Left ("can't understand start position `" ++ s ++ "`")
-
-bufferOpt :: ReadM Int
-bufferOpt = intOpt (>=0) "must be a non-negative integer"
 
 gameCfg :: Parser GameCfg
 gameCfg =
@@ -158,6 +125,36 @@ gameCfg =
                         <> help "Number of empty boxes surrounding start position")
   where names = intercalate ", " (map name knownPlayers)
 
+        bufferOpt = intOpt (>=0) "must be a non-negative integer"
+
+        startMoveOpt = eitherReader parse
+          where parse "center" = Right Center
+                parse "corner" = Right Corner
+                parse s        = Left ("can't understand start position `"
+                                       ++ s ++ "`")
+
+        playerOpt = eitherReader parse
+          where parse s
+                  | Just player <- find ((== s) . name) knownPlayers =
+                      Right player
+                  | otherwise =
+                      Left ("unknown player name `" ++ s ++ "`")
+
+        fieldOpt = eitherReader parse
+          where parse "easy"   = Right Easy
+                parse "medium" = Right Medium
+                parse "hard"   = Right Hard
+                parse s        =
+                  case splitOn "x" s of
+                   [rows, columns, mines] ->
+                     maybe (err s) Right (Custom
+                                          <$> readMaybe rows
+                                          <*> readMaybe columns
+                                          <*> readMaybe mines)
+                   _ -> err s
+
+                err s = Left ("can't understand field description `" ++ s ++ "`")
+
 uiCfg :: Parser UICfg
 uiCfg =
   UICfg
@@ -170,6 +167,8 @@ uiCfg =
                        <> value 200
                        <> showDefault
                        <> help "Delay (in ms) to use in non-interactive mode")
+
+  where delayOpt = intOpt (>0) "must be a positive integer"
 
 mode :: Parser Mode
 mode = subparser modeUI

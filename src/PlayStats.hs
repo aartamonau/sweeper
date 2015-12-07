@@ -3,7 +3,6 @@
 module PlayStats
        (
          PlayStats
-       , makeStats
        , numWon
        , numLost
        , numStalled
@@ -20,8 +19,11 @@ data PlayStats =
             }
   deriving Show
 
-makeStats :: PlayStats
-makeStats = PlayStats 0 0 0
+instance Monoid PlayStats where
+  mempty = PlayStats 0 0 0
+
+  (PlayStats xw xl xs) `mappend` (PlayStats yw yl ys) =
+    PlayStats (xw + yw) (xl + yl) (xs + ys)
 
 numPlayed :: PlayStats -> Int
 numPlayed (PlayStats {..}) = numWon + numLost + numStalled

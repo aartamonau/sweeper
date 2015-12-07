@@ -36,7 +36,7 @@ wait context | interactive cfg = waitKeypress context
 enterLoop :: Cfg -> DeviceContext -> IO ()
 enterLoop cfg = let ?ctx = ctx in loop
   where ctx = Ctx { ctxCfg   = cfg
-                  , ctxStats = makeStats
+                  , ctxStats = mempty
                   }
 
 loop :: (?ctx :: Ctx) => DeviceContext -> IO ()

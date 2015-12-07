@@ -9,9 +9,8 @@ module Mode.UI
 import Control.Concurrent (threadDelay)
 
 import CmdArgs (Cfg, UICfg,
-                cfgPlayer, cfgFieldSpec, cfgStartMove, cfgBuffer,
+                cfgPlayer, cfgStartMove,
                 uiInteractive, uiDelay)
-import Game (randomGame)
 import Play (Play,
              PlayError(ErrorFired, ErrorKilled, ErrorNoChange),
              newPlay, markMine, openEmpty, isWon)
@@ -23,6 +22,7 @@ import Player (Player(name, strategy),
 import PlayStats (PlayStats,
                   incWon, incLost, incStalled)
 
+import Mode.Common (randomGame)
 import Mode.UI.UI (Draw, DeviceContext,
                    runUI, display,
                    waitKeypress,
@@ -61,14 +61,10 @@ enterLoop cfg uiCfg deviceCtx = let ?ctx = ctx in loop
 
 loop :: (?ctx :: Ctx) => IO ()
 loop =
-  do let cfg = ctxCfg ?ctx
+  do let cfg   = ctxCfg ?ctx
 
-     let (rows, cols, mines) = cfgFieldSpec cfg
-     let start               = cfgStartMove cfg
-     let buf                 = cfgBuffer cfg
-
-     game <- randomGame rows cols mines start buf
-     loopGame (newPlay game) (strategy (cfgPlayer cfg) start)
+     game <- randomGame cfg
+     loopGame (newPlay game) (strategy (cfgPlayer cfg) (cfgStartMove cfg))
 
 loopGame :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()
 loopGame play strategy =

@@ -3,10 +3,11 @@ module Mode.Bench
          run
        ) where
 
-import Data.IORef (IORef, newIORef, atomicModifyIORef')
+import Control.Concurrent (setNumCapabilities)
+import Control.Concurrent.Async (mapConcurrently)
 
 import CmdArgs (Cfg, BenchCfg,
-                cfgPlayer, cfgStartMove, benchNumIters)
+                cfgPlayer, cfgStartMove, benchNumIters, benchNumWorkers)
 
 import Play (PlayError(ErrorNoChange),
              newPlay, isWon, markMine, openEmpty)
@@ -19,28 +20,27 @@ import Mode.Common (randomGame)
 
 run :: Cfg -> BenchCfg -> IO ()
 run cfg benchCfg =
-  do putStrLn $ "Number of iterations: " ++ show iters
+  do putStrLn $ "Number of iterations: " ++ show numIters
+     putStrLn $ "Number of workers: " ++ show numWorkers
 
-     workRef <- newIORef iters
-     stats <- worker cfg workRef
+     setNumCapabilities numWorkers
+     mapConcurrently (worker cfg) works >>= print . mconcat
 
-     print stats
+  where numIters   = benchNumIters benchCfg
+        numWorkers = benchNumWorkers benchCfg
 
-  where iters  = benchNumIters benchCfg
+        works = map (workerIters numIters numWorkers) [0..numWorkers-1]
 
-getWork :: IORef Int -> IO Bool
-getWork ref = atomicModifyIORef' ref modify
-  where modify v | v > 0     = (v-1, True)
-                 | v == 0    = (0, False)
-                 | otherwise = error "impossible: negative work count"
+workerIters :: Int -> Int -> Int -> Int
+workerIters total workers i = total `div` workers + extra
+  where rem = total `mod` workers
+        extra | i < rem   = 1
+              | otherwise = 0
 
-worker :: Cfg -> IORef Int -> IO PlayStats
-worker cfg ref = loop mempty
-  where loop stats =
-          do gotWork <- getWork ref
-             if gotWork
-               then iter cfg stats >>= loop
-               else return stats
+worker :: Cfg -> Int -> IO PlayStats
+worker cfg n = loop n mempty
+  where loop 0 stats = return stats
+        loop i stats = iter cfg stats >>= loop (i-1)
 
 iter :: Cfg -> PlayStats -> IO PlayStats
 iter cfg stats =

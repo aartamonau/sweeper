@@ -9,6 +9,7 @@ module CmdArgs
        , cfgFieldSpec
        , cfgMode
        , cfgBuffer
+       , cfgSeed
        , uiInteractive
        , uiDelay
        , benchNumIters
@@ -60,6 +61,7 @@ data GameCfg =
           , player :: Player
           , start  :: StartMove
           , buffer :: Int
+          , seed   :: Maybe Int
           }
 
 data UICfg =
@@ -98,6 +100,12 @@ cfgPlayer = player . cfgGameCfg
 cfgBuffer :: Cfg -> Int
 cfgBuffer = buffer . cfgGameCfg
 
+cfgSeed :: Cfg -> Maybe Int
+cfgSeed = seed . cfgGameCfg
+
+anyIntOpt :: ReadM Int
+anyIntOpt = intOpt (const True) "must be an integer"
+
 intOpt :: (Int -> Bool) -> String -> ReadM Int
 intOpt pred msg = eitherReader parse
   where parse s = maybe (Left msg) Right (readMaybe s >>= validate)
@@ -135,6 +143,10 @@ gameCfg =
                         <> value 0
                         <> showDefault
                         <> help "Number of empty boxes surrounding start position")
+  <*> option (Just <$> anyIntOpt) (long "seed"
+                                   <> metavar "SEED"
+                                   <> value Nothing
+                                   <> help "Override default random seed")
   where names = intercalate ", " (map name knownPlayers)
 
         bufferOpt = intOpt (>=0) "must be a non-negative integer"

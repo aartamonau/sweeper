@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module Mode.Bench
        (
          run
@@ -39,8 +41,8 @@ workerIters total workers i = total `div` workers + extra
 
 worker :: Cfg -> Int -> IO PlayStats
 worker cfg n = loop n mempty
-  where loop 0 stats = return stats
-        loop i stats = iter cfg stats >>= loop (i-1)
+  where loop 0 !stats = return stats
+        loop i !stats = iter cfg stats >>= loop (i-1)
 
 iter :: Cfg -> PlayStats -> IO PlayStats
 iter cfg stats =

@@ -12,12 +12,14 @@ module CmdArgs
        , uiInteractive
        , uiDelay
        , benchNumIters
+       , benchNumWorkers
        , runWithCfg
        )
        where
 
 import Data.List (intercalate, find)
 import Data.List.Split (splitOn)
+import GHC.Conc (getNumProcessors)
 import Text.Read (readMaybe)
 
 import Options.Applicative (Parser, ReadM,
@@ -66,7 +68,8 @@ data UICfg =
         }
 
 data BenchCfg =
-  BenchCfg { benchNumIters :: Int
+  BenchCfg { benchNumIters   :: Int
+           , benchNumWorkers :: Int
            }
 
 data Mode = ModeUI UICfg | ModeBench BenchCfg
@@ -177,28 +180,44 @@ uiCfg =
                         <> showDefault
                         <> help "Delay (in ms) to use in non-interactive mode")
 
-benchCfg :: Parser BenchCfg
-benchCfg =
-  BenchCfg
-  <$> option posIntOpt (long "num-iters"
-                        <> short 'n'
-                        <> metavar "ITERS"
-                        <> value 1000
-                        <> showDefault
-                        <> help "Number of games to benchmark the bot on")
+benchCfg :: IO (Parser BenchCfg)
+benchCfg = getNumProcessors >>= return . parser
+  where parser :: Int -> Parser BenchCfg
+        parser numCPUs =
+          BenchCfg
+          <$> option posIntOpt (long "num-iters"
+                                <> short 'n'
+                                <> metavar "ITERS"
+                                <> value 1000
+                                <> showDefault
+                                <> help "Number of games to benchmark the bot on")
+          <*> option posIntOpt (long "num-workers"
+                                <> short 't'
+                                <> metavar "WORKERS"
+                                <> value (max (numCPUs-1) 1)
+                                <> showDefault
+                                <> help "Number of workers to run benchmark on")
 
-mode :: Parser Mode
-mode = subparser (modeUI <> modeBench)
+mode :: IO (Parser Mode)
+mode =
+  do benchParser <- benchCfg
+     let modeBench = command "bench" (info (ModeBench <$> benchParser) benchDesc)
+
+     return $ subparser (modeUI <> modeBench)
   where modeUI = command "ui" (info (ModeUI <$> uiCfg) uiDesc)
         uiDesc = progDesc "View a bot play using Web interface"
 
-        modeBench = command "bench" (info (ModeBench <$> benchCfg) benchDesc)
         benchDesc = progDesc "Benchmark bot's performance"
 
-cfg :: Parser Cfg
-cfg = Cfg <$> gameCfg <*> mode
+cfg :: IO (Parser Cfg)
+cfg =
+  do modeParser <- mode
+     return $ Cfg <$> gameCfg <*> modeParser
 
 runWithCfg :: (Cfg -> IO ()) -> IO ()
-runWithCfg body = execParser parser >>= body
-  where parser = info (helper <*> cfg) (desc <> fullDesc)
-        desc   = progDesc "View and benchmark minesweeper bots."
+runWithCfg body =
+  do cfgParser <- cfg
+     let parser = info (helper <*> cfgParser) (desc <> fullDesc)
+
+     execParser parser >>= body
+  where desc = progDesc "View and benchmark minesweeper bots."

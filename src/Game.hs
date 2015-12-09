@@ -11,9 +11,11 @@ module Game
        , gameBounds
        ) where
 
+import Control.Monad.ST (ST, runST)
 import Data.Array (Array, (!), inRange, range, accumArray, listArray)
-
-import System.Random.Shuffle (shuffleM)
+import qualified Data.Array.MArray as MArr
+import Data.Array.ST (STArray)
+import System.Random.Mersenne (getStdRandom, randoms)
 
 data Game =
   Game { rows    :: Int
@@ -40,7 +42,7 @@ randomGame :: Int -> Int -> Int -> Pos -> Int -> IO Game
 randomGame rows columns numMines start buffer =
   do let bounds    = ((0, 0), (rows-1, columns-1))
      let positions = [p | p <- range bounds, not (isClose start p)]
-     mines <- take numMines <$> shuffleM positions
+     mines <- randomSubset numMines positions
 
      return $ Game { rows    = rows
                    , columns = columns
@@ -64,3 +66,23 @@ mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]
         hasMine = (mineMap !)
         item p | hasMine p = Mine
                | otherwise = Empty (length $ filter hasMine (neighbors p))
+
+randomSubset :: Int -> [a] -> IO [a]
+randomSubset k xs =
+  do rs <- getStdRandom randoms
+     return (doRandomSubset k xs rs)
+
+doRandomSubset :: Int -> [a] -> [Int] -> [a]
+doRandomSubset k xs rs
+  | length init < k = xs
+  | otherwise       =
+      runST $
+        do arr <- MArr.newListArray (0, k-1) init
+           mapM_ (maybeSwap arr) $ zip3 [k..] rs rest
+           MArr.getElems arr
+  where (init, rest) = splitAt k xs
+
+        maybeSwap :: STArray s Int a -> (Int, Int, a) -> ST s ()
+        maybeSwap arr (i, r, x) | j < k     = MArr.writeArray arr j x
+                                | otherwise = return ()
+          where j = r `mod` i

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE GADTs #-}
 
 module Player
        (
@@ -15,11 +16,12 @@ import Control.Monad.Trans.Free (FreeT, FreeF(Pure, Free), runFreeT)
 
 import Play (Play, Pos)
 
-data Move next = OpenEmpty Pos ([Pos] -> next)
-               | MarkMine Pos next
-               | GetPlay (Play -> next)
-               | PosInfo [(Pos, String)] next
-               deriving Functor
+data Move next where
+  OpenEmpty :: Pos -> ([Pos] -> next) -> Move next
+  MarkMine  :: Pos -> next -> Move next
+  GetPlay   :: (Play -> next) -> Move next
+  PosInfo   :: [(Pos, String)] -> next -> Move next
+  deriving Functor
 
 type Name       = String
 type Strategy a = FreeT Move IO a

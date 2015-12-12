@@ -9,7 +9,7 @@ module Mode.UI
 import Control.Concurrent (threadDelay)
 
 import CmdArgs (Cfg, UICfg,
-                cfgPlayer, cfgStartMove,
+                cfgPlayer, cfgStartMove, cfgMakeGen,
                 uiInteractive, uiDelay)
 import Play (Play,
              PlayError(ErrorFired, ErrorKilled, ErrorNoChange),
@@ -18,9 +18,10 @@ import Player (Player(name, strategy),
                Strategy,
                Move(GetPlay, PosInfo, OpenEmpty, MarkMine),
                FreeF(Pure, Free),
-               runFreeT)
+               runStrategy)
 import PlayStats (PlayStats,
                   incWon, incLost, incStalled)
+import Rand (Gen)
 
 import Mode.Common (randomGame)
 import Mode.UI.UI (Draw, DeviceContext,
@@ -32,6 +33,7 @@ data Ctx = Ctx { ctxCfg       :: Cfg
                , ctxUICfg     :: UICfg
                , ctxStats     :: PlayStats
                , ctxDeviceCtx :: DeviceContext
+               , ctxGen       :: Gen
                }
 
 run :: Cfg -> UICfg -> IO ()
@@ -52,16 +54,19 @@ wait context | uiInteractive cfg = waitKeypress context
   where cfg = ctxUICfg ?ctx
 
 enterLoop :: Cfg -> UICfg -> DeviceContext -> IO ()
-enterLoop cfg uiCfg deviceCtx = let ?ctx = ctx in loop
-  where ctx = Ctx { ctxCfg       = cfg
-                  , ctxUICfg     = uiCfg
-                  , ctxStats     = mempty
-                  , ctxDeviceCtx = deviceCtx
-                  }
+enterLoop cfg uiCfg deviceCtx =
+  do gen <- cfgMakeGen cfg
+     let ?ctx = ctx gen in loop
+  where ctx gen = Ctx { ctxCfg       = cfg
+                      , ctxUICfg     = uiCfg
+                      , ctxStats     = mempty
+                      , ctxDeviceCtx = deviceCtx
+                      , ctxGen       = gen
+                      }
 
 loop :: (?ctx :: Ctx) => IO ()
 loop =
-  do let cfg   = ctxCfg ?ctx
+  do let cfg = ctxCfg ?ctx
 
      game <- randomGame cfg
      loopGame (newPlay game) (strategy (cfgPlayer cfg) (cfgStartMove cfg))
@@ -73,13 +78,14 @@ loopGame play strategy =
 
 loopStrategy :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()
 loopStrategy play strategy =
-  do step <- runFreeT strategy
+  do step <- runStrategy (ctxGen ?ctx) strategy
      case step of
       Pure _                      -> surrender
       Free (PosInfo ps strategy') -> handlePosInfo ps strategy'
       Free (OpenEmpty p k)        -> handleOpenEmpty k (openEmpty play p)
       Free (MarkMine p strategy') -> handleMarkMine strategy' (markMine play p)
       Free (GetPlay k)            -> nextStep (k play)
+      _                           -> error "can't happen"
 
   where handlePosInfo ps strategy =
           do draw (drawPosInfo play ps)

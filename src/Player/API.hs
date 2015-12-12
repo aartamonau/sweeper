@@ -9,15 +9,17 @@ module Player.API
        , getPlay
        , surrender
        , posInfo
-       , io
+       , rand
+
+       , module Rand
        ) where
 
 
 import Control.Monad.Trans.Free (liftF)
-import Control.Monad.IO.Class (liftIO)
 
 import Play (Play, Pos)
 import Player (Player, Strategy, Move (..), makePlayer)
+import Rand (Rand, uniform, uniformR)
 
 openEmpty :: Pos -> Strategy [Pos]
 openEmpty p = liftF (OpenEmpty p id)
@@ -34,5 +36,5 @@ surrender = return ()
 posInfo :: [(Pos, String)] -> Strategy ()
 posInfo ps = liftF (PosInfo ps ())
 
-io :: IO a -> Strategy a
-io = liftIO
+rand :: Rand a -> Strategy a
+rand r = liftF (RunRandom r id)

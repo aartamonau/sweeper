@@ -9,14 +9,16 @@ import Control.Concurrent (setNumCapabilities)
 import Control.Concurrent.Async (mapConcurrently)
 
 import CmdArgs (Cfg, BenchCfg,
-                cfgPlayer, cfgStartMove, benchNumIters, benchNumWorkers)
+                cfgPlayer, cfgStartMove, cfgMakeGen,
+                benchNumIters, benchNumWorkers)
 
 import Play (PlayError(ErrorNoChange),
              newPlay, isWon, markMine, openEmpty)
 import Player (Move(OpenEmpty, MarkMine, GetPlay, PosInfo),
                FreeF(Free, Pure),
-               strategy, runFreeT)
+               strategy, runStrategy)
 import PlayStats (PlayStats, incWon, incLost, incStalled)
+import Rand (Gen)
 
 import Mode.Common (randomGame)
 
@@ -40,19 +42,21 @@ workerIters total workers i = total `div` workers + extra
               | otherwise = 0
 
 worker :: Cfg -> Int -> IO PlayStats
-worker cfg n = loop n mempty
-  where loop 0 !stats = return stats
-        loop i !stats = iter cfg stats >>= loop (i-1)
+worker cfg n =
+  do gen <- cfgMakeGen cfg
+     loop n gen mempty
+  where loop 0 _   !stats = return stats
+        loop i gen !stats = iter cfg gen stats >>= loop (i-1) gen
 
-iter :: Cfg -> PlayStats -> IO PlayStats
-iter cfg stats =
+iter :: Cfg -> Gen -> PlayStats -> IO PlayStats
+iter cfg gen stats =
   do game <- randomGame cfg
 
      let initStrategy = strategy (cfgPlayer cfg) (cfgStartMove cfg)
      loop (newPlay game) initStrategy
 
   where loop play s | isWon play = return $ incWon stats
-                    | otherwise  = runFreeT s >>= handleStep play
+                    | otherwise  = runStrategy gen s >>= handleStep play
 
         handleStep _    (Pure _)    = return $ incStalled stats
         handleStep play (Free move) = handleMove play move
@@ -61,6 +65,7 @@ iter cfg stats =
         handleMove play (OpenEmpty p k) = handleOpenEmpty play p k
         handleMove play (MarkMine p s)  = handleMarkMine play p s
         handleMove play (GetPlay k)     = loop play (k play)
+        handleMove _ _                  = error "can't happen"
 
         handleOpenEmpty play p k =
           case openEmpty play p of

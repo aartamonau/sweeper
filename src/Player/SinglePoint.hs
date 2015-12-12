@@ -14,13 +14,12 @@ import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import System.Random (randomRIO)
-
 import Play (Play, Pos, Item(Empty, Mine),
              playItem, playNeighbors, playBounds, isOpened)
 import Player.API (Player, Strategy,
                    makePlayer,
-                   openEmpty, markMine, getPlay, posInfo, io)
+                   openEmpty, markMine, getPlay, posInfo,
+                   rand, uniformR)
 
 data Move = OpenEmpty Pos
           | MarkMine Pos
@@ -112,7 +111,7 @@ playGreedy play opened
         mins    = filter ((== minProb) . snd) probs
 
         randomGreedyMove =
-          do i <- io $ randomRIO (0, n-1)
+          do i <- rand $ uniformR (0, n-1)
              let (p, _) = mins !! i
              playMove (OpenEmpty p)
           where n = length mins
@@ -121,7 +120,7 @@ playGreedy play opened
 
 playRandom :: Play -> Strategy [Pos]
 playRandom play =
-  do i <- io $ randomRIO (0, n-1)
+  do i <- rand $ uniformR (0, n-1)
      playMove (OpenEmpty $ unopened !! i)
 
   where bounds   = playBounds play

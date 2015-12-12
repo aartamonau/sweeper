@@ -9,7 +9,7 @@ module CmdArgs
        , cfgFieldSpec
        , cfgMode
        , cfgBuffer
-       , cfgSeed
+       , cfgMakeGen
        , uiInteractive
        , uiDelay
        , benchNumIters
@@ -36,6 +36,9 @@ import Player (Player(name))
 import qualified Player.Dummy as Dummy
 import qualified Player.SinglePoint as SinglePoint
 
+import Rand (Gen, newGen, systemGen)
+
+
 knownPlayers :: [Player]
 knownPlayers = [SinglePoint.player, Dummy.player]
 
@@ -61,7 +64,7 @@ data GameCfg =
           , player :: Player
           , start  :: StartMove
           , buffer :: Int
-          , seed   :: Maybe Int
+          , mkGen  :: IO Gen
           }
 
 data UICfg =
@@ -100,8 +103,8 @@ cfgPlayer = player . cfgGameCfg
 cfgBuffer :: Cfg -> Int
 cfgBuffer = buffer . cfgGameCfg
 
-cfgSeed :: Cfg -> Maybe Int
-cfgSeed = seed . cfgGameCfg
+cfgMakeGen :: Cfg -> IO Gen
+cfgMakeGen = mkGen . cfgGameCfg
 
 anyIntOpt :: ReadM Int
 anyIntOpt = intOpt (const True) "must be an integer"
@@ -143,10 +146,10 @@ gameCfg =
                         <> value 0
                         <> showDefault
                         <> help "Number of empty boxes surrounding start position")
-  <*> option (Just <$> anyIntOpt) (long "seed"
-                                   <> metavar "SEED"
-                                   <> value Nothing
-                                   <> help "Override default random seed")
+  <*> option (newGen <$> anyIntOpt) (long "seed"
+                                     <> metavar "SEED"
+                                     <> value systemGen
+                                     <> help "Override default random seed")
   where names = intercalate ", " (map name knownPlayers)
 
         bufferOpt = intOpt (>=0) "must be a non-negative integer"

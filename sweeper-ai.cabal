@@ -35,7 +35,6 @@ executable sweeper-ai
                        split >= 0.2 && < 0.3,
                        optparse-applicative >= 0.12 && < 0.13,
                        async >= 2.0 && < 2.1,
-                       mersenne-random >= 1.0 && < 1.1,
                        vector >= 0.11 && < 0.12,
                        mwc-random >= 0.13 && < 0.14,
                        mwc-random-monad >= 0.7 && < 0.8

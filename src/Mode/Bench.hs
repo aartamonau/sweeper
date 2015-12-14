@@ -50,7 +50,7 @@ worker cfg n =
 
 iter :: Cfg -> Gen -> PlayStats -> IO PlayStats
 iter cfg gen stats =
-  do game <- randomGame cfg
+  do game <- randomGame gen cfg
 
      let initStrategy = strategy (cfgPlayer cfg) (cfgStartMove cfg)
      loop (newPlay game) initStrategy

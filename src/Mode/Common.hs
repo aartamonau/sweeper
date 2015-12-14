@@ -9,8 +9,11 @@ import CmdArgs (Cfg, cfgFieldSpec, cfgStartMove, cfgBuffer)
 import Game (Game)
 import qualified Game as Game
 
-randomGame :: Cfg -> IO Game
-randomGame cfg = Game.randomGame rows cols mines startMove buffer
+import Rand (Gen, runRand)
+
+randomGame :: Gen -> Cfg -> IO Game
+randomGame gen cfg =
+  runRand (Game.randomGame rows cols mines startMove buffer) gen
   where (rows, cols, mines) = cfgFieldSpec cfg
         startMove           = cfgStartMove cfg
         buffer              = cfgBuffer cfg

@@ -67,8 +67,9 @@ enterLoop cfg uiCfg deviceCtx =
 loop :: (?ctx :: Ctx) => IO ()
 loop =
   do let cfg = ctxCfg ?ctx
+     let gen = ctxGen ?ctx
 
-     game <- randomGame cfg
+     game <- randomGame gen cfg
      loopGame (newPlay game) (strategy (cfgPlayer cfg) (cfgStartMove cfg))
 
 loopGame :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()

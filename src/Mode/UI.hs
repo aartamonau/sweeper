@@ -55,7 +55,7 @@ wait context | uiInteractive cfg = waitKeypress context
 
 enterLoop :: Cfg -> UICfg -> DeviceContext -> IO ()
 enterLoop cfg uiCfg deviceCtx =
-  do gen <- cfgMakeGen cfg
+  do gen <- cfgMakeGen cfg 0
      let ?ctx = ctx gen in loop
   where ctx gen = Ctx { ctxCfg       = cfg
                       , ctxUICfg     = uiCfg

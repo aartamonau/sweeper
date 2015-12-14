@@ -18,6 +18,7 @@ module CmdArgs
        )
        where
 
+import Data.Bits (xor)
 import Data.List (intercalate, find)
 import Data.List.Split (splitOn)
 import GHC.Conc (getNumProcessors)
@@ -45,6 +46,9 @@ knownPlayers = [SinglePoint.player, Dummy.player]
 defaultPlayer :: Player
 defaultPlayer = head knownPlayers
 
+threadGen :: Int -> Int -> IO Gen
+threadGen seed tid = newGen (seed `xor` tid)
+
 data Field = Easy | Medium | Hard | Custom Int Int Int
 
 instance Show Field where
@@ -64,7 +68,7 @@ data GameCfg =
           , player :: Player
           , start  :: StartMove
           , buffer :: Int
-          , mkGen  :: IO Gen
+          , mkGen  :: Int -> IO Gen
           }
 
 data UICfg =
@@ -103,8 +107,8 @@ cfgPlayer = player . cfgGameCfg
 cfgBuffer :: Cfg -> Int
 cfgBuffer = buffer . cfgGameCfg
 
-cfgMakeGen :: Cfg -> IO Gen
-cfgMakeGen = mkGen . cfgGameCfg
+cfgMakeGen :: Cfg -> Int -> IO Gen
+cfgMakeGen cfg = mkGen (cfgGameCfg cfg)
 
 anyIntOpt :: ReadM Int
 anyIntOpt = intOpt (const True) "must be an integer"
@@ -146,10 +150,10 @@ gameCfg =
                         <> value 0
                         <> showDefault
                         <> help "Number of empty boxes surrounding start position")
-  <*> option (newGen <$> anyIntOpt) (long "seed"
-                                     <> metavar "SEED"
-                                     <> value systemGen
-                                     <> help "Override default random seed")
+  <*> option (threadGen <$> anyIntOpt) (long "seed"
+                                        <> metavar "SEED"
+                                        <> value (const systemGen)
+                                        <> help "Override default random seed")
   where names = intercalate ", " (map name knownPlayers)
 
         bufferOpt = intOpt (>=0) "must be a non-negative integer"

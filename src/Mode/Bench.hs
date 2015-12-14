@@ -28,12 +28,12 @@ run cfg benchCfg =
      putStrLn $ "Number of workers: " ++ show numWorkers
 
      setNumCapabilities numWorkers
-     mapConcurrently (worker cfg) works >>= print . mconcat
+     mapConcurrently (uncurry $ worker cfg) works >>= print . mconcat
 
   where numIters   = benchNumIters benchCfg
         numWorkers = benchNumWorkers benchCfg
 
-        works = map (workerIters numIters numWorkers) [0..numWorkers-1]
+        works = [(i, workerIters numIters numWorkers i) | i <- [0..numWorkers-1]]
 
 workerIters :: Int -> Int -> Int -> Int
 workerIters total workers i = total `div` workers + extra
@@ -41,9 +41,9 @@ workerIters total workers i = total `div` workers + extra
         extra | i < rem   = 1
               | otherwise = 0
 
-worker :: Cfg -> Int -> IO PlayStats
-worker cfg n =
-  do gen <- cfgMakeGen cfg
+worker :: Cfg -> Int -> Int -> IO PlayStats
+worker cfg tid n =
+  do gen <- cfgMakeGen cfg tid
      loop n gen mempty
   where loop 0 _   !stats = return stats
         loop i gen !stats = iter cfg gen stats >>= loop (i-1) gen

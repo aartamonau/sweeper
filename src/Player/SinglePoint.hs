@@ -42,13 +42,16 @@ posMoves play p
          | numMines + numUnopened == c -> map MarkMine unopened
          | otherwise                   -> []
   | otherwise              = []
-  where item     = playItem play p
-        ns       = playNeighbors play p
-        unopened = filter (not . isOpened play) ns
-        mines    = [p | p <- ns,
-                        Just Mine == playItem play p]
+  where item = playItem play p
+        ns   = playNeighbors play p
 
-        numMines    = length mines
+        (unopened, numMines) = foldl' f ([], 0) ns
+          where f acc@(accUn, accMines) p =
+                  case playItem play p of
+                   Nothing   -> (p:accUn, accMines)
+                   Just Mine -> (accUn, accMines+1)
+                   _         -> acc
+
         numUnopened = length unopened
 
 player :: Player

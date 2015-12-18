@@ -16,10 +16,10 @@ import Data.Array (Array, (!), inRange, range, accumArray, listArray)
 import Rand (Rand, randomSubset)
 
 data Game =
-  Game { rows    :: Int
-       , columns :: Int
-       , mines   :: Int
-       , field   :: MineField
+  Game { rows    :: !Int
+       , columns :: !Int
+       , mines   :: !Int
+       , field   :: !MineField
        }
   deriving Show
 

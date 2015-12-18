@@ -31,13 +31,13 @@ import Game (Game(mines, rows, columns),
              gameItem, gameBounds)
 
 data Play =
-  Play { game :: Game
+  Play { game :: {-# UNPACK #-} !Game
 
-       , numMinesMarked :: Int
-       , numUncovered   :: Int
+       , numMinesMarked :: !Int
+       , numUncovered   :: !Int
 
-       , field     :: Array Pos (Maybe Item)
-       , errorMove :: Maybe Pos
+       , field     :: !(Array Pos (Maybe Item))
+       , errorMove :: !(Maybe Pos)
        }
 
 data PlayError = ErrorFired

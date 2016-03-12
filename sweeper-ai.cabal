@@ -12,6 +12,8 @@ executable sweeper-ai
   main-is:             Main.hs
   other-modules:       CmdArgs
                        Game
+                       Mode.Bench
+                       Mode.Common
                        Mode.UI
                        Mode.UI.Colors
                        Mode.UI.Draw

@@ -34,6 +34,7 @@ import Options.Applicative (Parser, ReadM,
 
 import Player (Player(name))
 
+import qualified Player.Constraints as Constraints
 import qualified Player.Dummy as Dummy
 import qualified Player.SinglePoint as SinglePoint
 
@@ -41,7 +42,7 @@ import Rand (Gen, newGen, systemGen)
 
 
 knownPlayers :: [Player]
-knownPlayers = [SinglePoint.player, Dummy.player]
+knownPlayers = [Constraints.player, Dummy.player, SinglePoint.player]
 
 defaultPlayer :: Player
 defaultPlayer = head knownPlayers

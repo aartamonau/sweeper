@@ -25,7 +25,6 @@ import GHC.Conc (getNumProcessors)
 import Text.Read (readMaybe)
 
 import Options.Applicative (Parser, ReadM,
-                            (<>),
                             execParser,
                             command, subparser,
                             helper, info, progDesc, fullDesc,

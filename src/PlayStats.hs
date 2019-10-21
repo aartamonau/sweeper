@@ -19,11 +19,12 @@ data PlayStats =
             }
   deriving Show
 
+instance Semigroup PlayStats where
+  PlayStats xw xl xs <> PlayStats yw yl ys =
+    PlayStats (xw + yw) (xl + yl) (xs + ys)
+
 instance Monoid PlayStats where
   mempty = PlayStats 0 0 0
-
-  (PlayStats xw xl xs) `mappend` (PlayStats yw yl ys) =
-    PlayStats (xw + yw) (xl + yl) (xs + ys)
 
 numPlayed :: PlayStats -> Int
 numPlayed (PlayStats {..}) = numWon + numLost + numStalled

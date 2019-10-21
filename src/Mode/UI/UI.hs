@@ -1,12 +1,14 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Mode.UI.UI
        (
-         DeviceContext
+         UI (UI, playerName, stats, play)
+       , DeviceContext
        , Draw
        , display
-       , drawPlay
+       , drawUI
        , drawMsg
        , drawError
        , drawPosInfo
@@ -37,17 +39,22 @@ import Mode.UI.Draw (Draw, Rect,
                      drawText, fillRect, setLineWidth,
                      fill, stroke, fillCircle, strokeLine, dimRect)
 
+data UI =
+  UI { playerName :: String
+     , stats      :: !PlayStats
+     , play       :: !Play
+     }
 
 display :: DeviceContext -> Draw () -> IO ()
 display context drawing = send context (runDraw context drawing)
 
-drawPlay :: Play -> PlayStats -> String -> Draw ()
-drawPlay play stats player =
+drawUI :: UI -> Draw ()
+drawUI (UI {playerName, stats, play}) =
   do setFillColor dimgrey
      fillRect (0, 0, 1, 1)
      withBoard play (drawBoard play)
      drawPlayInfo play stats
-     drawPlayerName player
+     drawPlayerName playerName
      maybeDrawErrorBox
 
   where maybeDrawErrorBox

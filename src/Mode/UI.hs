@@ -24,10 +24,11 @@ import PlayStats (PlayStats,
 import Rand (Gen)
 
 import Mode.Common (randomGame)
-import Mode.UI.UI (Draw, DeviceContext,
+import Mode.UI.UI (UI (UI, playerName, stats, play),
+                   Draw, DeviceContext,
                    runUI, display,
                    waitKeypress,
-                   drawMsg, drawError, drawPlay, drawPosInfo)
+                   drawMsg, drawError, drawUI, drawPosInfo)
 
 data Ctx = Ctx { ctxCfg       :: Cfg
                , ctxUICfg     :: UICfg
@@ -39,12 +40,17 @@ data Ctx = Ctx { ctxCfg       :: Cfg
 run :: Cfg -> UICfg -> IO ()
 run cfg = runUI . enterLoop cfg
 
-drawUI :: (?ctx :: Ctx) => Play -> Draw ()
-drawUI play = drawPlay play ctxStats (name $ cfgPlayer ctxCfg)
+draw :: (?ctx :: Ctx) => Play -> Draw ()
+draw play =
+  drawUI $
+    UI { play       = play
+       , stats      = ctxStats
+       , playerName = name $ cfgPlayer ctxCfg
+       }
   where Ctx {..} = ?ctx
 
-draw :: (?ctx :: Ctx) => Draw () -> IO ()
-draw d = display context d >> wait context
+present :: (?ctx :: Ctx) => Draw () -> IO ()
+present d = display context d >> wait context
   where Ctx {ctxDeviceCtx = context} = ?ctx
 
 wait :: (?ctx :: Ctx) => DeviceContext -> IO ()
@@ -74,7 +80,7 @@ loop =
 
 loopGame :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()
 loopGame play strategy =
-  do draw (drawUI play)
+  do present (draw play)
      loopStrategy play strategy
 
 loopStrategy :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()
@@ -89,7 +95,7 @@ loopStrategy play strategy =
       _                           -> error "can't happen"
 
   where handlePosInfo ps strategy =
-          do draw (drawPosInfo play ps)
+          do present (drawPosInfo play ps)
              nextStep strategy
 
         handleOpenEmpty k (play, Left err) = handleError play err (k [])
@@ -106,12 +112,12 @@ loopStrategy play strategy =
         nextStep strategy      = loopStrategy play strategy
 
         surrender =
-          do draw (drawUI play >> drawError "Player surrenders")
+          do present (draw play >> drawError "Player surrenders")
              restart incStalled
 
         handleError _ ErrorNoChange strategy = nextStep strategy
         handleError play err _               =
-          do draw (drawUI play >> drawError (describeError err))
+          do present (draw play >> drawError (describeError err))
              restart incLost
 
         describeError ErrorKilled = "Player explodes on a mine"
@@ -120,6 +126,6 @@ loopStrategy play strategy =
 
         success play strategy
           | isWon play =
-              do draw (drawUI play >> drawMsg "Player wins")
+              do present (draw play >> drawMsg "Player wins")
                  restart incWon
           | otherwise  = continue play strategy

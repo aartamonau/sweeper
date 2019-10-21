@@ -1,4 +1,4 @@
-{-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Mode.UI
@@ -40,29 +40,27 @@ data Ctx = Ctx { ctxCfg       :: Cfg
 run :: Cfg -> UICfg -> IO ()
 run cfg = runUI . enterLoop cfg
 
-draw :: (?ctx :: Ctx) => Play -> Draw ()
-draw play =
-  drawUI $
-    UI { play       = play
-       , stats      = ctxStats
-       , playerName = name $ cfgPlayer ctxCfg
-       }
-  where Ctx {..} = ?ctx
+draw :: Ctx -> Play -> Draw ()
+draw ctx play =
+  drawUI $ UI { play, stats, playerName }
+  where stats = ctxStats ctx
+        playerName = name $ cfgPlayer (ctxCfg ctx)
 
-present :: (?ctx :: Ctx) => Draw () -> IO ()
-present d = display context d >> wait context
-  where Ctx {ctxDeviceCtx = context} = ?ctx
+present :: Ctx -> Draw () -> IO ()
+present ctx d = display context d >> wait ctx
+  where Ctx {ctxDeviceCtx = context} = ctx
 
-wait :: (?ctx :: Ctx) => DeviceContext -> IO ()
-wait context | uiInteractive cfg = waitKeypress context
-             | otherwise         = threadDelay (1000 * uiDelay cfg)
+wait :: Ctx -> IO ()
+wait ctx | uiInteractive cfg = waitKeypress deviceContext
+         | otherwise         = threadDelay (1000 * uiDelay cfg)
 
-  where cfg = ctxUICfg ?ctx
+  where cfg = ctxUICfg ctx
+        deviceContext = ctxDeviceCtx ctx
 
 enterLoop :: Cfg -> UICfg -> DeviceContext -> IO ()
 enterLoop cfg uiCfg deviceCtx =
   do gen <- cfgMakeGen cfg 0
-     let ?ctx = ctx gen in loop
+     loop (ctx gen)
   where ctx gen = Ctx { ctxCfg       = cfg
                       , ctxUICfg     = uiCfg
                       , ctxStats     = mempty
@@ -70,22 +68,22 @@ enterLoop cfg uiCfg deviceCtx =
                       , ctxGen       = gen
                       }
 
-loop :: (?ctx :: Ctx) => IO ()
-loop =
-  do let cfg = ctxCfg ?ctx
-     let gen = ctxGen ?ctx
+loop :: Ctx -> IO ()
+loop ctx =
+  do let cfg = ctxCfg ctx
+     let gen = ctxGen ctx
 
      game <- randomGame gen cfg
-     loopGame (newPlay game) (strategy (cfgPlayer cfg) (cfgStartMove cfg))
+     loopGame ctx (newPlay game) (strategy (cfgPlayer cfg) (cfgStartMove cfg))
 
-loopGame :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()
-loopGame play strategy =
-  do present (draw play)
-     loopStrategy play strategy
+loopGame :: Ctx -> Play -> Strategy () -> IO ()
+loopGame ctx play strategy =
+  do present ctx (draw ctx play)
+     loopStrategy ctx play strategy
 
-loopStrategy :: (?ctx :: Ctx) => Play -> Strategy () -> IO ()
-loopStrategy play strategy =
-  do step <- runStrategy (ctxGen ?ctx) strategy
+loopStrategy :: Ctx -> Play -> Strategy () -> IO ()
+loopStrategy ctx play strategy =
+  do step <- runStrategy (ctxGen ctx) strategy
      case step of
       Pure _                      -> surrender
       Free (PosInfo ps strategy') -> handlePosInfo ps strategy'
@@ -95,7 +93,7 @@ loopStrategy play strategy =
       _                           -> error "can't happen"
 
   where handlePosInfo ps strategy =
-          do present (drawPosInfo play ps)
+          do present ctx (drawPosInfo play ps)
              nextStep strategy
 
         handleOpenEmpty k (play, Left err) = handleError play err (k [])
@@ -104,20 +102,20 @@ loopStrategy play strategy =
         handleMarkMine strategy (play, Left err) = handleError play err strategy
         handleMarkMine strategy (play, Right ()) = success play strategy
 
-        restart :: (?ctx :: Ctx) => (PlayStats -> PlayStats) -> IO ()
-        restart inc = let ?ctx = ?ctx {ctxStats = inc ctxStats} in loop
-          where Ctx {..} = ?ctx
+        restart :: (PlayStats -> PlayStats) -> IO ()
+        restart inc = loop (ctx {ctxStats = inc stats})
+          where stats = ctxStats ctx
 
-        continue play strategy = loopGame play strategy
-        nextStep strategy      = loopStrategy play strategy
+        continue play strategy = loopGame ctx play strategy
+        nextStep strategy      = loopStrategy ctx play strategy
 
         surrender =
-          do present (draw play >> drawError "Player surrenders")
+          do present ctx (draw ctx play >> drawError "Player surrenders")
              restart incStalled
 
         handleError _ ErrorNoChange strategy = nextStep strategy
         handleError play err _               =
-          do present (draw play >> drawError (describeError err))
+          do present ctx (draw ctx play >> drawError (describeError err))
              restart incLost
 
         describeError ErrorKilled = "Player explodes on a mine"
@@ -126,6 +124,6 @@ loopStrategy play strategy =
 
         success play strategy
           | isWon play =
-              do present (draw play >> drawMsg "Player wins")
+              do present ctx (draw ctx play >> drawMsg "Player wins")
                  restart incWon
           | otherwise  = continue play strategy

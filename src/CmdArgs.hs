@@ -26,7 +26,7 @@ import Text.Read (readMaybe)
 
 import Options.Applicative (Parser, ReadM,
                             execParser,
-                            command, subparser,
+                            command, hsubparser,
                             helper, info, progDesc, fullDesc,
                             long, short, metavar, help, value, showDefault,
                             option, flag, eitherReader)
@@ -222,7 +222,7 @@ mode =
   do benchParser <- benchCfg
      let modeBench = command "bench" (info (ModeBench <$> benchParser) benchDesc)
 
-     return $ subparser (modeUI <> modeBench)
+     return $ hsubparser (modeUI <> modeBench)
   where modeUI = command "ui" (info (ModeUI <$> uiCfg) uiDesc)
         uiDesc = progDesc "View a bot play using Web interface"
 

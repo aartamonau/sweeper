@@ -1,5 +1,5 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Mode.UI
        (
@@ -30,50 +30,44 @@ import Mode.UI.UI (UI (UI, playerName, stats, play),
                    waitKeypress,
                    drawMsg, drawError, drawUI, drawPosInfo)
 
-data Ctx = Ctx { ctxCfg       :: Cfg
-               , ctxUICfg     :: UICfg
-               , ctxStats     :: PlayStats
-               , ctxDeviceCtx :: DeviceContext
-               , ctxGen       :: Gen
+data Ctx = Ctx { cfg           :: Cfg
+               , uiCfg         :: UICfg
+               , stats         :: PlayStats
+               , deviceContext :: DeviceContext
+               , rndGen        :: Gen
                }
 
 run :: Cfg -> UICfg -> IO ()
 run cfg = runUI . enterLoop cfg
 
 draw :: Ctx -> Play -> Draw ()
-draw ctx play =
+draw (Ctx {stats, cfg}) play =
   drawUI $ UI { play, stats, playerName }
-  where stats = ctxStats ctx
-        playerName = name $ cfgPlayer (ctxCfg ctx)
+  where playerName = name $ cfgPlayer cfg
 
 present :: Ctx -> Draw () -> IO ()
-present ctx d = display context d >> wait ctx
-  where Ctx {ctxDeviceCtx = context} = ctx
+present ctx@(Ctx {deviceContext}) d =
+  display deviceContext d >> wait ctx
 
 wait :: Ctx -> IO ()
-wait ctx | uiInteractive cfg = waitKeypress deviceContext
-         | otherwise         = threadDelay (1000 * uiDelay cfg)
-
-  where cfg = ctxUICfg ctx
-        deviceContext = ctxDeviceCtx ctx
+wait (Ctx {deviceContext, uiCfg})
+  | uiInteractive uiCfg = waitKeypress deviceContext
+  | otherwise           = threadDelay (1000 * uiDelay uiCfg)
 
 enterLoop :: Cfg -> UICfg -> DeviceContext -> IO ()
-enterLoop cfg uiCfg deviceCtx =
+enterLoop cfg uiCfg deviceContext =
   do gen <- cfgMakeGen cfg 0
      loop (ctx gen)
-  where ctx gen = Ctx { ctxCfg       = cfg
-                      , ctxUICfg     = uiCfg
-                      , ctxStats     = mempty
-                      , ctxDeviceCtx = deviceCtx
-                      , ctxGen       = gen
+  where ctx gen = Ctx { cfg           = cfg
+                      , uiCfg         = uiCfg
+                      , stats         = mempty
+                      , deviceContext = deviceContext
+                      , rndGen        = gen
                       }
 
 loop :: Ctx -> IO ()
-loop ctx =
-  do let cfg = ctxCfg ctx
-     let gen = ctxGen ctx
-
-     game <- randomGame gen cfg
+loop ctx@(Ctx {cfg, rndGen}) =
+  do game <- randomGame rndGen cfg
      loopGame ctx (newPlay game) (strategy (cfgPlayer cfg) (cfgStartMove cfg))
 
 loopGame :: Ctx -> Play -> Strategy () -> IO ()
@@ -83,7 +77,7 @@ loopGame ctx play strategy =
 
 loopStrategy :: Ctx -> Play -> Strategy () -> IO ()
 loopStrategy ctx play strategy =
-  do step <- runStrategy (ctxGen ctx) strategy
+  do step <- runStrategy (rndGen ctx) strategy
      case step of
       Pure _                      -> surrender
       Free (PosInfo ps strategy') -> handlePosInfo ps strategy'
@@ -103,8 +97,8 @@ loopStrategy ctx play strategy =
         handleMarkMine strategy (play, Right ()) = success play strategy
 
         restart :: (PlayStats -> PlayStats) -> IO ()
-        restart inc = loop (ctx {ctxStats = inc stats})
-          where stats = ctxStats ctx
+        restart inc = loop (ctx {stats = inc stats})
+          where Ctx {stats} = ctx
 
         continue play strategy = loopGame ctx play strategy
         nextStep strategy      = loopStrategy ctx play strategy

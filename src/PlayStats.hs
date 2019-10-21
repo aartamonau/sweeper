@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module PlayStats
        (
          PlayStats
@@ -27,13 +25,14 @@ instance Monoid PlayStats where
   mempty = PlayStats 0 0 0
 
 numPlayed :: PlayStats -> Int
-numPlayed (PlayStats {..}) = numWon + numLost + numStalled
+numPlayed (PlayStats {numWon, numLost, numStalled}) =
+  numWon + numLost + numStalled
 
 incWon :: PlayStats -> PlayStats
-incWon stats@(PlayStats {..}) = stats { numWon = numWon+1 }
+incWon stats@(PlayStats {numWon}) = stats { numWon = numWon+1 }
 
 incLost :: PlayStats -> PlayStats
-incLost stats@(PlayStats {..}) = stats { numLost = numLost+1 }
+incLost stats@(PlayStats {numLost}) = stats { numLost = numLost+1 }
 
 incStalled :: PlayStats -> PlayStats
-incStalled stats@(PlayStats {..}) = stats { numStalled = numStalled+1 }
+incStalled stats@(PlayStats {numStalled}) = stats { numStalled = numStalled+1 }

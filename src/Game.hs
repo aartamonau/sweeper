@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Game
        (
          Game (Game, rows, columns, field, mines)
@@ -34,7 +32,7 @@ gameItem :: Game -> Pos -> Item
 gameItem game p = field game ! p
 
 gameBounds :: Game -> (Pos, Pos)
-gameBounds (Game {..}) = ((0, 0), (rows-1, columns-1))
+gameBounds (Game {rows, columns}) = ((0, 0), (rows-1, columns-1))
 
 randomGame :: Int -> Int -> Int -> Pos -> Int -> Rand Game
 randomGame rows columns numMines start buffer =

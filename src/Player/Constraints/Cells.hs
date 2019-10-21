@@ -4,7 +4,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
 module Player.Constraints.Cells
@@ -121,7 +120,7 @@ computedCell f =
 
 addFormula :: CellValue a => Cell 'ComputedCell a -> Formula a -> ST RealWorld ()
 addFormula cell@(MkCell _ ref) newFormula =
-  do state@CellState{..} <- readSTRef ref
+  do state@CellState{rdeps, value, formula} <- readSTRef ref
 
      assertUndecided value "attempting to add formula to a decided cell"
 
@@ -150,7 +149,8 @@ addFormula cell@(MkCell _ ref) newFormula =
 updateRDepsWith :: ([Dep] -> [Dep]) -> [Dep] -> ST RealWorld ()
 updateRDepsWith op deps = mapM_ updateOneDep deps
   where updateOneDep (Dep (MkCell _ depCell)) = modifySTRef' depCell updateRDeps
-          where updateRDeps state@(CellState {..}) = state { rdeps = op rdeps }
+          where updateRDeps state@(CellState {rdeps}) =
+                  state { rdeps = op rdeps }
 
 ioCell :: a -> ST RealWorld (Cell 'IOCell a)
 ioCell v = MkCell Proxy <$> newSTRef state
@@ -167,7 +167,7 @@ modifyValue cell f = getValue cell >>= setValue cell . f
 
 setValueInternal :: CellValue a => Cell k a -> a -> ST RealWorld ()
 setValueInternal cell@(MkCell _ ref) v =
-  do state@CellState {..} <- readSTRef ref
+  do state@CellState {value} <- readSTRef ref
 
      assertUndecided value "attempting to overwrite decided value"
      when (newValue /= value) $ set state
@@ -191,7 +191,7 @@ invalidateDep (Dep cell) = invalidate cell
 
 invalidate :: CellValue a => Cell k a -> ST RealWorld ()
 invalidate cell@(MkCell _ ref) =
-  do CellState {..} <- readSTRef ref
+  do CellState {formula} <- readSTRef ref
 
      newValue <- compute formula
      setValueInternal cell newValue

@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Play
        (
          Play (numMinesMarked, numUncovered)
@@ -68,7 +66,7 @@ playBounds :: Play -> (Pos, Pos)
 playBounds = gameBounds . game
 
 playItem :: Play -> Pos -> Maybe Item
-playItem (Play {..}) p  = field ! p
+playItem (Play {field}) p  = field ! p
 
 playNeighbors :: Play -> Pos -> [Pos]
 playNeighbors play p@(pi, pj) =
@@ -83,7 +81,7 @@ playNumMines :: Play -> Int
 playNumMines = mines . game
 
 openEmpty :: Play -> Pos -> PlayResult [Pos]
-openEmpty play@(Play {..}) p
+openEmpty play@(Play {game}) p
   | Just Mine <- item = retError play p ErrorFired
   | Just _    <- item = retError play p ErrorNoChange
   | otherwise         =
@@ -125,28 +123,30 @@ markMine play p
   where item = playItem play p
 
 isWon :: Play -> Bool
-isWon play@(Play {..}) =
+isWon play@(Play {game, numMinesMarked, numUncovered}) =
   numUncovered == numEmpty && numMinesMarked == playNumMines play
   where numEmpty = rows game * columns game - mines game
 
 isOpened :: Play -> Pos -> Bool
-isOpened (Play {..}) p = isJust (field ! p)
+isOpened (Play {field}) p = isJust (field ! p)
 
 uncoverBox :: Play -> Pos -> Play
-uncoverBox play@(Play {..}) p =
+uncoverBox play@(Play {game}) p =
   incNumUncovered $ setBox play p (gameItem game p)
 
 markBox :: Play -> Pos -> Play
 markBox play p = incMarkedMines $ setBox play p Mine
 
 setBox :: Play -> Pos -> Item -> Play
-setBox play@(Play {..}) p item = play {field = field // [(p, Just item)]}
+setBox play@(Play {field}) p item = play {field = field // [(p, Just item)]}
 
 incMarkedMines :: Play -> Play
-incMarkedMines play@(Play {..}) = play {numMinesMarked = numMinesMarked + 1}
+incMarkedMines play@(Play {numMinesMarked}) =
+  play {numMinesMarked = numMinesMarked + 1}
 
 incNumUncovered :: Play -> Play
-incNumUncovered play@(Play {..}) = play {numUncovered = numUncovered + 1}
+incNumUncovered play@(Play {numUncovered}) =
+  play {numUncovered = numUncovered + 1}
 
 retError :: Play -> Pos -> PlayError -> PlayResult a
 retError play lastMove error = (newPlay, Left error)
@@ -156,5 +156,5 @@ ret :: Play -> a -> PlayResult a
 ret play r = (play, Right r)
 
 errorItem :: Play -> Maybe (Pos, Item)
-errorItem (Play {..}) = f <$> errorMove
+errorItem (Play {game, errorMove}) = f <$> errorMove
   where f p = (p, gameItem game p)

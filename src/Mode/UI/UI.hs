@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Mode.UI.UI
        (
@@ -82,7 +81,7 @@ waitKeypress context =
      if likeEvent ev
        then flush context >> return ()
        else waitKeypress context
-  where likeEvent (Event {..})
+  where likeEvent (Event {eType, eWhich})
           | eType == "mousedown" = True
           | eType == "keydown"   = eWhich == Just 32 -- space
           | otherwise            = error "can't happen"

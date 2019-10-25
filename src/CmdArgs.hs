@@ -19,7 +19,7 @@ module CmdArgs
        where
 
 import Data.Bits (xor)
-import Data.List (intercalate, find)
+import Data.List (intercalate, lookup)
 import Data.List.Split (splitOn)
 import GHC.Conc (getNumProcessors)
 import Text.Read (readMaybe)
@@ -125,6 +125,23 @@ intOpt pred msg = eitherReader parse
 posIntOpt :: ReadM Int
 posIntOpt = intOpt (>0) "must be a positive integer"
 
+presentOptions :: [String] -> String
+presentOptions options = intercalate ", " butLast ++ maybeLast
+  where n = length options
+        (butLast, last) = splitAt (n-1) options'
+        options' = ["`" ++ option ++ "'" | option <- options]
+
+        maybeLast | [x] <- last = " or " ++ x
+                  | otherwise   = ""
+
+readOneOf :: [(String, a)] -> ReadM a
+readOneOf pairs = eitherReader doRead
+  where doRead value
+          | Just x <- lookup value pairs = Right x
+          | otherwise = Left errorMsg
+
+        errorMsg = "the value must be one of " ++ presentOptions (map fst pairs)
+
 cfg :: SystemEnv -> Parser Cfg
 cfg env =
   Cfg
@@ -161,18 +178,8 @@ cfg env =
 
         bufferOpt = intOpt (>=0) "must be a non-negative integer"
 
-        startMoveOpt = eitherReader parse
-          where parse "center" = Right Center
-                parse "corner" = Right Corner
-                parse s        = Left ("can't understand start position `"
-                                       ++ s ++ "`")
-
-        playerOpt = eitherReader parse
-          where parse s
-                  | Just player <- find ((== s) . name) knownPlayers =
-                      Right player
-                  | otherwise =
-                      Left ("unknown player name `" ++ s ++ "`")
+        startMoveOpt = readOneOf [("center", Center), ("corner", Corner)]
+        playerOpt = readOneOf [(name p, p) | p <- knownPlayers]
 
         fieldOpt = eitherReader parse
           where parse "easy"   = Right Easy

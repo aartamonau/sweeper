@@ -21,6 +21,7 @@ module CmdArgs
 import Data.Bits (xor)
 import Data.List (intercalate, lookup)
 import Data.List.Split (splitOn)
+import Control.Applicative ((<|>))
 import GHC.Conc (getNumProcessors)
 import Text.Read (readMaybe)
 
@@ -29,7 +30,8 @@ import Options.Applicative (Parser, ReadM,
                             command, hsubparser,
                             helper, info, progDesc, fullDesc,
                             long, short, metavar, help, value, showDefault,
-                            option, flag, eitherReader)
+                            option, flag,
+                            maybeReader, eitherReader)
 
 import Player (Player(name))
 
@@ -142,15 +144,28 @@ readOneOf pairs = eitherReader doRead
 
         errorMsg = "the value must be one of " ++ presentOptions (map fst pairs)
 
+readCustomFieldSpec :: ReadM FieldSpec
+readCustomFieldSpec = maybeReader reader
+  where reader value
+          | [rows, columns, mines] <- splitOn "x" value =
+              Custom <$> readMaybe rows <*>
+                         readMaybe columns <*>
+                         readMaybe mines
+          | otherwise = Nothing
+
+readFieldSpec :: ReadM FieldSpec
+readFieldSpec = readOneOf mnemonicSpecs <|> readCustomFieldSpec
+  where mnemonicSpecs  = [("easy", Easy), ("medium", Medium), ("hard", Hard)]
+
 cfg :: SystemEnv -> Parser Cfg
 cfg env =
   Cfg
-  <$> option fieldOpt (long "field"
-                       <> short 'f'
-                       <> metavar "SPEC"
-                       <> value Easy
-                       <> showDefault
-                       <> help "Field specification (easy, medium, hard or RxCxM)")
+  <$> option readFieldSpec (long "field"
+                            <> short 'f'
+                            <> metavar "SPEC"
+                            <> value Easy
+                            <> showDefault
+                            <> help "Field specification (easy, medium, hard or RxCxM)")
   <*> option playerOpt (long "player"
                         <> short 'p'
                         <> metavar "PLAYER"
@@ -180,21 +195,6 @@ cfg env =
 
         startMoveOpt = readOneOf [("center", Center), ("corner", Corner)]
         playerOpt = readOneOf [(name p, p) | p <- knownPlayers]
-
-        fieldOpt = eitherReader parse
-          where parse "easy"   = Right Easy
-                parse "medium" = Right Medium
-                parse "hard"   = Right Hard
-                parse s        =
-                  case splitOn "x" s of
-                   [rows, columns, mines] ->
-                     maybe (err s) Right (Custom
-                                          <$> readMaybe rows
-                                          <*> readMaybe columns
-                                          <*> readMaybe mines)
-                   _ -> err s
-
-                err s = Left ("can't understand field description `" ++ s ++ "`")
 
         modeUI = command "ui" $ info (ModeUI <$> uiCfg) uiDesc
         uiDesc = progDesc "View a bot play using Web interface"

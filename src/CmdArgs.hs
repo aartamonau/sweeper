@@ -88,6 +88,9 @@ data Cfg =
       , cfgMode    :: Mode
       }
 
+data SystemEnv =
+  SystemEnv { numCPUs :: Int }
+
 cfgFieldSpec :: Cfg -> (Int, Int, Int)
 cfgFieldSpec = spec . field . cfgGameCfg
   where spec Easy           = (10, 10, 10)
@@ -199,44 +202,41 @@ uiCfg =
                         <> showDefault
                         <> help "Delay (in ms) to use in non-interactive mode")
 
-benchCfg :: IO (Parser BenchCfg)
-benchCfg = getNumProcessors >>= return . parser
-  where parser :: Int -> Parser BenchCfg
-        parser numCPUs =
-          BenchCfg
-          <$> option posIntOpt (long "num-iters"
-                                <> short 'n'
-                                <> metavar "ITERS"
-                                <> value 1000
-                                <> showDefault
-                                <> help "Number of games to benchmark the bot on")
-          <*> option posIntOpt (long "num-workers"
-                                <> short 't'
-                                <> metavar "WORKERS"
-                                <> value (max (numCPUs-1) 1)
-                                <> showDefault
-                                <> help "Number of workers to run benchmark on")
+benchCfg :: SystemEnv -> Parser BenchCfg
+benchCfg (SystemEnv {numCPUs}) =
+  BenchCfg
+  <$> option posIntOpt (long "num-iters"
+                        <> short 'n'
+                        <> metavar "ITERS"
+                        <> value 1000
+                        <> showDefault
+                        <> help "Number of games to benchmark the bot on")
+  <*> option posIntOpt (long "num-workers"
+                        <> short 't'
+                        <> metavar "WORKERS"
+                        <> value (max (numCPUs-1) 1)
+                        <> showDefault
+                        <> help "Number of workers to run benchmark on")
 
-mode :: IO (Parser Mode)
-mode =
-  do benchParser <- benchCfg
-     let modeBench = command "bench" (info (ModeBench <$> benchParser) benchDesc)
-
-     return $ hsubparser (modeUI <> modeBench)
-  where modeUI = command "ui" (info (ModeUI <$> uiCfg) uiDesc)
+mode :: SystemEnv -> Parser Mode
+mode env = hsubparser (modeUI <> modeBench)
+  where modeUI = command "ui" $ info (ModeUI <$> uiCfg) uiDesc
         uiDesc = progDesc "View a bot play using Web interface"
 
+        modeBench =
+          command "bench" $ info (ModeBench <$> benchCfg env) benchDesc
         benchDesc = progDesc "Benchmark bot's performance"
 
-cfg :: IO (Parser Cfg)
-cfg =
-  do modeParser <- mode
-     return $ Cfg <$> gameCfg <*> modeParser
+cfg :: SystemEnv -> Parser Cfg
+cfg env = Cfg <$> gameCfg <*> mode env
+
+getSystemEnv :: IO (SystemEnv)
+getSystemEnv = SystemEnv <$> getNumProcessors
 
 runWithCfg :: (Cfg -> IO ()) -> IO ()
 runWithCfg body =
-  do cfgParser <- cfg
-     let parser = info (helper <*> cfgParser) (desc <> fullDesc)
+  do env <- getSystemEnv
+     let parser = info (helper <*> cfg env) (desc <> fullDesc)
 
      execParser parser >>= body
   where desc = progDesc "View and benchmark minesweeper bots."

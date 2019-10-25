@@ -214,7 +214,7 @@ benchCfg (SystemEnv {numCPUs}) =
   <*> option posIntOpt (long "num-workers"
                         <> short 't'
                         <> metavar "WORKERS"
-                        <> value (max (numCPUs-1) 1)
+                        <> value numCPUs
                         <> showDefault
                         <> help "Number of workers to run benchmark on")
 

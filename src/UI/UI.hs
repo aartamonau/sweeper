@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Mode.UI.UI
+module UI.UI
        (
          UI (UI, playerName, stats, play)
        , DeviceContext
@@ -27,15 +27,15 @@ import Play (Play(numMinesMarked),
              playItem, playNumMines, errorItem)
 import PlayStats (PlayStats, numWon, numPlayed)
 
-import Mode.UI.Colors (Color,
-                       black, red, dimgrey, grey, lightgrey,
-                       blue, green, khaki, purple, darkred, brown)
-import Mode.UI.Draw (Draw, Rect,
-                     (|||),
-                     runDraw, restrict, aspectRatio,
-                     setFont, setFillColor, setStrokeColor,
-                     drawText, fillRect, setLineWidth,
-                     fill, stroke, fillCircle, strokeLine, dimRect)
+import UI.Colors (Color,
+                  black, red, dimgrey, grey, lightgrey,
+                  blue, green, khaki, purple, darkred, brown)
+import UI.Draw (Draw, Rect,
+                (|||),
+                runDraw, restrict, aspectRatio,
+                setFont, setFillColor, setStrokeColor,
+                drawText, fillRect, setLineWidth,
+                fill, stroke, fillCircle, strokeLine, dimRect)
 
 data UI =
   UI { playerName :: String

@@ -1,4 +1,4 @@
-module Mode.UI.Colors where
+module UI.Colors where
 
 import Data.Colour (Colour)
 import Data.Colour.SRGB (sRGB24show)

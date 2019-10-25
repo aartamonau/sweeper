@@ -21,11 +21,11 @@ import PlayStats (PlayStats,
 import Rand (Gen)
 
 import Mode.Common (randomGame)
-import Mode.UI.UI (UI (UI, playerName, stats, play),
-                   Draw, DeviceContext,
-                   runUI, display,
-                   waitKeypress,
-                   drawMsg, drawError, drawUI, drawPosInfo)
+import UI.UI (UI (UI, playerName, stats, play),
+              Draw, DeviceContext,
+              runUI, display,
+              waitKeypress,
+              drawMsg, drawError, drawUI, drawPosInfo)
 
 data Ctx = Ctx { cfg           :: Cfg
                , uiCfg         :: UICfg

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Mode.UI.Draw
+module UI.Draw
        (
          Draw
        , Point
@@ -32,7 +32,7 @@ import Data.Text (pack)
 import Graphics.Blank (Canvas, DeviceContext)
 import qualified Graphics.Blank as Blank
 
-import Mode.UI.Colors (Color)
+import UI.Colors (Color)
 
 type Point = (Double, Double)
 type Rect  = (Double, Double, Double, Double)

@@ -15,9 +15,6 @@ executable sweeper-ai
                        Mode.Bench
                        Mode.Common
                        Mode.UI
-                       Mode.UI.Colors
-                       Mode.UI.Draw
-                       Mode.UI.UI
                        Play
                        Player
                        Player.API
@@ -27,6 +24,9 @@ executable sweeper-ai
                        Player.SinglePoint
                        PlayStats
                        Rand
+                       UI.Colors
+                       UI.Draw
+                       UI.UI
   build-depends:       base,
                        array,
                        random,

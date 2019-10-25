@@ -4,9 +4,9 @@ module Game
        , MineField
        , Pos
        , Item (Mine, Empty)
-       , randomGame
-       , gameItem
-       , gameBounds
+       , random
+       , bounds
+       , getItem
        ) where
 
 import Data.Array (Array, (!), inRange, range, accumArray, listArray)
@@ -28,14 +28,14 @@ data Item = Mine
           | Empty Int
           deriving (Show, Eq)
 
-gameItem :: Game -> Pos -> Item
-gameItem game p = field game ! p
+getItem :: Game -> Pos -> Item
+getItem game p = field game ! p
 
-gameBounds :: Game -> (Pos, Pos)
-gameBounds (Game {rows, columns}) = ((0, 0), (rows-1, columns-1))
+bounds :: Game -> (Pos, Pos)
+bounds (Game {rows, columns}) = ((0, 0), (rows-1, columns-1))
 
-randomGame :: Int -> Int -> Int -> Pos -> Int -> Rand Game
-randomGame rows columns numMines start buffer =
+random :: Int -> Int -> Int -> Pos -> Int -> Rand Game
+random rows columns numMines start buffer =
   do let bounds    = ((0, 0), (rows-1, columns-1))
      let positions = [p | p <- range bounds, not (isClose start p)]
      mines <- randomSubset numMines positions

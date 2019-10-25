@@ -13,7 +13,7 @@ import Rand (Gen, runRand)
 
 randomGame :: Gen -> Cfg -> IO Game
 randomGame gen cfg =
-  runRand (Game.randomGame rows cols mines startMove buffer) gen
+  runRand (Game.random rows cols mines startMove buffer) gen
   where (rows, cols, mines) = cfgFieldSpec cfg
         startMove           = cfgStartMove cfg
         buffer              = cfgBuffer cfg

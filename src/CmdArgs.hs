@@ -49,9 +49,9 @@ defaultPlayer = head knownPlayers
 threadGen :: Int -> Int -> IO Gen
 threadGen seed tid = newGen (seed `xor` tid)
 
-data Field = Easy | Medium | Hard | Custom Int Int Int
+data FieldSpec = Easy | Medium | Hard | Custom Int Int Int
 
-instance Show Field where
+instance Show FieldSpec where
   show Easy           = "easy"
   show Medium         = "medium"
   show Hard           = "hard"
@@ -76,19 +76,19 @@ data BenchCfg =
 data Mode = ModeUI UICfg | ModeBench BenchCfg
 
 data Cfg =
-  Cfg { field  :: Field
-      , player :: Player
-      , start  :: StartMove
-      , buffer :: Int
-      , mkGen  :: Int -> IO Gen
-      , mode   :: Mode
+  Cfg { fieldSpec :: FieldSpec
+      , player    :: Player
+      , start     :: StartMove
+      , buffer    :: Int
+      , mkGen     :: Int -> IO Gen
+      , mode      :: Mode
       }
 
 data SystemEnv =
   SystemEnv { numCPUs :: Int }
 
 cfgFieldSpec :: Cfg -> (Int, Int, Int)
-cfgFieldSpec = spec . field
+cfgFieldSpec = spec . fieldSpec
   where spec Easy           = (10, 10, 10)
         spec Medium         = (16, 16, 40)
         spec Hard           = (16, 30, 99)

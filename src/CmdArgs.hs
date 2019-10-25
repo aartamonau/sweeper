@@ -63,14 +63,6 @@ instance Show StartMove where
   show Center = "center"
   show Corner = "corner"
 
-data GameCfg =
-  GameCfg { field  :: Field
-          , player :: Player
-          , start  :: StartMove
-          , buffer :: Int
-          , mkGen  :: Int -> IO Gen
-          }
-
 data UICfg =
   UICfg { uiInteractive :: Bool
         , uiDelay       :: Int
@@ -84,34 +76,41 @@ data BenchCfg =
 data Mode = ModeUI UICfg | ModeBench BenchCfg
 
 data Cfg =
-  Cfg { cfgGameCfg :: GameCfg
-      , cfgMode    :: Mode
+  Cfg { field  :: Field
+      , player :: Player
+      , start  :: StartMove
+      , buffer :: Int
+      , mkGen  :: Int -> IO Gen
+      , mode   :: Mode
       }
 
 data SystemEnv =
   SystemEnv { numCPUs :: Int }
 
 cfgFieldSpec :: Cfg -> (Int, Int, Int)
-cfgFieldSpec = spec . field . cfgGameCfg
+cfgFieldSpec = spec . field
   where spec Easy           = (10, 10, 10)
         spec Medium         = (16, 16, 40)
         spec Hard           = (16, 30, 99)
         spec (Custom r c m) = (r, c, m)
 
 cfgStartMove :: Cfg -> (Int, Int)
-cfgStartMove cfg = go (start $ cfgGameCfg cfg)
+cfgStartMove cfg = go $ start cfg
   where go Corner = (0, 0)
         go Center = (rows `div` 2, columns `div` 2)
           where (rows, columns, _) = cfgFieldSpec cfg
 
 cfgPlayer :: Cfg -> Player
-cfgPlayer = player . cfgGameCfg
+cfgPlayer = player
 
 cfgBuffer :: Cfg -> Int
-cfgBuffer = buffer . cfgGameCfg
+cfgBuffer = buffer
 
 cfgMakeGen :: Cfg -> Int -> IO Gen
-cfgMakeGen cfg = mkGen (cfgGameCfg cfg)
+cfgMakeGen = mkGen
+
+cfgMode :: Cfg -> Mode
+cfgMode = mode
 
 anyIntOpt :: ReadM Int
 anyIntOpt = intOpt (const True) "must be an integer"
@@ -126,9 +125,9 @@ intOpt pred msg = eitherReader parse
 posIntOpt :: ReadM Int
 posIntOpt = intOpt (>0) "must be a positive integer"
 
-gameCfg :: Parser GameCfg
-gameCfg =
-  GameCfg
+cfg :: SystemEnv -> Parser Cfg
+cfg env =
+  Cfg
   <$> option fieldOpt (long "field"
                        <> short 'f'
                        <> metavar "SPEC"
@@ -157,6 +156,7 @@ gameCfg =
                                         <> metavar "SEED"
                                         <> value (const systemGen)
                                         <> help "Override default random seed")
+  <*> hsubparser (modeUI <> modeBench)
   where names = intercalate ", " (map name knownPlayers)
 
         bufferOpt = intOpt (>=0) "must be a non-negative integer"
@@ -189,6 +189,13 @@ gameCfg =
 
                 err s = Left ("can't understand field description `" ++ s ++ "`")
 
+        modeUI = command "ui" $ info (ModeUI <$> uiCfg) uiDesc
+        uiDesc = progDesc "View a bot play using Web interface"
+
+        modeBench = command "bench" $ info (ModeBench <$> benchCfg env) benchDesc
+        benchDesc = progDesc "Benchmark bot's performance"
+
+
 uiCfg :: Parser UICfg
 uiCfg =
   UICfg
@@ -217,18 +224,6 @@ benchCfg (SystemEnv {numCPUs}) =
                         <> value numCPUs
                         <> showDefault
                         <> help "Number of workers to run benchmark on")
-
-mode :: SystemEnv -> Parser Mode
-mode env = hsubparser (modeUI <> modeBench)
-  where modeUI = command "ui" $ info (ModeUI <$> uiCfg) uiDesc
-        uiDesc = progDesc "View a bot play using Web interface"
-
-        modeBench =
-          command "bench" $ info (ModeBench <$> benchCfg env) benchDesc
-        benchDesc = progDesc "Benchmark bot's performance"
-
-cfg :: SystemEnv -> Parser Cfg
-cfg env = Cfg <$> gameCfg <*> mode env
 
 getSystemEnv :: IO (SystemEnv)
 getSystemEnv = SystemEnv <$> getNumProcessors

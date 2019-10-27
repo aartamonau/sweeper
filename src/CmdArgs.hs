@@ -115,17 +115,18 @@ cfgMode :: Cfg -> Mode
 cfgMode = mode
 
 readAnyInt :: ReadM Int
-readAnyInt = auto <|> readerError "must be an integer"
+readAnyInt = readInt (const True) "must be an integer"
 
-intOpt :: (Int -> Bool) -> String -> ReadM Int
-intOpt pred msg = eitherReader parse
-  where parse s = maybe (Left msg) Right (readMaybe s >>= validate)
+readPosInt :: ReadM Int
+readPosInt = readInt (>0) "must be a positive integer"
 
-        validate x | pred x    = Just x
-                   | otherwise = Nothing
+readNonNegInt :: ReadM Int
+readNonNegInt = readInt (>=0) "must be a non-negative integer"
 
-posIntOpt :: ReadM Int
-posIntOpt = intOpt (>0) "must be a positive integer"
+readInt :: (Int -> Bool) -> String -> ReadM Int
+readInt pred errorMsg = go <|> readerError errorMsg
+  where go = do value <- auto
+                if pred value then return value else fail ""
 
 presentOptions :: [String] -> String
 presentOptions options = intercalate ", " butLast ++ maybeLast
@@ -178,20 +179,18 @@ cfg env =
                            <> value Center
                            <> showDefault
                            <> help "Start move (center or corner)")
-  <*> option bufferOpt (long "buffer-zone"
-                        <> short 'b'
-                        <> metavar "ROWS"
-                        <> value 0
-                        <> showDefault
-                        <> help "Number of empty boxes surrounding start position")
+  <*> option readNonNegInt (long "buffer-zone"
+                            <> short 'b'
+                            <> metavar "ROWS"
+                            <> value 0
+                            <> showDefault
+                            <> help "Number of empty boxes surrounding start position")
   <*> option (threadGen <$> readAnyInt) (long "seed"
                                          <> metavar "SEED"
                                          <> value (const systemGen)
                                          <> help "Override default random seed")
   <*> hsubparser (modeUI <> modeBench)
   where names = intercalate ", " (map name knownPlayers)
-
-        bufferOpt = intOpt (>=0) "must be a non-negative integer"
 
         startMoveOpt = readOneOf [("center", Center), ("corner", Corner)]
         playerOpt = readOneOf [(name p, p) | p <- knownPlayers]
@@ -209,28 +208,28 @@ uiCfg =
   <$> flag True False (long "non-interactive"
                        <> short 'n'
                        <> help "Run in non-interactive mode")
-  <*> option posIntOpt (long "delay"
-                        <> short 'd'
-                        <> metavar "DELAY"
-                        <> value 200
-                        <> showDefault
-                        <> help "Delay (in ms) to use in non-interactive mode")
+  <*> option readPosInt (long "delay"
+                         <> short 'd'
+                         <> metavar "DELAY"
+                         <> value 200
+                         <> showDefault
+                         <> help "Delay (in ms) to use in non-interactive mode")
 
 benchCfg :: SystemEnv -> Parser BenchCfg
 benchCfg (SystemEnv {numCPUs}) =
   BenchCfg
-  <$> option posIntOpt (long "num-iters"
-                        <> short 'n'
-                        <> metavar "ITERS"
-                        <> value 1000
-                        <> showDefault
-                        <> help "Number of games to benchmark the bot on")
-  <*> option posIntOpt (long "num-workers"
-                        <> short 't'
-                        <> metavar "WORKERS"
-                        <> value numCPUs
-                        <> showDefault
-                        <> help "Number of workers to run benchmark on")
+  <$> option readPosInt (long "num-iters"
+                         <> short 'n'
+                         <> metavar "ITERS"
+                         <> value 1000
+                         <> showDefault
+                         <> help "Number of games to benchmark the bot on")
+  <*> option readPosInt (long "num-workers"
+                         <> short 't'
+                         <> metavar "WORKERS"
+                         <> value numCPUs
+                         <> showDefault
+                         <> help "Number of workers to run benchmark on")
 
 getSystemEnv :: IO (SystemEnv)
 getSystemEnv = SystemEnv <$> getNumProcessors

@@ -29,7 +29,7 @@ import Options.Applicative (Parser, ReadM,
                             execParser,
                             command, hsubparser,
                             helper, info, progDesc, fullDesc,
-                            long, short, metavar, help, value, showDefault,
+                            long, metavar, help, value, showDefault,
                             option, flag,
                             maybeReader, eitherReader, auto, readerError)
 
@@ -168,25 +168,21 @@ cfg :: SystemEnv -> Parser Cfg
 cfg env =
   Cfg
   <$> option readFieldSpec (long "field"
-                            <> short 'f'
                             <> metavar "SPEC"
                             <> value Easy
                             <> showDefault
                             <> help "Field specification (easy, medium, hard or RxCxM)")
   <*> option readPlayer (long "player"
-                         <> short 'p'
                          <> metavar "PLAYER"
                          <> value defaultPlayer
                          <> showDefault
                          <> help ("Player (known: " ++ names ++ ")"))
   <*> option readStartMove (long "start-move"
-                            <> short 's'
                             <> metavar "START"
                             <> value Center
                             <> showDefault
                             <> help "Start move (center or corner)")
   <*> option readNonNegInt (long "buffer-zone"
-                            <> short 'b'
                             <> metavar "ROWS"
                             <> value 0
                             <> showDefault
@@ -209,10 +205,8 @@ uiCfg :: Parser UICfg
 uiCfg =
   UICfg
   <$> flag True False (long "non-interactive"
-                       <> short 'n'
                        <> help "Run in non-interactive mode")
   <*> option readPosInt (long "delay"
-                         <> short 'd'
                          <> metavar "DELAY"
                          <> value 200
                          <> showDefault
@@ -222,13 +216,11 @@ benchCfg :: SystemEnv -> Parser BenchCfg
 benchCfg (SystemEnv {numCPUs}) =
   BenchCfg
   <$> option readPosInt (long "num-iters"
-                         <> short 'n'
                          <> metavar "ITERS"
                          <> value 1000
                          <> showDefault
                          <> help "Number of games to benchmark the bot on")
   <*> option readPosInt (long "num-workers"
-                         <> short 't'
                          <> metavar "WORKERS"
                          <> value numCPUs
                          <> showDefault

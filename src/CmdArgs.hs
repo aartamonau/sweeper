@@ -161,6 +161,9 @@ readFieldSpec = readOneOf mnemonicSpecs <|> readCustomFieldSpec
 readPlayer :: ReadM Player
 readPlayer = readOneOf [(name p, p) | p <- knownPlayers]
 
+readStartMove :: ReadM StartMove
+readStartMove = readOneOf [("center", Center), ("corner", Corner)]
+
 cfg :: SystemEnv -> Parser Cfg
 cfg env =
   Cfg
@@ -176,12 +179,12 @@ cfg env =
                          <> value defaultPlayer
                          <> showDefault
                          <> help ("Player (known: " ++ names ++ ")"))
-  <*> option startMoveOpt (long "start-move"
-                           <> short 's'
-                           <> metavar "START"
-                           <> value Center
-                           <> showDefault
-                           <> help "Start move (center or corner)")
+  <*> option readStartMove (long "start-move"
+                            <> short 's'
+                            <> metavar "START"
+                            <> value Center
+                            <> showDefault
+                            <> help "Start move (center or corner)")
   <*> option readNonNegInt (long "buffer-zone"
                             <> short 'b'
                             <> metavar "ROWS"
@@ -194,8 +197,6 @@ cfg env =
                                          <> help "Override default random seed")
   <*> hsubparser (modeUI <> modeBench)
   where names = intercalate ", " (map name knownPlayers)
-
-        startMoveOpt = readOneOf [("center", Center), ("corner", Corner)]
 
         modeUI = command "ui" $ info (ModeUI <$> uiCfg) uiDesc
         uiDesc = progDesc "View a bot play using Web interface"

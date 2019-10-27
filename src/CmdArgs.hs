@@ -31,7 +31,7 @@ import Options.Applicative (Parser, ReadM,
                             helper, info, progDesc, fullDesc,
                             long, short, metavar, help, value, showDefault,
                             option, flag,
-                            maybeReader, eitherReader)
+                            maybeReader, eitherReader, auto, readerError)
 
 import Player (Player(name))
 
@@ -114,8 +114,8 @@ cfgMakeGen = mkGen
 cfgMode :: Cfg -> Mode
 cfgMode = mode
 
-anyIntOpt :: ReadM Int
-anyIntOpt = intOpt (const True) "must be an integer"
+readAnyInt :: ReadM Int
+readAnyInt = auto <|> readerError "must be an integer"
 
 intOpt :: (Int -> Bool) -> String -> ReadM Int
 intOpt pred msg = eitherReader parse
@@ -184,10 +184,10 @@ cfg env =
                         <> value 0
                         <> showDefault
                         <> help "Number of empty boxes surrounding start position")
-  <*> option (threadGen <$> anyIntOpt) (long "seed"
-                                        <> metavar "SEED"
-                                        <> value (const systemGen)
-                                        <> help "Override default random seed")
+  <*> option (threadGen <$> readAnyInt) (long "seed"
+                                         <> metavar "SEED"
+                                         <> value (const systemGen)
+                                         <> help "Override default random seed")
   <*> hsubparser (modeUI <> modeBench)
   where names = intercalate ", " (map name knownPlayers)
 

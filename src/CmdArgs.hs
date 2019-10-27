@@ -158,6 +158,9 @@ readFieldSpec :: ReadM FieldSpec
 readFieldSpec = readOneOf mnemonicSpecs <|> readCustomFieldSpec
   where mnemonicSpecs  = [("easy", Easy), ("medium", Medium), ("hard", Hard)]
 
+readPlayer :: ReadM Player
+readPlayer = readOneOf [(name p, p) | p <- knownPlayers]
+
 cfg :: SystemEnv -> Parser Cfg
 cfg env =
   Cfg
@@ -167,12 +170,12 @@ cfg env =
                             <> value Easy
                             <> showDefault
                             <> help "Field specification (easy, medium, hard or RxCxM)")
-  <*> option playerOpt (long "player"
-                        <> short 'p'
-                        <> metavar "PLAYER"
-                        <> value defaultPlayer
-                        <> showDefault
-                        <> help ("Player (known: " ++ names ++ ")"))
+  <*> option readPlayer (long "player"
+                         <> short 'p'
+                         <> metavar "PLAYER"
+                         <> value defaultPlayer
+                         <> showDefault
+                         <> help ("Player (known: " ++ names ++ ")"))
   <*> option startMoveOpt (long "start-move"
                            <> short 's'
                            <> metavar "START"
@@ -193,7 +196,6 @@ cfg env =
   where names = intercalate ", " (map name knownPlayers)
 
         startMoveOpt = readOneOf [("center", Center), ("corner", Corner)]
-        playerOpt = readOneOf [(name p, p) | p <- knownPlayers]
 
         modeUI = command "ui" $ info (ModeUI <$> uiCfg) uiDesc
         uiDesc = progDesc "View a bot play using Web interface"

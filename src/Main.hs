@@ -12,5 +12,4 @@ main = runWithCfg dispatch
   where dispatch cfg
           | ModeUI    uiCfg    <- mode = UI.run cfg uiCfg
           | ModeBench benchCfg <- mode = Bench.run cfg benchCfg
-          | otherwise                  = error "can't happen"
           where mode = cfgMode cfg

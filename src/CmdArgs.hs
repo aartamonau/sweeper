@@ -48,9 +48,6 @@ knownPlayers = [Constraints.player, Dummy.player, SinglePoint.player]
 defaultPlayer :: Player
 defaultPlayer = head knownPlayers
 
-threadGen :: Int -> Int -> IO Gen
-threadGen seed tid = newGen (seed `xor` tid)
-
 data FieldSpec = Easy | Medium | Hard | Custom Int Int Int
 
 instance Show FieldSpec where
@@ -82,7 +79,7 @@ data Cfg =
       , player    :: Player
       , start     :: StartMove
       , buffer    :: Int
-      , mkGen     :: Int -> IO Gen
+      , seed      :: Maybe Int
       , mode      :: Mode
       }
 
@@ -109,7 +106,9 @@ cfgBuffer :: Cfg -> Int
 cfgBuffer = buffer
 
 cfgMakeGen :: Cfg -> Int -> IO Gen
-cfgMakeGen = mkGen
+cfgMakeGen (Cfg {seed}) tid
+  | Just s  <- seed = newGen (s `xor` tid)
+  | Nothing <- seed = systemGen
 
 cfgMode :: Cfg -> Mode
 cfgMode = mode
@@ -187,10 +186,10 @@ cfg env =
                             <> value 0
                             <> showDefault
                             <> help "Number of empty boxes surrounding start position")
-  <*> option (threadGen <$> readAnyInt) (long "seed"
-                                         <> metavar "SEED"
-                                         <> value (const systemGen)
-                                         <> help "Override default random seed")
+  <*> option (Just <$> readAnyInt) (long "seed"
+                                    <> metavar "SEED"
+                                    <> value Nothing
+                                    <> help "Override default random seed")
   <*> hsubparser (modeUI <> modeBench)
   where names = intercalate ", " (map name knownPlayers)
 

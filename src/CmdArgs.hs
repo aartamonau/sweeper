@@ -157,51 +157,57 @@ readFieldSpec :: ReadM FieldSpec
 readFieldSpec = readOneOf mnemonicSpecs <|> readCustomFieldSpec
   where mnemonicSpecs  = [("easy", Easy), ("medium", Medium), ("hard", Hard)]
 
+parseFieldSpec :: Parser FieldSpec
+parseFieldSpec =
+  option readFieldSpec $
+    long "field"
+    <> metavar "SPEC"
+    <> value Easy
+    <> showDefault
+    <> help "Field specification (easy, medium, hard or RxCxM)"
+
 readPlayer :: ReadM Player
 readPlayer = readOneOf [(name p, p) | p <- knownPlayers]
+
+parsePlayer :: Parser Player
+parsePlayer =
+  option readPlayer (long "player"
+                     <> metavar "PLAYER"
+                     <> value defaultPlayer
+                     <> showDefault
+                     <> help ("Player (one of " ++ names ++ ")"))
+
+  where names = presentOptions $ map name knownPlayers
 
 readStartMove :: ReadM StartMove
 readStartMove = readOneOf [("center", Center), ("corner", Corner)]
 
-cfg :: SystemEnv -> Parser Cfg
-cfg env =
-  Cfg
-  <$> option readFieldSpec (long "field"
-                            <> metavar "SPEC"
-                            <> value Easy
-                            <> showDefault
-                            <> help "Field specification (easy, medium, hard or RxCxM)")
-  <*> option readPlayer (long "player"
-                         <> metavar "PLAYER"
-                         <> value defaultPlayer
-                         <> showDefault
-                         <> help ("Player (known: " ++ names ++ ")"))
-  <*> option readStartMove (long "start-move"
-                            <> metavar "START"
-                            <> value Center
-                            <> showDefault
-                            <> help "Start move (center or corner)")
-  <*> option readNonNegInt (long "buffer-zone"
-                            <> metavar "ROWS"
-                            <> value 0
-                            <> showDefault
-                            <> help "Number of empty boxes surrounding start position")
-  <*> option (Just <$> readAnyInt) (long "seed"
-                                    <> metavar "SEED"
-                                    <> value Nothing
-                                    <> help "Override default random seed")
-  <*> hsubparser (modeUI <> modeBench)
-  where names = intercalate ", " (map name knownPlayers)
+parseStartMove :: Parser StartMove
+parseStartMove =
+  option readStartMove (long "start-move"
+                        <> metavar "START"
+                        <> value Center
+                        <> showDefault
+                        <> help "Start move (center or corner)")
 
-        modeUI = command "ui" $ info (ModeUI <$> uiCfg) uiDesc
-        uiDesc = progDesc "View a bot play using Web interface"
+parseBufferZone :: Parser Int
+parseBufferZone =
+  option readNonNegInt $
+    long "buffer-zone"
+    <> metavar "ROWS"
+    <> value 0
+    <> showDefault
+    <> help "Number of empty boxes surrounding start position"
 
-        modeBench = command "bench" $ info (ModeBench <$> benchCfg env) benchDesc
-        benchDesc = progDesc "Benchmark bot's performance"
+parseSeed :: Parser (Maybe Int)
+parseSeed =
+  option (Just <$> readAnyInt) (long "seed"
+                                <> metavar "SEED"
+                                <> value Nothing
+                                <> help "Override default random seed")
 
-
-uiCfg :: Parser UICfg
-uiCfg =
+parseModeUI :: Parser UICfg
+parseModeUI =
   UICfg
   <$> flag True False (long "non-interactive"
                        <> help "Run in non-interactive mode")
@@ -211,8 +217,8 @@ uiCfg =
                          <> showDefault
                          <> help "Delay (in ms) to use in non-interactive mode")
 
-benchCfg :: SystemEnv -> Parser BenchCfg
-benchCfg (SystemEnv {numCPUs}) =
+parseModeBench :: SystemEnv -> Parser BenchCfg
+parseModeBench (SystemEnv {numCPUs}) =
   BenchCfg
   <$> option readPosInt (long "num-iters"
                          <> metavar "ITERS"
@@ -224,6 +230,25 @@ benchCfg (SystemEnv {numCPUs}) =
                          <> value numCPUs
                          <> showDefault
                          <> help "Number of workers to run benchmark on")
+
+parseMode :: SystemEnv -> Parser Mode
+parseMode env = hsubparser (modeUI <> modeBench)
+  where modeUI = command "ui" $ info (ModeUI <$> parseModeUI) uiDesc
+        uiDesc = progDesc "View a bot play using Web interface"
+
+        modeBench = command "bench" $
+                      info (ModeBench <$> parseModeBench env) benchDesc
+        benchDesc = progDesc "Benchmark bot's performance"
+
+cfg :: SystemEnv -> Parser Cfg
+cfg env =
+  Cfg
+  <$> parseFieldSpec
+  <*> parsePlayer
+  <*> parseStartMove
+  <*> parseBufferZone
+  <*> parseSeed
+  <*> parseMode env
 
 getSystemEnv :: IO (SystemEnv)
 getSystemEnv = SystemEnv <$> getNumProcessors

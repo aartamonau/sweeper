@@ -19,7 +19,6 @@ module CmdArgs
        where
 
 import Data.Bits (xor)
-import Data.List (intercalate, lookup)
 import Data.List.Split (splitOn)
 import Control.Applicative ((<|>))
 import GHC.Conc (getNumProcessors)
@@ -31,8 +30,9 @@ import Options.Applicative (Parser, ReadM,
                             helper, info, progDesc, fullDesc,
                             long, metavar, help, value, showDefault,
                             option, flag,
-                            maybeReader, eitherReader)
+                            maybeReader)
 
+import CmdArgs.Helpers (presentList)
 import qualified CmdArgs.Read as Read
 import Player (Player(name))
 
@@ -114,23 +114,6 @@ cfgMakeGen (Cfg {seed}) tid
 cfgMode :: Cfg -> Mode
 cfgMode = mode
 
-presentOptions :: [String] -> String
-presentOptions options = intercalate ", " butLast ++ maybeLast
-  where n = length options
-        (butLast, last) = splitAt (n-1) options'
-        options' = ["`" ++ option ++ "'" | option <- options]
-
-        maybeLast | [x] <- last = " or " ++ x
-                  | otherwise   = ""
-
-readOneOf :: [(String, a)] -> ReadM a
-readOneOf pairs = eitherReader doRead
-  where doRead value
-          | Just x <- lookup value pairs = Right x
-          | otherwise = Left errorMsg
-
-        errorMsg = "the value must be one of " ++ presentOptions (map fst pairs)
-
 readCustomFieldSpec :: ReadM FieldSpec
 readCustomFieldSpec = maybeReader reader
   where reader value
@@ -141,7 +124,7 @@ readCustomFieldSpec = maybeReader reader
           | otherwise = Nothing
 
 readFieldSpec :: ReadM FieldSpec
-readFieldSpec = readOneOf mnemonicSpecs <|> readCustomFieldSpec
+readFieldSpec = Read.oneOf mnemonicSpecs <|> readCustomFieldSpec
   where mnemonicSpecs  = [("easy", Easy), ("medium", Medium), ("hard", Hard)]
 
 parseFieldSpec :: Parser FieldSpec
@@ -154,7 +137,7 @@ parseFieldSpec =
     <> help "Field specification (easy, medium, hard or RxCxM)"
 
 readPlayer :: ReadM Player
-readPlayer = readOneOf [(name p, p) | p <- knownPlayers]
+readPlayer = Read.oneOf [(name p, p) | p <- knownPlayers]
 
 parsePlayer :: Parser Player
 parsePlayer =
@@ -164,10 +147,10 @@ parsePlayer =
                      <> showDefault
                      <> help ("Player (one of " ++ names ++ ")"))
 
-  where names = presentOptions $ map name knownPlayers
+  where names = presentList $ map name knownPlayers
 
 readStartMove :: ReadM StartMove
-readStartMove = readOneOf [("center", Center), ("corner", Corner)]
+readStartMove = Read.oneOf [("center", Center), ("corner", Corner)]
 
 parseStartMove :: Parser StartMove
 parseStartMove =

@@ -11,6 +11,7 @@ cabal-version:       >=1.10
 executable sweeper-ai
   main-is:             Main.hs
   other-modules:       CmdArgs
+                       CmdArgs.Read
                        Game
                        Mode.Bench
                        Mode.Common

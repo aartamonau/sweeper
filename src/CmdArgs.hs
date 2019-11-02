@@ -31,8 +31,9 @@ import Options.Applicative (Parser, ReadM,
                             helper, info, progDesc, fullDesc,
                             long, metavar, help, value, showDefault,
                             option, flag,
-                            maybeReader, eitherReader, auto, readerError)
+                            maybeReader, eitherReader)
 
+import qualified CmdArgs.Read as Read
 import Player (Player(name))
 
 import qualified Player.Constraints as Constraints
@@ -113,20 +114,6 @@ cfgMakeGen (Cfg {seed}) tid
 cfgMode :: Cfg -> Mode
 cfgMode = mode
 
-readAnyInt :: ReadM Int
-readAnyInt = readInt (const True) "must be an integer"
-
-readPosInt :: ReadM Int
-readPosInt = readInt (>0) "must be a positive integer"
-
-readNonNegInt :: ReadM Int
-readNonNegInt = readInt (>=0) "must be a non-negative integer"
-
-readInt :: (Int -> Bool) -> String -> ReadM Int
-readInt pred errorMsg = go <|> readerError errorMsg
-  where go = do value <- auto
-                if pred value then return value else fail ""
-
 presentOptions :: [String] -> String
 presentOptions options = intercalate ", " butLast ++ maybeLast
   where n = length options
@@ -192,7 +179,7 @@ parseStartMove =
 
 parseBufferZone :: Parser Int
 parseBufferZone =
-  option readNonNegInt $
+  option Read.nonNegativeInt $
     long "buffer-zone"
     <> metavar "ROWS"
     <> value 0
@@ -201,35 +188,38 @@ parseBufferZone =
 
 parseSeed :: Parser (Maybe Int)
 parseSeed =
-  option (Just <$> readAnyInt) (long "seed"
-                                <> metavar "SEED"
-                                <> value Nothing
-                                <> help "Override default random seed")
+  option (Just <$> Read.int) (long "seed"
+                              <> metavar "SEED"
+                              <> value Nothing
+                              <> help "Override default random seed")
 
 parseModeUI :: Parser UICfg
 parseModeUI =
   UICfg
   <$> flag True False (long "non-interactive"
                        <> help "Run in non-interactive mode")
-  <*> option readPosInt (long "delay"
-                         <> metavar "DELAY"
-                         <> value 200
-                         <> showDefault
-                         <> help "Delay (in ms) to use in non-interactive mode")
+  <*> option Read.positiveInt
+             (long "delay"
+              <> metavar "DELAY"
+              <> value 200
+              <> showDefault
+              <> help "Delay (in ms) to use in non-interactive mode")
 
 parseModeBench :: SystemEnv -> Parser BenchCfg
 parseModeBench (SystemEnv {numCPUs}) =
   BenchCfg
-  <$> option readPosInt (long "num-iters"
-                         <> metavar "ITERS"
-                         <> value 1000
-                         <> showDefault
-                         <> help "Number of games to benchmark the bot on")
-  <*> option readPosInt (long "num-workers"
-                         <> metavar "WORKERS"
-                         <> value numCPUs
-                         <> showDefault
-                         <> help "Number of workers to run benchmark on")
+  <$> option Read.positiveInt
+             (long "num-iters"
+              <> metavar "ITERS"
+              <> value 1000
+              <> showDefault
+              <> help "Number of games to benchmark the bot on")
+  <*> option Read.positiveInt
+             (long "num-workers"
+              <> metavar "WORKERS"
+              <> value numCPUs
+              <> showDefault
+              <> help "Number of workers to run benchmark on")
 
 parseMode :: SystemEnv -> Parser Mode
 parseMode env = hsubparser (modeUI <> modeBench)

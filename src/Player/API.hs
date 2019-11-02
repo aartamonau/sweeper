@@ -1,25 +1,22 @@
 module Player.API
-       (
-         Player
-       , Strategy
-       , makePlayer
+  ( Player
+  , Strategy
+  , makePlayer
+  , openEmpty
+  , markMine
+  , getPlay
+  , surrender
+  , posInfo
+  , st
+  , rand
+  , module Rand
+  ) where
 
-       , openEmpty
-       , markMine
-       , getPlay
-       , surrender
-       , posInfo
-       , st
-       , rand
-
-       , module Rand
-       ) where
-
-import Control.Monad.ST (ST, RealWorld)
+import Control.Monad.ST (RealWorld, ST)
 import Control.Monad.Trans.Free (liftF)
 
 import Play (Play, Pos)
-import Player (Player, Strategy, Move (..), makePlayer)
+import Player (Move(..), Player, Strategy, makePlayer)
 import Rand (Rand, uniform, uniformR)
 
 openEmpty :: Pos -> Strategy [Pos]

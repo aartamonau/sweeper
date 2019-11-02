@@ -1,31 +1,31 @@
 module Rand
-       (
-         Rand
-       , Gen
-       , newGen
-       , systemGen
-       , runRand
-
-       , randomSubset
-
-       , uniform
-       , uniformR
-       ) where
+  ( Rand
+  , Gen
+  , newGen
+  , systemGen
+  , runRand
+  , randomSubset
+  , uniform
+  , uniformR
+  ) where
 
 import Control.Monad (when)
-import Control.Monad.ST (ST, RealWorld, stToIO)
+import Control.Monad.ST (RealWorld, ST, stToIO)
 import qualified Data.Array.MArray as MArr
 import Data.Array.ST (STArray)
 import Data.Vector (singleton)
 
-import System.Random.MWC (GenST, initialize, withSystemRandom, asGenST)
+import System.Random.MWC (GenST, asGenST, initialize, withSystemRandom)
 import qualified System.Random.MWC as R
-import System.Random.MWC.Monad (RandST, uniform, uniformR, toRand)
+import System.Random.MWC.Monad (RandST, toRand, uniform, uniformR)
 import qualified System.Random.MWC.Monad as M
 
 type Rand a = RandST RealWorld a
 
-newtype Gen = Gen { unGen :: GenST RealWorld }
+newtype Gen =
+  Gen
+    { unGen :: GenST RealWorld
+    }
 
 newGen :: Int -> IO Gen
 newGen = stToIO . (fmap Gen) . initialize . singleton . fromIntegral
@@ -41,15 +41,18 @@ randomSubset :: Int -> [a] -> Rand [a]
 randomSubset k xs
   | length init < k = return xs
   | otherwise       = toRand go
-  where (init, rest) = splitAt k xs
+  where
+    (init, rest) = splitAt k xs
 
-        go gen =
-          do arr <- MArr.newListArray (0, k-1) init
-             mapM_ (maybeSwap gen arr) $ zip [k..] rest
-             MArr.getElems arr
+    go gen = do
+      arr <- MArr.newListArray (0, k-1) init
+      mapM_ (maybeSwap gen arr) $ zip [k..] rest
+      MArr.getElems arr
 
-        maybeSwap :: GenST RealWorld
-                  -> STArray RealWorld Int a -> (Int, a) -> ST RealWorld ()
-        maybeSwap gen arr (i, x) =
-          do j <- R.uniformR (0, i) gen
-             when (j < k) $ MArr.writeArray arr j x
+    maybeSwap :: GenST RealWorld
+              -> STArray RealWorld Int a
+              -> (Int, a)
+              -> ST RealWorld ()
+    maybeSwap gen arr (i, x) = do
+      j <- R.uniformR (0, i) gen
+      when (j < k) $ MArr.writeArray arr j x

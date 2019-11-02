@@ -20,8 +20,6 @@ executable sweeper-ai
                        Play
                        Player
                        Player.API
-                       Player.Constraints
-                       Player.Constraints.Cells
                        Player.Dummy
                        Player.SinglePoint
                        PlayStats

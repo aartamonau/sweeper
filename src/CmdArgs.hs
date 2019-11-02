@@ -36,7 +36,6 @@ import CmdArgs.Helpers (presentList)
 import qualified CmdArgs.Read as Read
 import Player (Player(name))
 
-import qualified Player.Constraints as Constraints
 import qualified Player.Dummy as Dummy
 import qualified Player.SinglePoint as SinglePoint
 
@@ -44,7 +43,7 @@ import Rand (Gen, newGen, systemGen)
 
 
 knownPlayers :: [Player]
-knownPlayers = [Constraints.player, Dummy.player, SinglePoint.player]
+knownPlayers = [Dummy.player, SinglePoint.player]
 
 defaultPlayer :: Player
 defaultPlayer = head knownPlayers

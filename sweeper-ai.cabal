@@ -13,6 +13,7 @@ executable sweeper-ai
   other-modules:       CmdArgs
                        CmdArgs.Helpers
                        CmdArgs.Read
+                       Config
                        Game
                        Mode.Bench
                        Mode.Common

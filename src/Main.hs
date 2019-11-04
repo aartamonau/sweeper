@@ -2,15 +2,14 @@ module Main
   ( main
   ) where
 
-import CmdArgs (Mode(ModeUI, ModeBench), cfgMode, runWithCfg)
+import CmdArgs (Mode(ModeUI, ModeBench))
+import qualified CmdArgs
+
 import qualified Mode.UI as UI
 import qualified Mode.Bench as Bench
 
 main :: IO ()
-main = runWithCfg dispatch
+main = CmdArgs.run dispatch
   where
-    dispatch cfg
-      | ModeUI    uiCfg    <- mode = UI.run cfg uiCfg
-      | ModeBench benchCfg <- mode = Bench.run cfg benchCfg
-      where
-        mode = cfgMode cfg
+    dispatch cfg (ModeUI uiCfg)       = UI.run cfg uiCfg
+    dispatch cfg (ModeBench benchCfg) = Bench.run cfg benchCfg

@@ -7,15 +7,10 @@ module Mode.Bench
 import Control.Concurrent (setNumCapabilities)
 import Control.Concurrent.Async (mapConcurrently)
 
-import CmdArgs
-  ( BenchCfg
-  , Cfg
-  , benchNumIters
-  , benchNumWorkers
-  , cfgMakeGen
-  , cfgPlayer
-  , cfgStartMove
-  )
+import CmdArgs (BenchCfg, benchNumIters, benchNumWorkers)
+
+import Config (Config)
+import qualified Config
 
 import Play (PlayError(ErrorNoChange), isWon, markMine, newPlay, openEmpty)
 import Player
@@ -29,7 +24,7 @@ import Rand (Gen)
 
 import Mode.Common (randomGame)
 
-run :: Cfg -> BenchCfg -> IO ()
+run :: Config -> BenchCfg -> IO ()
 run cfg benchCfg = do
   putStrLn $ "Number of iterations: " ++ show numIters
   putStrLn $ "Number of workers: " ++ show numWorkers
@@ -51,19 +46,19 @@ workerIters total workers i = total `div` workers + extra
       | i < rem   = 1
       | otherwise = 0
 
-worker :: Cfg -> Int -> Int -> IO PlayStats
+worker :: Config -> Int -> Int -> IO PlayStats
 worker cfg tid n = do
-  gen <- cfgMakeGen cfg tid
+  gen <- Config.makeGen cfg tid
   loop n gen mempty
   where
     loop 0 _   !stats = return stats
     loop i gen !stats = iter cfg gen stats >>= loop (i - 1) gen
 
-iter :: Cfg -> Gen -> PlayStats -> IO PlayStats
+iter :: Config -> Gen -> PlayStats -> IO PlayStats
 iter cfg gen stats = do
   game <- randomGame gen cfg
 
-  let initStrategy = strategy (cfgPlayer cfg) (cfgStartMove cfg)
+  let initStrategy = strategy (Config.player cfg) (Config.startMove cfg)
   loop (newPlay game) initStrategy
 
   where

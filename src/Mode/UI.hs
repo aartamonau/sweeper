@@ -5,14 +5,14 @@ module Mode.UI
 import Control.Concurrent (threadDelay)
 
 import CmdArgs
-  ( Cfg
-  , UICfg
-  , cfgMakeGen
-  , cfgPlayer
-  , cfgStartMove
+  ( UICfg
   , uiDelay
   , uiInteractive
   )
+
+import Config (Config)
+import qualified Config
+
 import Play
   ( Play
   , PlayError(ErrorFired, ErrorKilled, ErrorNoChange)
@@ -47,20 +47,20 @@ import UI.UI
 
 data Ctx =
   Ctx
-    { cfg           :: Cfg
+    { cfg           :: Config
     , uiCfg         :: UICfg
     , stats         :: PlayStats
     , deviceContext :: DeviceContext
     , rndGen        :: Gen
     }
 
-run :: Cfg -> UICfg -> IO ()
+run :: Config -> UICfg -> IO ()
 run cfg = runUI . enterLoop cfg
 
 draw :: Ctx -> Play -> Draw ()
 draw (Ctx {stats, cfg}) play = drawUI $ UI {play, stats, playerName}
   where
-    playerName = name $ cfgPlayer cfg
+    playerName = name $ Config.player cfg
 
 present :: Ctx -> Draw () -> IO ()
 present ctx@(Ctx {deviceContext}) d = display deviceContext d >> wait ctx
@@ -70,9 +70,9 @@ wait (Ctx {deviceContext, uiCfg})
   | uiInteractive uiCfg = waitKeypress deviceContext
   | otherwise           = threadDelay (1000 * uiDelay uiCfg)
 
-enterLoop :: Cfg -> UICfg -> DeviceContext -> IO ()
+enterLoop :: Config -> UICfg -> DeviceContext -> IO ()
 enterLoop cfg uiCfg deviceContext = do
-  gen <- cfgMakeGen cfg 0
+  gen <- Config.makeGen cfg 0
   loop (ctx gen)
   where
     ctx gen =
@@ -87,7 +87,8 @@ enterLoop cfg uiCfg deviceContext = do
 loop :: Ctx -> IO ()
 loop ctx@(Ctx {cfg, rndGen}) = do
   game <- randomGame rndGen cfg
-  loopGame ctx (newPlay game) (strategy (cfgPlayer cfg) (cfgStartMove cfg))
+  loopGame ctx (newPlay game) $
+    strategy (Config.player cfg) (Config.startMove cfg)
 
 loopGame :: Ctx -> Play -> Strategy () -> IO ()
 loopGame ctx play strategy = do

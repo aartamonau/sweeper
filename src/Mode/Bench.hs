@@ -6,6 +6,8 @@ module Mode.Bench
 
 import Control.Concurrent (setNumCapabilities)
 import Control.Concurrent.Async (mapConcurrently)
+import Data.Maybe (fromMaybe)
+import GHC.Conc (getNumProcessors)
 
 import CmdArgs (BenchCfg, benchNumIters, benchNumWorkers)
 
@@ -26,17 +28,19 @@ import Mode.Common (randomGame)
 
 run :: Config -> BenchCfg -> IO ()
 run cfg benchCfg = do
+  numCPUs <- getNumProcessors
+  let numWorkers = fromMaybe numCPUs (benchNumWorkers benchCfg)
+
   putStrLn $ "Number of iterations: " ++ show numIters
   putStrLn $ "Number of workers: " ++ show numWorkers
 
   setNumCapabilities numWorkers
-  mapConcurrently (uncurry $ worker cfg) works >>= print . mconcat
+
+  let jobs = [(i, workerIters numIters numWorkers i) | i <- [0..numWorkers-1]]
+  mapConcurrently (uncurry $ worker cfg) jobs >>= print . mconcat
 
   where
-    numIters   = benchNumIters benchCfg
-    numWorkers = benchNumWorkers benchCfg
-
-    works = [(i, workerIters numIters numWorkers i) | i <- [0..numWorkers-1]]
+    numIters = benchNumIters benchCfg
 
 workerIters :: Int -> Int -> Int -> Int
 workerIters total workers i = total `div` workers + extra

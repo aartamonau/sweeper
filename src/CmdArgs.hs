@@ -9,8 +9,6 @@ module CmdArgs
   , run
   ) where
 
-import GHC.Conc (getNumProcessors)
-
 import Options.Applicative
   ( Parser
   , command
@@ -26,6 +24,7 @@ import Options.Applicative
   , option
   , progDesc
   , showDefault
+  , showDefaultWith
   , value
   )
 
@@ -43,15 +42,10 @@ data UICfg =
 data BenchCfg =
   BenchCfg
     { benchNumIters :: Int
-    , benchNumWorkers :: Int
+    , benchNumWorkers :: Maybe Int
     }
 
 data Mode = ModeUI UICfg | ModeBench BenchCfg
-
-data SystemEnv =
-  SystemEnv
-    { numCPUs :: Int
-    }
 
 parseModeUI :: Parser UICfg
 parseModeUI =
@@ -65,8 +59,8 @@ parseModeUI =
            <> showDefault
            <> help "Delay (in ms) to use in non-interactive mode")
 
-parseModeBench :: SystemEnv -> Parser BenchCfg
-parseModeBench (SystemEnv {numCPUs}) =
+parseModeBench :: Parser BenchCfg
+parseModeBench =
   BenchCfg
     <$> option Read.positiveInt
           (long "num-iters"
@@ -74,33 +68,26 @@ parseModeBench (SystemEnv {numCPUs}) =
            <> value 1000
            <> showDefault
            <> help "Number of games to benchmark the bot on")
-    <*> option Read.positiveInt
+    <*> option (Just <$> Read.positiveInt)
           (long "num-workers"
            <> metavar "WORKERS"
-           <> value numCPUs
-           <> showDefault
+           <> value Nothing
+           <> showDefaultWith (const "number of logical CPUs")
            <> help "Number of workers to run benchmark on")
 
-parseMode :: SystemEnv -> Parser Mode
-parseMode env = hsubparser (modeUI <> modeBench)
+parseMode :: Parser Mode
+parseMode = hsubparser (modeUI <> modeBench)
   where
     modeUI = command "ui" $ info (ModeUI <$> parseModeUI) uiDesc
     uiDesc = progDesc "View a bot play using Web interface"
-    modeBench =
-      command "bench" $ info (ModeBench <$> parseModeBench env) benchDesc
+    modeBench = command "bench" $ info (ModeBench <$> parseModeBench) benchDesc
     benchDesc = progDesc "Benchmark bot's performance"
 
-parse :: SystemEnv -> Parser (Config, Mode)
-parse env = (,) <$> Config.parse <*> parseMode env
-
-getSystemEnv :: IO (SystemEnv)
-getSystemEnv = SystemEnv <$> getNumProcessors
+parse :: Parser (Config, Mode)
+parse = (,) <$> Config.parse <*> parseMode
 
 run :: (Config -> Mode -> IO ()) -> IO ()
-run body = do
-  env <- getSystemEnv
-  let parserInfo = info (helper <*> parse env) (desc <> fullDesc)
-  execParser parserInfo >>= uncurry body
-
+run body = execParser parserInfo >>= uncurry body
   where
     desc = progDesc "View and benchmark minesweeper bots."
+    parserInfo = info (helper <*> parse) (desc <> fullDesc)

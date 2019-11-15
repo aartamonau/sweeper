@@ -1,15 +1,22 @@
+{-# LANGUAGE ApplicativeDo #-}
+
 module Mode.UI
-  ( run
+  ( parse
   ) where
 
 import Control.Concurrent (threadDelay)
-
-import CmdArgs
-  ( UICfg
-  , uiDelay
-  , uiInteractive
+import Options.Applicative
+  ( Parser
+  , flag
+  , help
+  , long
+  , metavar
+  , option
+  , showDefault
+  , value
   )
 
+import qualified CmdArgs.Read as Read
 import Config (Config)
 import qualified Config
 
@@ -45,6 +52,26 @@ import UI.UI
   , waitKeypress
   )
 
+data UICfg =
+  UICfg
+    { delay :: Int
+    , interactive :: Bool
+    }
+
+parse :: Parser (Config -> IO ())
+parse = do
+  delay <- option Read.positiveInt
+             (long "delay"
+              <> metavar "DELAY"
+              <> value 200
+              <> showDefault
+              <> help "Delay (in ms) to use in non-interactive mode")
+  interactive <- flag True False
+                   (long "non-interactive"
+                    <> help "Run in non-interactive mode")
+
+  return $ run (UICfg {delay, interactive})
+
 data Ctx =
   Ctx
     { cfg           :: Config
@@ -54,8 +81,8 @@ data Ctx =
     , rndGen        :: Gen
     }
 
-run :: Config -> UICfg -> IO ()
-run cfg = runUI . enterLoop cfg
+run :: UICfg -> Config -> IO ()
+run uiCfg  = runUI . enterLoop uiCfg
 
 draw :: Ctx -> Play -> Draw ()
 draw (Ctx {stats, cfg}) play = drawUI $ UI {play, stats, playerName}
@@ -67,11 +94,11 @@ present ctx@(Ctx {deviceContext}) d = display deviceContext d >> wait ctx
 
 wait :: Ctx -> IO ()
 wait (Ctx {deviceContext, uiCfg})
-  | uiInteractive uiCfg = waitKeypress deviceContext
-  | otherwise           = threadDelay (1000 * uiDelay uiCfg)
+  | interactive uiCfg = waitKeypress deviceContext
+  | otherwise         = threadDelay (1000 * delay uiCfg)
 
-enterLoop :: Config -> UICfg -> DeviceContext -> IO ()
-enterLoop cfg uiCfg deviceContext = do
+enterLoop :: UICfg -> Config -> DeviceContext -> IO ()
+enterLoop uiCfg cfg deviceContext = do
   gen <- Config.makeGen cfg 0
   loop (ctx gen)
   where

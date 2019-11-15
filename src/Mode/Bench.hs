@@ -1,15 +1,26 @@
+{-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE BangPatterns #-}
 
 module Mode.Bench
-  ( run
+  ( parse
   ) where
 
 import Control.Concurrent (setNumCapabilities)
 import Control.Concurrent.Async (mapConcurrently)
 import Data.Maybe (fromMaybe)
 import GHC.Conc (getNumProcessors)
+import Options.Applicative
+  ( Parser
+  , help
+  , long
+  , metavar
+  , option
+  , showDefault
+  , showDefaultWith
+  , value
+  )
 
-import CmdArgs (BenchCfg, benchNumIters, benchNumWorkers)
+import qualified CmdArgs.Read as Read
 
 import Config (Config)
 import qualified Config
@@ -26,21 +37,41 @@ import Rand (Gen)
 
 import Mode.Common (randomGame)
 
-run :: Config -> BenchCfg -> IO ()
-run cfg benchCfg = do
+data BenchCfg =
+  BenchCfg
+    { numIters :: Int
+    , numWorkers :: Maybe Int
+    }
+
+parse :: Parser (Config -> IO ())
+parse = do
+  numIters <- option Read.positiveInt
+                (long "num-iters"
+                 <> metavar "ITERS"
+                 <> value 1000
+                 <> showDefault
+                 <> help "Number of games to benchmark the bot on")
+  numWorkers <- option (Just <$> Read.positiveInt)
+                  (long "num-workers"
+                   <> metavar "WORKERS"
+                   <> value Nothing
+                   <> showDefaultWith (const "number of logical CPUs")
+                   <> help "Number of workers to run benchmark on")
+
+  return $ run (BenchCfg {numWorkers, numIters})
+
+run :: BenchCfg -> Config -> IO ()
+run (BenchCfg {numWorkers, numIters}) cfg = do
   numCPUs <- getNumProcessors
-  let numWorkers = fromMaybe numCPUs (benchNumWorkers benchCfg)
+  let numWorkers' = fromMaybe numCPUs numWorkers
 
   putStrLn $ "Number of iterations: " ++ show numIters
-  putStrLn $ "Number of workers: " ++ show numWorkers
+  putStrLn $ "Number of workers: " ++ show numWorkers'
 
-  setNumCapabilities numWorkers
+  setNumCapabilities numWorkers'
 
-  let jobs = [(i, workerIters numIters numWorkers i) | i <- [0..numWorkers-1]]
+  let jobs = [(i, workerIters numIters numWorkers' i) | i <- [0..numWorkers'-1]]
   mapConcurrently (uncurry $ worker cfg) jobs >>= print . mconcat
-
-  where
-    numIters = benchNumIters benchCfg
 
 workerIters :: Int -> Int -> Int -> Int
 workerIters total workers i = total `div` workers + extra

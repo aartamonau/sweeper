@@ -2,7 +2,7 @@ module Main
   ( main
   ) where
 
-import qualified CmdArgs
+import qualified Cli
 
 main :: IO ()
-main = CmdArgs.run
+main = Cli.run

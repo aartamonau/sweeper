@@ -1,4 +1,4 @@
-module CmdArgs.Helpers
+module Cli.Helpers
   ( presentList
   ) where
 

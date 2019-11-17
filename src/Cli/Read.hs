@@ -1,4 +1,4 @@
-module CmdArgs.Read
+module Cli.Read
   ( int
   , nonNegativeInt
   , oneOf
@@ -9,7 +9,7 @@ import Control.Applicative ((<|>))
 import Data.List (lookup)
 import Options.Applicative (ReadM, auto, eitherReader, readerError)
 
-import CmdArgs.Helpers (presentList)
+import Cli.Helpers (presentList)
 
 int :: ReadM Int
 int = readInt (const True) "must be an integer"

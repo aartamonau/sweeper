@@ -1,6 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 
-module CmdArgs
+module Cli
   ( run
   ) where
 

@@ -20,7 +20,7 @@ import Options.Applicative
   , value
   )
 
-import qualified CmdArgs.Read as Read
+import qualified Cli.Read as Read
 
 import Config (Config)
 import qualified Config

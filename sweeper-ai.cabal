@@ -10,9 +10,9 @@ cabal-version:       >=1.10
 
 executable sweeper-ai
   main-is:             Main.hs
-  other-modules:       CmdArgs
-                       CmdArgs.Helpers
-                       CmdArgs.Read
+  other-modules:       Cli
+                       Cli.Helpers
+                       Cli.Read
                        Config
                        Game
                        Mode

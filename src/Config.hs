@@ -25,8 +25,8 @@ import Options.Applicative
   )
 import Text.Read (readMaybe)
 
-import CmdArgs.Helpers (presentList)
-import qualified CmdArgs.Read as Read
+import Cli.Helpers (presentList)
+import qualified Cli.Read as Read
 
 import Player (Player(name))
 

@@ -8,34 +8,20 @@ import Control.Monad (join)
 
 import Options.Applicative
   ( Parser
-  , command
   , execParser
   , fullDesc
   , helper
-  , hsubparser
   , info
   , progDesc
   )
 
-import Config (Config)
 import qualified Config
-
-import qualified Mode.Bench as ModeBench
-import qualified Mode.UI as ModeUI
-
-parseMode :: Parser (Config -> IO ())
-parseMode = hsubparser (modeUI <> modeBench)
-  where
-    -- TODO: commands and descriptions should go inside modes as well
-    modeUI = command "ui" $ info ModeUI.parse uiDesc
-    uiDesc = progDesc "View a bot play using Web interface"
-    modeBench = command "bench" $ info ModeBench.parse benchDesc
-    benchDesc = progDesc "Benchmark bot's performance"
+import qualified Mode
 
 parse :: Parser (IO ())
 parse = do
   cfg <- Config.parse
-  run <- parseMode
+  run <- Mode.parse
 
   return $ run cfg
 

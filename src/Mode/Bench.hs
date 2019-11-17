@@ -2,7 +2,7 @@
 {-# LANGUAGE BangPatterns #-}
 
 module Mode.Bench
-  ( parse
+  ( mode
   ) where
 
 import Control.Concurrent (setNumCapabilities)
@@ -25,6 +25,9 @@ import qualified CmdArgs.Read as Read
 import Config (Config)
 import qualified Config
 
+import Mode.Type (Mode(Mode))
+import qualified Mode.Type
+
 import Play (PlayError(ErrorNoChange), isWon, markMine, newPlay, openEmpty)
 import Player
   ( FreeF(Free, Pure)
@@ -42,6 +45,12 @@ data BenchCfg =
     { numIters :: Int
     , numWorkers :: Maybe Int
     }
+
+mode :: Mode
+mode = Mode {name, help, parse}
+  where
+    name = "bench"
+    help = "Benchmark bot's performance"
 
 parse :: Parser (Config -> IO ())
 parse = do

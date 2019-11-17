@@ -15,8 +15,10 @@ executable sweeper-ai
                        CmdArgs.Read
                        Config
                        Game
+                       Mode
                        Mode.Bench
                        Mode.Common
+                       Mode.Type
                        Mode.UI
                        Play
                        Player

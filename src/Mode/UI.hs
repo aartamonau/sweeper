@@ -1,7 +1,7 @@
 {-# LANGUAGE ApplicativeDo #-}
 
 module Mode.UI
-  ( parse
+  ( mode
   ) where
 
 import Control.Concurrent (threadDelay)
@@ -19,6 +19,9 @@ import Options.Applicative
 import qualified CmdArgs.Read as Read
 import Config (Config)
 import qualified Config
+import Mode.Type (Mode(Mode))
+import qualified Mode.Type
+import Mode.Common (randomGame)
 
 import Play
   ( Play
@@ -38,7 +41,6 @@ import Player
 import PlayStats (PlayStats, incLost, incStalled, incWon)
 import Rand (Gen)
 
-import Mode.Common (randomGame)
 import UI.UI
   ( DeviceContext
   , Draw
@@ -57,6 +59,12 @@ data UICfg =
     { delay :: Int
     , interactive :: Bool
     }
+
+mode :: Mode
+mode = Mode {name, help, parse}
+  where
+    name = "ui"
+    help = "View a bot play using Web interface"
 
 parse :: Parser (Config -> IO ())
 parse = do

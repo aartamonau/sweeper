@@ -1,7 +1,7 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE BangPatterns #-}
 
-module Mode.Bench
+module Cli.Mode.Bench
   ( mode
   ) where
 
@@ -20,13 +20,11 @@ import Options.Applicative
   , value
   )
 
+import Cli.Config (Config)
+import qualified Cli.Config as Config
+import Cli.Mode.Type (Mode(Mode))
+import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
-
-import Config (Config)
-import qualified Config
-
-import Mode.Type (Mode(Mode))
-import qualified Mode.Type
 
 import Play (PlayError(ErrorNoChange), isWon, markMine, newPlay, openEmpty)
 import Player
@@ -38,7 +36,7 @@ import Player
 import PlayStats (PlayStats, incLost, incStalled, incWon)
 import Rand (Gen)
 
-import Mode.Common (randomGame)
+import Cli.Mode.Common (randomGame)
 
 data BenchCfg =
   BenchCfg

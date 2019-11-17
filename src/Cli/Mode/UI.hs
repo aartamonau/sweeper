@@ -1,6 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 
-module Mode.UI
+module Cli.Mode.UI
   ( mode
   ) where
 
@@ -16,12 +16,12 @@ import Options.Applicative
   , value
   )
 
+import Cli.Config (Config)
+import qualified Cli.Config as Config
+import Cli.Mode.Common (randomGame)
+import Cli.Mode.Type (Mode(Mode))
+import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
-import Config (Config)
-import qualified Config
-import Mode.Type (Mode(Mode))
-import qualified Mode.Type
-import Mode.Common (randomGame)
 
 import Play
   ( Play

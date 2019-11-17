@@ -15,8 +15,8 @@ import Options.Applicative
   , progDesc
   )
 
-import qualified Config
-import qualified Mode
+import qualified Cli.Config as Config
+import qualified Cli.Mode as Mode
 
 parse :: Parser (IO ())
 parse = do

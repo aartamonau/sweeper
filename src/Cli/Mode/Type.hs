@@ -1,10 +1,10 @@
-module Mode.Type
+module Cli.Mode.Type
   ( Mode(Mode, name, help, parse)
   ) where
 
 import Options.Applicative (Parser)
 
-import Config (Config)
+import Cli.Config (Config)
 
 data Mode =
   Mode

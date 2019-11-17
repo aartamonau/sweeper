@@ -1,9 +1,9 @@
-module Mode.Common
+module Cli.Mode.Common
   ( randomGame
   ) where
 
-import Config (Config)
-import qualified Config
+import Cli.Config (Config)
+import qualified Cli.Config as Config
 
 import Game (Game)
 import qualified Game as Game

@@ -1,4 +1,4 @@
-module Config
+module Cli.Config
   ( Config
   , fieldSpec
   , startMove

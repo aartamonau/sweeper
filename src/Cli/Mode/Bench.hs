@@ -26,7 +26,6 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
 
-import Play (PlayError(ErrorNoChange))
 import qualified Play as Play
 import Player
   ( FreeF(Free, Pure)
@@ -121,12 +120,11 @@ iter cfg gen stats = do
     handleOpenEmpty play p k =
       case Play.openEmpty play p of
         (play', Right ps) -> loop play' (k ps)
-        (_, Left err)     -> handleError play (k []) err
+        (_, Left err)     -> handleError err
 
     handleMarkMine play p s =
       case Play.markMine play p of
         (play', Right ()) -> loop play' s
-        (_, Left err)     -> handleError play s err
+        (_, Left err)     -> handleError err
 
-    handleError play s ErrorNoChange = loop play s
-    handleError _ _ _                = return $ incLost stats
+    handleError _ = return $ incLost stats

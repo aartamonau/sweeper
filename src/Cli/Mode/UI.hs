@@ -23,7 +23,7 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
 
-import Play (Play, PlayError(ErrorFired, ErrorKilled, ErrorNoChange))
+import Play (Play, PlayError(ErrorFired, ErrorKilled))
 import qualified Play as Play
 import Player
   ( FreeF(Free, Pure)
@@ -159,14 +159,12 @@ loopStrategy ctx play strategy = do
       present ctx (draw ctx play >> drawError "Player surrenders")
       restart incStalled
 
-    handleError _ ErrorNoChange strategy = nextStep strategy
     handleError play err _               = do
       present ctx (draw ctx play >> drawError (describeError err))
       restart incLost
 
     describeError ErrorKilled = "Player explodes on a mine"
     describeError ErrorFired  = "Player is fired due to incompetence"
-    describeError _           = error "can't happen"
 
     success play strategy
       | Play.isWon play = do

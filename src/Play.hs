@@ -1,6 +1,6 @@
 module Play
   ( Play(numMinesMarked, numUncovered)
-  , PlayError(ErrorFired, ErrorKilled)
+  , PlayError(ErrorKilled, ErrorAlreadyPlayed)
   , Pos
   , Item(Mine, Empty)
   , random
@@ -47,8 +47,8 @@ data Play =
     }
 
 data PlayError
-  = ErrorFired
-  | ErrorKilled
+  = ErrorKilled
+  | ErrorAlreadyPlayed
   deriving (Show)
 
 type PlayResult r = (Play, Either PlayError r)
@@ -108,7 +108,7 @@ numMines (Play {mines}) = mines
 
 openEmpty :: Play -> Pos -> PlayResult [Pos]
 openEmpty play@(Play {field}) p
-  | Just _ <- itm = retError play p ErrorFired
+  | Just _ <- itm = retError play p ErrorAlreadyPlayed
   | otherwise     =
     case field ! p of
       Mine        -> retError play p ErrorKilled
@@ -142,7 +142,7 @@ openEmptyLoop (p, mines) acc@(seen, play)
 
 markMine :: Play -> Pos -> PlayResult ()
 markMine play p
-  | Just _ <- itm = retError play p ErrorFired
+  | Just _ <- itm = retError play p ErrorAlreadyPlayed
   | otherwise     = ret (markBox play p) ()
 
   where

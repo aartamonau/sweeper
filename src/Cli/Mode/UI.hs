@@ -23,7 +23,7 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
 
-import Play (Play, PlayError(ErrorFired, ErrorKilled))
+import Play (Play, PlayError(ErrorKilled, ErrorAlreadyPlayed))
 import qualified Play as Play
 import Player
   ( FreeF(Free, Pure)
@@ -163,8 +163,9 @@ loopStrategy ctx play strategy = do
       present ctx (draw ctx play >> drawError (describeError err))
       restart incLost
 
-    describeError ErrorKilled = "Player explodes on a mine"
-    describeError ErrorFired  = "Player is fired due to incompetence"
+    describeError ErrorKilled         = "Player explodes on a mine"
+    describeError ErrorAlreadyPlayed  =
+      "Player attempted to play a square that had already been opened"
 
     success play strategy
       | Play.isWon play = do

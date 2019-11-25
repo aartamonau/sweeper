@@ -11,9 +11,9 @@ module PlayStats
 
 data PlayStats =
   PlayStats
-    { numWon :: !Int
-    , numLost :: !Int
-    , numStalled :: !Int
+    { numWon :: Int
+    , numLost :: Int
+    , numStalled :: Int
     }
   deriving (Show)
 

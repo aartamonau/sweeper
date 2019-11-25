@@ -14,10 +14,10 @@ import Rand (Rand, randomSubset)
 
 data Game =
   Game
-    { rows :: !Int
-    , columns :: !Int
-    , mines :: !Int
-    , field :: !MineField
+    { rows :: Int
+    , columns :: Int
+    , mines :: Int
+    , field :: MineField
     }
   deriving (Show)
 

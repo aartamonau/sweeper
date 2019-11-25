@@ -75,8 +75,8 @@ import UI.Draw
 data UI =
   UI
     { playerName :: String
-    , stats :: !PlayStats
-    , play :: !Play
+    , stats :: PlayStats
+    , play :: Play
     }
 
 display :: DeviceContext -> Draw () -> IO ()

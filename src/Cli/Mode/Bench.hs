@@ -93,8 +93,8 @@ worker cfg tid n = do
   gen <- Config.makeGen cfg tid
   loop n gen mempty
   where
-    loop 0 _   !stats = return stats
-    loop i gen !stats = iter cfg gen stats >>= loop (i - 1) gen
+    loop 0 _   stats = return stats
+    loop i gen stats = iter cfg gen stats >>= loop (i - 1) gen
 
 iter :: Config -> Gen -> PlayStats -> IO PlayStats
 iter cfg gen stats = do

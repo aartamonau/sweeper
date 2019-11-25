@@ -27,13 +27,13 @@ import qualified Game as Game
 
 data Play =
   Play
-    { game :: {-# UNPACK #-} !Game
+    { game :: Game
 
-    , numMinesMarked :: !Int
-    , numUncovered   :: !Int
+    , numMinesMarked :: Int
+    , numUncovered   :: Int
 
-    , field     :: !(Array Pos (Maybe Item))
-    , errorMove :: !(Maybe Pos)
+    , field     :: Array Pos (Maybe Item)
+    , errorMove :: Maybe Pos
     }
 
 data PlayError

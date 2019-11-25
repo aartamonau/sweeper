@@ -32,8 +32,8 @@ data Play =
     , numMinesMarked :: Int
     , numUncovered   :: Int
 
-    , field     :: Array Pos (Maybe Item)
-    , errorMove :: Maybe Pos
+    , fieldState :: Array Pos (Maybe Item)
+    , errorMove  :: Maybe Pos
     }
 
 data PlayError
@@ -50,7 +50,7 @@ newPlay game =
     { game           = game
     , numMinesMarked = 0
     , numUncovered   = 0
-    , field          = allClosed
+    , fieldState     = allClosed
     , errorMove      = Nothing
     }
   where
@@ -67,7 +67,7 @@ playBounds :: Play -> (Pos, Pos)
 playBounds = Game.bounds . game
 
 playItem :: Play -> Pos -> Maybe Item
-playItem (Play {field}) p  = field ! p
+playItem (Play {fieldState}) p  = fieldState ! p
 
 playNeighbors :: Play -> Pos -> [Pos]
 playNeighbors play p@(pi, pj) =
@@ -139,7 +139,7 @@ isWon play@(Play {game, numMinesMarked, numUncovered}) =
     numEmpty = Game.rows game * Game.columns game - Game.mines game
 
 isOpened :: Play -> Pos -> Bool
-isOpened (Play {field}) p = isJust (field ! p)
+isOpened (Play {fieldState}) p = isJust (fieldState ! p)
 
 uncoverBox :: Play -> Pos -> Play
 uncoverBox play@(Play {game}) p =
@@ -149,7 +149,8 @@ markBox :: Play -> Pos -> Play
 markBox play p = incMarkedMines $ setBox play p Mine
 
 setBox :: Play -> Pos -> Item -> Play
-setBox play@(Play {field}) p item = play {field = field // [(p, Just item)]}
+setBox play@(Play {fieldState}) p item =
+  play {fieldState = fieldState // [(p, Just item)]}
 
 incMarkedMines :: Play -> Play
 incMarkedMines play@(Play {numMinesMarked}) =

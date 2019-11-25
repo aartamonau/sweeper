@@ -37,7 +37,7 @@ import Player
 import PlayStats (PlayStats, incLost, incStalled, incWon)
 import Rand (Gen)
 
-import Cli.Mode.Common (randomGame)
+import Cli.Mode.Common (randomPlay)
 
 data BenchCfg =
   BenchCfg
@@ -99,10 +99,10 @@ worker cfg tid n = do
 
 iter :: Config -> Gen -> PlayStats -> IO PlayStats
 iter cfg gen stats = do
-  game <- randomGame gen cfg
+  play <- randomPlay gen cfg
 
   let initStrategy = strategy (Config.player cfg) (Config.startMove cfg)
-  loop (Play.newPlay game) initStrategy
+  loop play initStrategy
 
   where
     loop play s

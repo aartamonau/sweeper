@@ -3,7 +3,7 @@ module Play
   , PlayError(ErrorNoChange, ErrorFired, ErrorKilled)
   , Pos
   , Item(Mine, Empty)
-  , newPlay
+  , random
   , rows
   , columns
   , openEmpty
@@ -18,20 +18,30 @@ module Play
   ) where
 
 
-import Data.Array (Array, (!), (//), inRange, listArray)
+import Data.Array (Array, (!), (//), accumArray, inRange, listArray, range)
 import Data.List (foldl')
 import Data.Maybe (isJust)
 
-import Game (Game, Item(Empty, Mine), Pos)
-import qualified Game as Game
+import Rand (Rand, randomSubset)
+
+type Pos = (Int, Int)
+type MineField = Array Pos Item
+
+data Item
+  = Mine
+  | Empty Int
+  deriving (Show, Eq)
 
 data Play =
   Play
-    { game :: Game
+    { rows    :: Int
+    , columns :: Int
+    , mines   :: Int
 
     , numMinesMarked :: Int
     , numUncovered   :: Int
 
+    , field      :: MineField
     , fieldState :: Array Pos (Maybe Item)
     , errorMove  :: Maybe Pos
     }
@@ -44,27 +54,42 @@ data PlayError
 
 type PlayResult r = (Play, Either PlayError r)
 
-newPlay :: Game -> Play
-newPlay game =
-  Play
-    { game           = game
-    , numMinesMarked = 0
-    , numUncovered   = 0
-    , fieldState     = allClosed
-    , errorMove      = Nothing
-    }
+mkMineField :: (Pos, Pos) -> [Pos] -> MineField
+mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]
   where
-    allClosed = listArray bounds $ repeat Nothing
-    bounds    = Game.bounds game
+    mineMap = accumArray (||) False bounds [(p, True) | p <- mines]
 
-rows :: Play -> Int
-rows = Game.rows . game
+    neighbors (i, j) = [p | di <- [-1, 0, 1],
+                        dj <- [-1, 0, 1],
+                        let p = (i + di, j + dj),
+                        p /= (i, j),
+                        inRange bounds p]
 
-columns :: Play -> Int
-columns = Game.columns . game
+    hasMine = (mineMap !)
+    item p | hasMine p = Mine
+           | otherwise = Empty (length $ filter hasMine (neighbors p))
+
+random :: Int -> Int -> Int -> Pos -> Int -> Rand Play
+random rows columns numMines start buffer = do
+  let bounds    = ((0, 0), (rows-1, columns-1))
+  let positions = [p | p <- range bounds, not (isClose start p)]
+  mines <- randomSubset numMines positions
+
+  return $ Play
+             { rows           = rows
+             , columns        = columns
+             , mines          = length mines
+             , numMinesMarked = 0
+             , numUncovered   = 0
+             , field          = mkMineField bounds mines
+             , fieldState     = listArray bounds $ repeat Nothing
+             , errorMove      = Nothing
+             }
+  where
+    isClose (si, sj) (i, j) = abs (si - i) <= buffer && abs (sj - j) <= buffer
 
 bounds :: Play -> (Pos, Pos)
-bounds = Game.bounds . game
+bounds (Play {rows, columns}) = ((0, 0), (rows - 1, columns - 1))
 
 item :: Play -> Pos -> Maybe Item
 item (Play {fieldState}) p  = fieldState ! p
@@ -80,14 +105,14 @@ neighbors play p@(pi, pj) =
   ]
 
 numMines :: Play -> Int
-numMines = Game.mines . game
+numMines (Play {mines}) = mines
 
 openEmpty :: Play -> Pos -> PlayResult [Pos]
-openEmpty play@(Play {game}) p
+openEmpty play@(Play {field}) p
   | Just Mine <- itm = retError play p ErrorFired
   | Just _    <- itm = retError play p ErrorNoChange
   | otherwise        =
-    case Game.getItem game p of
+    case field ! p of
       Mine        -> retError play p ErrorKilled
       Empty mines ->
         let (ps, newPlay) = (openEmptyLoopEnter (p, mines) play)
@@ -114,7 +139,7 @@ openEmptyLoop (p, mines) acc@(seen, play)
                 , np /= p
                 , inRange (bounds play) np
                 , not (isOpened play np)
-                , let Empty count = Game.getItem (game play) np
+                , let Empty count = field play ! np
                 ]
 
 markMine :: Play -> Pos -> PlayResult ()
@@ -127,17 +152,17 @@ markMine play p
     itm = item play p
 
 isWon :: Play -> Bool
-isWon play@(Play {game, numMinesMarked, numUncovered}) =
-  numUncovered == numEmpty && numMinesMarked == numMines play
+isWon (Play {rows, columns, mines, numMinesMarked, numUncovered}) =
+  numUncovered == numEmpty && numMinesMarked == mines
   where
-    numEmpty = Game.rows game * Game.columns game - Game.mines game
+    numEmpty = rows * columns - mines
 
 isOpened :: Play -> Pos -> Bool
 isOpened (Play {fieldState}) p = isJust (fieldState ! p)
 
 uncoverBox :: Play -> Pos -> Play
-uncoverBox play@(Play {game}) p =
-  incNumUncovered $ setBox play p (Game.getItem game p)
+uncoverBox play@(Play {field}) p =
+  incNumUncovered $ setBox play p (field ! p)
 
 markBox :: Play -> Pos -> Play
 markBox play p = incMarkedMines $ setBox play p Mine
@@ -163,6 +188,6 @@ ret :: Play -> a -> PlayResult a
 ret play r = (play, Right r)
 
 errorItem :: Play -> Maybe (Pos, Item)
-errorItem (Play {game, errorMove}) = f <$> errorMove
+errorItem (Play {field, errorMove}) = f <$> errorMove
   where
-    f p = (p, Game.getItem game p)
+    f p = (p, field ! p)

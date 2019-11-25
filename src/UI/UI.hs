@@ -25,17 +25,8 @@ import Graphics.Blank
   , wait
   )
 
-import Play
-  ( Item(Empty, Mine)
-  , Play(numMinesMarked)
-  , Pos
-  , errorItem
-  , playBounds
-  , playColumns
-  , playItem
-  , playNumMines
-  , playRows
-  )
+import Play (Item(Empty, Mine), Play(numMinesMarked), Pos)
+import qualified Play as Play
 import PlayStats (PlayStats, numPlayed, numWon)
 
 import UI.Colors
@@ -93,8 +84,8 @@ drawUI (UI {playerName, stats, play}) = do
 
   where
     maybeDrawErrorBox
-      | Just (p, item) <- errorItem play = drawErrorBox play p item
-      | otherwise                        = return ()
+      | Just (p, item) <- Play.errorItem play = drawErrorBox play p item
+      | otherwise = return ()
 
 drawPosInfo :: Play -> [(Pos, String)] -> Draw ()
 drawPosInfo play ps = do
@@ -135,8 +126,8 @@ boardRect :: Play -> Draw Rect
 boardRect play = do
   aspect <- aspectRatio
 
-  let columns' = fromIntegral (playColumns play)
-  let rows'    = fromIntegral (playRows play)
+  let columns' = fromIntegral (Play.columns play)
+  let rows'    = fromIntegral (Play.rows play)
 
   let boxSide = min (aspect / columns') (1 / rows')
 
@@ -148,13 +139,13 @@ boardRect play = do
   return (x, y, w, h)
 
 drawBoard :: Play -> Draw ()
-drawBoard play = sequence_ [drawBox play p | p <- range (playBounds play)]
+drawBoard play = sequence_ [drawBox play p | p <- range (Play.bounds play)]
 
 withBox :: Play -> Pos -> Draw a -> Draw a
 withBox play (i, j) = restrict rect
   where
-    w = 1 / fromIntegral (playColumns play)
-    h = 1 / fromIntegral (playRows play)
+    w = 1 / fromIntegral (Play.columns play)
+    h = 1 / fromIntegral (Play.rows play)
     x = w * fromIntegral j
     y = h * fromIntegral i
 
@@ -163,7 +154,7 @@ withBox play (i, j) = restrict rect
 drawBox :: Play -> Pos -> Draw ()
 drawBox play p = withBox play p (draw maybeItem)
   where
-    maybeItem = playItem play p
+    maybeItem = Play.item play p
 
     draw Nothing     = drawClosedBox
     draw (Just item) = drawOpenBox item
@@ -247,7 +238,7 @@ drawPlayInfo play stats = do
     (mx, my, mw, _) = margins
     rect = (mx, 0, mw, my)
     frac n d = show n ++ "/" ++ show d
-    mines = frac (numMinesMarked play) (playNumMines play)
+    mines = frac (numMinesMarked play) (Play.numMines play)
 
     drawNumMines = do
       setFont "monospace" 0.4

@@ -2,7 +2,8 @@ module Player.Dummy
   ( player
   ) where
 
-import Play (Pos, playColumns, playRows)
+import Play (Pos)
+import qualified Play
 import Player.API
   ( Player
   , Strategy
@@ -19,7 +20,7 @@ player = makePlayer "dummy" strategy
 strategy :: Pos -> Strategy ()
 strategy start = do
   play <- getPlay
-  let dims = (playRows play, playColumns play)
+  let dims = (Play.rows play, Play.columns play)
 
   _ <- openEmpty start
   loop dims

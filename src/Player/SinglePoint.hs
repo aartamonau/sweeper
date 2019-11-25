@@ -13,15 +13,9 @@ import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Play
-  ( Item(Empty, Mine)
-  , Play
-  , Pos
-  , isOpened
-  , playBounds
-  , playItem
-  , playNeighbors
-  )
+import Play (Item(Empty, Mine), Play, Pos)
+import qualified Play
+
 import Player.API
   ( Player
   , Strategy
@@ -60,13 +54,13 @@ posMoves play p
        | otherwise                   -> []
   | otherwise              = []
   where
-    item = playItem play p
-    ns   = playNeighbors play p
+    item = Play.item play p
+    ns   = Play.neighbors play p
 
     (unopened, numMines) = foldl' f ([], 0) ns
       where
         f acc@(accUn, accMines) p =
-          case playItem play p of
+          case Play.item play p of
             Nothing   -> (p:accUn, accMines)
             Just Mine -> (accUn, accMines+1)
             _         -> acc
@@ -107,11 +101,11 @@ posProbs play p
       in [(up, prob) | up <- unopened]
   | otherwise              = error "can't happen"
   where
-    item = playItem play p
-    ns   = playNeighbors play p
+    item = Play.item play p
+    ns   = Play.neighbors play p
 
-    unopened = filter (not . isOpened play) ns
-    mines    = [p | p <- ns, Just Mine == playItem play p]
+    unopened = filter (not . Play.isOpened play) ns
+    mines    = [p | p <- ns, Just Mine == Play.item play p]
 
     numUnopened = length unopened
     numMines    = length mines
@@ -148,6 +142,6 @@ playRandom play = do
   playMove (OpenEmpty $ unopened !! i)
 
   where
-    bounds   = playBounds play
-    unopened = filter (not . isOpened play) (range bounds)
+    bounds   = Play.bounds play
+    unopened = filter (not . Play.isOpened play) (range bounds)
     n        = length unopened

@@ -23,14 +23,8 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
 
-import Play
-  ( Play
-  , PlayError(ErrorFired, ErrorKilled, ErrorNoChange)
-  , isWon
-  , markMine
-  , newPlay
-  , openEmpty
-  )
+import Play (Play, PlayError(ErrorFired, ErrorKilled, ErrorNoChange))
+import qualified Play as Play
 import Player
   ( FreeF(Free, Pure)
   , Move(GetPlay, MarkMine, OpenEmpty, PosInfo)
@@ -122,7 +116,7 @@ enterLoop uiCfg cfg deviceContext = do
 loop :: Ctx -> IO ()
 loop ctx@(Ctx {cfg, rndGen}) = do
   game <- randomGame rndGen cfg
-  loopGame ctx (newPlay game) $
+  loopGame ctx (Play.newPlay game) $
     strategy (Config.player cfg) (Config.startMove cfg)
 
 loopGame :: Ctx -> Play -> Strategy () -> IO ()
@@ -136,8 +130,9 @@ loopStrategy ctx play strategy = do
   case step of
     Pure _                      -> surrender
     Free (PosInfo ps strategy') -> handlePosInfo ps strategy'
-    Free (OpenEmpty p k)        -> handleOpenEmpty k (openEmpty play p)
-    Free (MarkMine p strategy') -> handleMarkMine strategy' (markMine play p)
+    Free (OpenEmpty p k)        -> handleOpenEmpty k (Play.openEmpty play p)
+    Free (MarkMine p strategy') ->
+      handleMarkMine strategy' (Play.markMine play p)
     Free (GetPlay k)            -> nextStep (k play)
     _                           -> error "can't happen"
 
@@ -174,7 +169,7 @@ loopStrategy ctx play strategy = do
     describeError _           = error "can't happen"
 
     success play strategy
-      | isWon play = do
+      | Play.isWon play = do
         present ctx (draw ctx play >> drawMsg "Player wins")
         restart incWon
-      | otherwise  = continue play strategy
+      | otherwise = continue play strategy

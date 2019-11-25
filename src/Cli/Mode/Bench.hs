@@ -26,7 +26,8 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
 
-import Play (PlayError(ErrorNoChange), isWon, markMine, newPlay, openEmpty)
+import Play (PlayError(ErrorNoChange))
+import qualified Play as Play
 import Player
   ( FreeF(Free, Pure)
   , Move(GetPlay, MarkMine, OpenEmpty, PosInfo)
@@ -101,12 +102,12 @@ iter cfg gen stats = do
   game <- randomGame gen cfg
 
   let initStrategy = strategy (Config.player cfg) (Config.startMove cfg)
-  loop (newPlay game) initStrategy
+  loop (Play.newPlay game) initStrategy
 
   where
     loop play s
-      | isWon play = return $ incWon stats
-      | otherwise  = runStrategy gen s >>= handleStep play
+      | Play.isWon play = return $ incWon stats
+      | otherwise       = runStrategy gen s >>= handleStep play
 
     handleStep _    (Pure _)    = return $ incStalled stats
     handleStep play (Free move) = handleMove play move
@@ -118,12 +119,12 @@ iter cfg gen stats = do
     handleMove _ _                  = error "can't happen"
 
     handleOpenEmpty play p k =
-      case openEmpty play p of
+      case Play.openEmpty play p of
         (play', Right ps) -> loop play' (k ps)
         (_, Left err)     -> handleError play (k []) err
 
     handleMarkMine play p s =
-      case markMine play p of
+      case Play.markMine play p of
         (play', Right ()) -> loop play' s
         (_, Left err)     -> handleError play s err
 

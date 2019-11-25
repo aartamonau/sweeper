@@ -4,16 +4,16 @@ module Play
   , Pos
   , Item(Mine, Empty)
   , newPlay
-  , playRows
-  , playColumns
+  , rows
+  , columns
   , openEmpty
   , markMine
   , isWon
   , isOpened
-  , playItem
-  , playBounds
-  , playNeighbors
-  , playNumMines
+  , item
+  , bounds
+  , neighbors
+  , numMines
   , errorItem
   ) where
 
@@ -57,46 +57,43 @@ newPlay game =
     allClosed = listArray bounds $ repeat Nothing
     bounds    = Game.bounds game
 
-playRows :: Play -> Int
-playRows = Game.rows . game
+rows :: Play -> Int
+rows = Game.rows . game
 
-playColumns :: Play -> Int
-playColumns = Game.columns . game
+columns :: Play -> Int
+columns = Game.columns . game
 
-playBounds :: Play -> (Pos, Pos)
-playBounds = Game.bounds . game
+bounds :: Play -> (Pos, Pos)
+bounds = Game.bounds . game
 
-playItem :: Play -> Pos -> Maybe Item
-playItem (Play {fieldState}) p  = fieldState ! p
+item :: Play -> Pos -> Maybe Item
+item (Play {fieldState}) p  = fieldState ! p
 
-playNeighbors :: Play -> Pos -> [Pos]
-playNeighbors play p@(pi, pj) =
+neighbors :: Play -> Pos -> [Pos]
+neighbors play p@(pi, pj) =
   [ q
   | di <- [-1, 0, 1]
   , dj <- [-1, 0, 1]
   , let q = (pi + di, pj + dj)
   , q /= p
-  , inRange bounds q
+  , inRange (bounds play) q
   ]
 
-  where
-    bounds = playBounds play
-
-playNumMines :: Play -> Int
-playNumMines = Game.mines . game
+numMines :: Play -> Int
+numMines = Game.mines . game
 
 openEmpty :: Play -> Pos -> PlayResult [Pos]
 openEmpty play@(Play {game}) p
-  | Just Mine <- item = retError play p ErrorFired
-  | Just _    <- item = retError play p ErrorNoChange
-  | otherwise         =
+  | Just Mine <- itm = retError play p ErrorFired
+  | Just _    <- itm = retError play p ErrorNoChange
+  | otherwise        =
     case Game.getItem game p of
       Mine        -> retError play p ErrorKilled
       Empty mines ->
         let (ps, newPlay) = (openEmptyLoopEnter (p, mines) play)
         in ret newPlay ps
   where
-    item = playItem play p
+    itm = item play p
 
 openEmptyLoopEnter :: (Pos, Int) -> Play -> ([Pos], Play)
 openEmptyLoopEnter start@(p, _) play =
@@ -108,33 +105,30 @@ openEmptyLoop (p, mines) acc@(seen, play)
   | otherwise  = acc
   where
     (i, j)    = p
-    bounds    = playBounds play
-
     acc'      = map fst neighbors ++ seen
     play'     = foldl' uncoverBox play (map fst neighbors)
-
     neighbors = [ (np, count)
                 | di <- [-1, 0, 1]
                 , dj <- [-1, 0, 1]
                 , let np = (i + di, j + dj)
                 , np /= p
-                , inRange bounds np
+                , inRange (bounds play) np
                 , not (isOpened play np)
                 , let Empty count = Game.getItem (game play) np
                 ]
 
 markMine :: Play -> Pos -> PlayResult ()
 markMine play p
-  | Just Mine <- item = retError play p ErrorNoChange
-  | Just _    <- item = retError play p ErrorFired
-  | otherwise         = ret (markBox play p) ()
+  | Just Mine <- itm = retError play p ErrorNoChange
+  | Just _    <- itm = retError play p ErrorFired
+  | otherwise        = ret (markBox play p) ()
 
   where
-    item = playItem play p
+    itm = item play p
 
 isWon :: Play -> Bool
 isWon play@(Play {game, numMinesMarked, numUncovered}) =
-  numUncovered == numEmpty && numMinesMarked == playNumMines play
+  numUncovered == numEmpty && numMinesMarked == numMines play
   where
     numEmpty = Game.rows game * Game.columns game - Game.mines game
 

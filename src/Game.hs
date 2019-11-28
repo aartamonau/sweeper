@@ -1,5 +1,5 @@
 module Game
-  ( Game(numMinesMarked, numUncovered)
+  ( Game(numMinesMarked)
   , PlayError(ErrorKilled, ErrorAlreadyPlayed)
   , Pos
   , Item(Mine, Empty)

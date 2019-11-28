@@ -25,7 +25,7 @@ import Graphics.Blank
   , wait
   )
 
-import Game (Item(Empty, Mine), Game(numMinesMarked), Pos)
+import Game (Item(Empty, Mine), Game, Pos)
 import qualified Game as Game
 import PlayStats (PlayStats, numPlayed, numWon)
 
@@ -238,7 +238,7 @@ drawPlayInfo game stats = do
     (mx, my, mw, _) = margins
     rect = (mx, 0, mw, my)
     frac n d = show n ++ "/" ++ show d
-    mines = frac (numMinesMarked game) (Game.numMines game)
+    mines = frac (Game.numMinesMarked game) (Game.numMines game)
 
     drawNumMines = do
       setFont "monospace" 0.4

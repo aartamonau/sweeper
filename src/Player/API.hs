@@ -16,7 +16,12 @@ import Control.Monad.ST (RealWorld, ST)
 import Control.Monad.Trans.Free (liftF)
 
 import Game (Game, Pos)
-import Player (Move(..), Player, Strategy, makePlayer)
+import Player
+  ( Move(GetGame, MarkMine, OpenEmpty, PosInfo, RunRandom, RunST)
+  , Player
+  , Strategy
+  , makePlayer
+  )
 import Rand (Rand, uniform, uniformR)
 
 openEmpty :: Pos -> Strategy [Pos]

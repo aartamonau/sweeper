@@ -1,17 +1,17 @@
 module Cli.Mode.Common
-  ( randomPlay
+  ( randomGame
   ) where
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config
 
-import Play (Play)
-import qualified Play as Play
+import Game (Game)
+import qualified Game as Game
 
 import Rand (Gen, runRand)
 
-randomPlay :: Gen -> Config -> IO Play
-randomPlay gen cfg = runRand (Play.random rows cols mines startMove buffer) gen
+randomGame :: Gen -> Config -> IO Game
+randomGame gen cfg = runRand (Game.random rows cols mines startMove buffer) gen
   where
     (rows, cols, mines) = Config.fieldSpec cfg
     startMove           = Config.startMove cfg

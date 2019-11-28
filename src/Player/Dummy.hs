@@ -2,12 +2,12 @@ module Player.Dummy
   ( player
   ) where
 
-import Play (Pos)
-import qualified Play
+import Game (Pos)
+import qualified Game
 import Player.API
   ( Player
   , Strategy
-  , getPlay
+  , getGame
   , makePlayer
   , openEmpty
   , rand
@@ -19,8 +19,8 @@ player = makePlayer "dummy" strategy
 
 strategy :: Pos -> Strategy ()
 strategy start = do
-  play <- getPlay
-  let dims = (Play.rows play, Play.columns play)
+  game <- getGame
+  let dims = (Game.rows game, Game.columns game)
 
   _ <- openEmpty start
   loop dims

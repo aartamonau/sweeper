@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module UI.UI
-  ( UI(UI, playerName, stats, play)
+  ( UI(UI, playerName, stats, game)
   , DeviceContext
   , Draw
   , display
@@ -25,8 +25,8 @@ import Graphics.Blank
   , wait
   )
 
-import Play (Item(Empty, Mine), Play(numMinesMarked), Pos)
-import qualified Play as Play
+import Game (Item(Empty, Mine), Game(numMinesMarked), Pos)
+import qualified Game as Game
 import PlayStats (PlayStats, numPlayed, numWon)
 
 import UI.Colors
@@ -67,34 +67,34 @@ data UI =
   UI
     { playerName :: String
     , stats :: PlayStats
-    , play :: Play
+    , game :: Game
     }
 
 display :: DeviceContext -> Draw () -> IO ()
 display context drawing = send context (runDraw context drawing)
 
 drawUI :: UI -> Draw ()
-drawUI (UI {playerName, stats, play}) = do
+drawUI (UI {playerName, stats, game}) = do
   setFillColor dimgrey
   fillRect (0, 0, 1, 1)
-  withBoard play (drawBoard play)
-  drawPlayInfo play stats
+  withBoard game (drawBoard game)
+  drawPlayInfo game stats
   drawPlayerName playerName
   maybeDrawErrorBox
 
   where
     maybeDrawErrorBox
-      | Just (p, item) <- Play.errorItem play = drawErrorBox play p item
+      | Just (p, item) <- Game.errorItem game = drawErrorBox game p item
       | otherwise = return ()
 
-drawPosInfo :: Play -> [(Pos, String)] -> Draw ()
-drawPosInfo play ps = do
+drawPosInfo :: Game -> [(Pos, String)] -> Draw ()
+drawPosInfo game ps = do
   setFillColor black
   setStrokeColor black
 
   forM_ ps $ \(p, info) ->
-    withBoard play $
-    withBox play p $ do
+    withBoard game $
+    withBox game p $ do
       setFont "monospace" 0.4
       drawText info (0.5, 0.5)
 
@@ -122,12 +122,12 @@ runUI loop = do
   blankCanvas 3000 {events = ["keydown", "mousedown"]} loop
 
 -- internal
-boardRect :: Play -> Draw Rect
-boardRect play = do
+boardRect :: Game -> Draw Rect
+boardRect game = do
   aspect <- aspectRatio
 
-  let columns' = fromIntegral (Play.columns play)
-  let rows'    = fromIntegral (Play.rows play)
+  let columns' = fromIntegral (Game.columns game)
+  let rows'    = fromIntegral (Game.rows game)
 
   let boxSide = min (aspect / columns') (1 / rows')
 
@@ -138,23 +138,23 @@ boardRect play = do
 
   return (x, y, w, h)
 
-drawBoard :: Play -> Draw ()
-drawBoard play = sequence_ [drawBox play p | p <- range (Play.bounds play)]
+drawBoard :: Game -> Draw ()
+drawBoard game = sequence_ [drawBox game p | p <- range (Game.bounds game)]
 
-withBox :: Play -> Pos -> Draw a -> Draw a
-withBox play (i, j) = restrict rect
+withBox :: Game -> Pos -> Draw a -> Draw a
+withBox game (i, j) = restrict rect
   where
-    w = 1 / fromIntegral (Play.columns play)
-    h = 1 / fromIntegral (Play.rows play)
+    w = 1 / fromIntegral (Game.columns game)
+    h = 1 / fromIntegral (Game.rows game)
     x = w * fromIntegral j
     y = h * fromIntegral i
 
     rect = (x, y, w, h)
 
-drawBox :: Play -> Pos -> Draw ()
-drawBox play p = withBox play p (draw maybeItem)
+drawBox :: Game -> Pos -> Draw ()
+drawBox game p = withBox game p (draw maybeItem)
   where
-    maybeItem = Play.item play p
+    maybeItem = Game.item game p
 
     draw Nothing     = drawClosedBox
     draw (Just item) = drawOpenBox item
@@ -221,14 +221,14 @@ drawMine = do
 margins :: Rect
 margins = (0.1, 0.1, 0.8, 0.8)
 
-withBoard :: Play -> Draw () -> Draw ()
-withBoard play drawing =
+withBoard :: Game -> Draw () -> Draw ()
+withBoard game drawing =
   restrict margins $ do
-    rect <- boardRect play
+    rect <- boardRect game
     restrict rect drawing
 
-drawPlayInfo :: Play -> PlayStats -> Draw ()
-drawPlayInfo play stats = do
+drawPlayInfo :: Game -> PlayStats -> Draw ()
+drawPlayInfo game stats = do
   setStrokeColor black
   setFillColor black
 
@@ -238,7 +238,7 @@ drawPlayInfo play stats = do
     (mx, my, mw, _) = margins
     rect = (mx, 0, mw, my)
     frac n d = show n ++ "/" ++ show d
-    mines = frac (numMinesMarked play) (Play.numMines play)
+    mines = frac (numMinesMarked game) (Game.numMines game)
 
     drawNumMines = do
       setFont "monospace" 0.4
@@ -281,6 +281,6 @@ drawX =
     strokeLine (0, 0) (1, 1)
     strokeLine (1, 0) (0, 1)
 
-drawErrorBox :: Play -> Pos -> Item -> Draw ()
-drawErrorBox play p item =
-  withBoard play $ withBox play p (drawOpenBox item >> drawX)
+drawErrorBox :: Game -> Pos -> Item -> Draw ()
+drawErrorBox game p item =
+  withBoard game $ withBox game p (drawOpenBox item >> drawX)

@@ -26,17 +26,17 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
 
-import qualified Play as Play
+import qualified Game as Game
 import Player
   ( FreeF(Free, Pure)
-  , Move(GetPlay, MarkMine, OpenEmpty, PosInfo)
+  , Move(GetGame, MarkMine, OpenEmpty, PosInfo)
   , runStrategy
   , strategy
   )
 import PlayStats (PlayStats, incLost, incStalled, incWon)
 import Rand (Gen)
 
-import Cli.Mode.Common (randomPlay)
+import Cli.Mode.Common (randomGame)
 
 data BenchCfg =
   BenchCfg
@@ -98,33 +98,33 @@ worker cfg tid n = do
 
 iter :: Config -> Gen -> PlayStats -> IO PlayStats
 iter cfg gen stats = do
-  play <- randomPlay gen cfg
+  game <- randomGame gen cfg
 
   let initStrategy = strategy (Config.player cfg) (Config.startMove cfg)
-  loop play initStrategy
+  loop game initStrategy
 
   where
-    loop play s
-      | Play.isWon play = return $ incWon stats
-      | otherwise       = runStrategy gen s >>= handleStep play
+    loop game s
+      | Game.isWon game = return $ incWon stats
+      | otherwise       = runStrategy gen s >>= handleStep game
 
     handleStep _    (Pure _)    = return $ incStalled stats
-    handleStep play (Free move) = handleMove play move
+    handleStep game (Free move) = handleMove game move
 
-    handleMove play (PosInfo _ s)   = loop play s
-    handleMove play (OpenEmpty p k) = handleOpenEmpty play p k
-    handleMove play (MarkMine p s)  = handleMarkMine play p s
-    handleMove play (GetPlay k)     = loop play (k play)
+    handleMove game (PosInfo _ s)   = loop game s
+    handleMove game (OpenEmpty p k) = handleOpenEmpty game p k
+    handleMove game (MarkMine p s)  = handleMarkMine game p s
+    handleMove game (GetGame k)     = loop game (k game)
     handleMove _ _                  = error "can't happen"
 
-    handleOpenEmpty play p k =
-      case Play.openEmpty play p of
-        (play', Right ps) -> loop play' (k ps)
+    handleOpenEmpty game p k =
+      case Game.openEmpty game p of
+        (game', Right ps) -> loop game' (k ps)
         (_, Left err)     -> handleError err
 
-    handleMarkMine play p s =
-      case Play.markMine play p of
-        (play', Right ()) -> loop play' s
+    handleMarkMine game p s =
+      case Game.markMine game p of
+        (game', Right ()) -> loop game' s
         (_, Left err)     -> handleError err
 
     handleError _ = return $ incLost stats

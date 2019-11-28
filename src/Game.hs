@@ -1,5 +1,5 @@
-module Play
-  ( Play(numMinesMarked, numUncovered)
+module Game
+  ( Game(numMinesMarked, numUncovered)
   , PlayError(ErrorKilled, ErrorAlreadyPlayed)
   , Pos
   , Item(Mine, Empty)
@@ -32,8 +32,8 @@ data Item
   | Empty Int
   deriving (Show, Eq)
 
-data Play =
-  Play
+data Game =
+  Game
     { rows    :: Int
     , columns :: Int
     , mines   :: Int
@@ -51,7 +51,7 @@ data PlayError
   | ErrorAlreadyPlayed
   deriving (Show)
 
-type PlayResult r = (Play, Either PlayError r)
+type PlayResult r = (Game, Either PlayError r)
 
 mkMineField :: (Pos, Pos) -> [Pos] -> MineField
 mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]
@@ -68,13 +68,13 @@ mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]
     item p | hasMine p = Mine
            | otherwise = Empty (length $ filter hasMine (neighbors p))
 
-random :: Int -> Int -> Int -> Pos -> Int -> Rand Play
+random :: Int -> Int -> Int -> Pos -> Int -> Rand Game
 random rows columns numMines start buffer = do
   let bounds    = ((0, 0), (rows-1, columns-1))
   let positions = [p | p <- range bounds, not (isClose start p)]
   mines <- randomSubset numMines positions
 
-  return $ Play
+  return $ Game
              { rows           = rows
              , columns        = columns
              , mines          = length mines
@@ -87,104 +87,104 @@ random rows columns numMines start buffer = do
   where
     isClose (si, sj) (i, j) = abs (si - i) <= buffer && abs (sj - j) <= buffer
 
-bounds :: Play -> (Pos, Pos)
-bounds (Play {rows, columns}) = ((0, 0), (rows - 1, columns - 1))
+bounds :: Game -> (Pos, Pos)
+bounds (Game {rows, columns}) = ((0, 0), (rows - 1, columns - 1))
 
-item :: Play -> Pos -> Maybe Item
-item (Play {fieldState}) p  = fieldState ! p
+item :: Game -> Pos -> Maybe Item
+item (Game {fieldState}) p  = fieldState ! p
 
-neighbors :: Play -> Pos -> [Pos]
-neighbors play p@(pi, pj) =
+neighbors :: Game -> Pos -> [Pos]
+neighbors game p@(pi, pj) =
   [ q
   | di <- [-1, 0, 1]
   , dj <- [-1, 0, 1]
   , let q = (pi + di, pj + dj)
   , q /= p
-  , inRange (bounds play) q
+  , inRange (bounds game) q
   ]
 
-numMines :: Play -> Int
-numMines (Play {mines}) = mines
+numMines :: Game -> Int
+numMines (Game {mines}) = mines
 
-openEmpty :: Play -> Pos -> PlayResult [Pos]
-openEmpty play@(Play {field}) p
-  | Just _ <- itm = retError play p ErrorAlreadyPlayed
+openEmpty :: Game -> Pos -> PlayResult [Pos]
+openEmpty game@(Game {field}) p
+  | Just _ <- itm = retError game p ErrorAlreadyPlayed
   | otherwise     =
     case field ! p of
-      Mine        -> retError play p ErrorKilled
+      Mine        -> retError game p ErrorKilled
       Empty mines ->
-        let (ps, newPlay) = (openEmptyLoopEnter (p, mines) play)
-        in ret newPlay ps
+        let (ps, newGame) = (openEmptyLoopEnter (p, mines) game)
+        in ret newGame ps
   where
-    itm = item play p
+    itm = item game p
 
-openEmptyLoopEnter :: (Pos, Int) -> Play -> ([Pos], Play)
-openEmptyLoopEnter start@(p, _) play =
-  openEmptyLoop start ([p], uncoverBox play p)
+openEmptyLoopEnter :: (Pos, Int) -> Game -> ([Pos], Game)
+openEmptyLoopEnter start@(p, _) game =
+  openEmptyLoop start ([p], uncoverBox game p)
 
-openEmptyLoop :: (Pos, Int) -> ([Pos], Play) -> ([Pos], Play)
-openEmptyLoop (p, mines) acc@(seen, play)
-  | mines == 0 = foldl' (flip openEmptyLoop) (acc', play') neighbors
+openEmptyLoop :: (Pos, Int) -> ([Pos], Game) -> ([Pos], Game)
+openEmptyLoop (p, mines) acc@(seen, game)
+  | mines == 0 = foldl' (flip openEmptyLoop) (acc', game') neighbors
   | otherwise  = acc
   where
     (i, j)    = p
     acc'      = map fst neighbors ++ seen
-    play'     = foldl' uncoverBox play (map fst neighbors)
+    game'     = foldl' uncoverBox game (map fst neighbors)
     neighbors = [ (np, count)
                 | di <- [-1, 0, 1]
                 , dj <- [-1, 0, 1]
                 , let np = (i + di, j + dj)
                 , np /= p
-                , inRange (bounds play) np
-                , not (isOpened play np)
-                , let Empty count = field play ! np
+                , inRange (bounds game) np
+                , not (isOpened game np)
+                , let Empty count = field game ! np
                 ]
 
-markMine :: Play -> Pos -> PlayResult ()
-markMine play p
-  | Just _ <- itm = retError play p ErrorAlreadyPlayed
-  | otherwise     = ret (markBox play p) ()
+markMine :: Game -> Pos -> PlayResult ()
+markMine game p
+  | Just _ <- itm = retError game p ErrorAlreadyPlayed
+  | otherwise     = ret (markBox game p) ()
 
   where
-    itm = item play p
+    itm = item game p
 
-isWon :: Play -> Bool
-isWon (Play {rows, columns, mines, numMinesMarked, numUncovered}) =
+isWon :: Game -> Bool
+isWon (Game {rows, columns, mines, numMinesMarked, numUncovered}) =
   numUncovered == numEmpty && numMinesMarked == mines
   where
     numEmpty = rows * columns - mines
 
-isOpened :: Play -> Pos -> Bool
-isOpened (Play {fieldState}) p = isJust (fieldState ! p)
+isOpened :: Game -> Pos -> Bool
+isOpened (Game {fieldState}) p = isJust (fieldState ! p)
 
-uncoverBox :: Play -> Pos -> Play
-uncoverBox play@(Play {field}) p =
-  incNumUncovered $ setBox play p (field ! p)
+uncoverBox :: Game -> Pos -> Game
+uncoverBox game@(Game {field}) p =
+  incNumUncovered $ setBox game p (field ! p)
 
-markBox :: Play -> Pos -> Play
-markBox play p = incMarkedMines $ setBox play p Mine
+markBox :: Game -> Pos -> Game
+markBox game p = incMarkedMines $ setBox game p Mine
 
-setBox :: Play -> Pos -> Item -> Play
-setBox play@(Play {fieldState}) p item =
-  play {fieldState = fieldState // [(p, Just item)]}
+setBox :: Game -> Pos -> Item -> Game
+setBox game@(Game {fieldState}) p item =
+  game {fieldState = fieldState // [(p, Just item)]}
 
-incMarkedMines :: Play -> Play
-incMarkedMines play@(Play {numMinesMarked}) =
-  play {numMinesMarked = numMinesMarked + 1}
+incMarkedMines :: Game -> Game
+incMarkedMines game@(Game {numMinesMarked}) =
+  game {numMinesMarked = numMinesMarked + 1}
 
-incNumUncovered :: Play -> Play
-incNumUncovered play@(Play {numUncovered}) =
-  play {numUncovered = numUncovered + 1}
+incNumUncovered :: Game -> Game
+incNumUncovered game@(Game {numUncovered}) =
+  game {numUncovered = numUncovered + 1}
 
-retError :: Play -> Pos -> PlayError -> PlayResult a
-retError play lastMove error = (newPlay, Left error)
+retError :: Game -> Pos -> PlayError -> PlayResult a
+retError game lastMove error = (newGame, Left error)
   where
-    newPlay = play {errorMove = Just lastMove}
+    newGame = game {errorMove = Just lastMove}
 
-ret :: Play -> a -> PlayResult a
-ret play r = (play, Right r)
+ret :: Game -> a -> PlayResult a
+ret game r = (game, Right r)
 
-errorItem :: Play -> Maybe (Pos, Item)
-errorItem (Play {field, errorMove}) = f <$> errorMove
+errorItem :: Game -> Maybe (Pos, Item)
+errorItem (Game {field, errorMove}) = f <$> errorMove
   where
     f p = (p, field ! p)

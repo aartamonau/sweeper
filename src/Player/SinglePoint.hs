@@ -13,13 +13,13 @@ import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Play (Item(Empty, Mine), Play, Pos)
-import qualified Play
+import Game (Item(Empty, Mine), Game, Pos)
+import qualified Game
 
 import Player.API
   ( Player
   , Strategy
-  , getPlay
+  , getGame
   , makePlayer
   , markMine
   , openEmpty
@@ -33,8 +33,8 @@ data Move
   | MarkMine Pos
   deriving (Eq, Ord)
 
-findMoves :: Play -> [Pos] -> (Set Move, [Pos])
-findMoves play = foldl' f z
+findMoves :: Game -> [Pos] -> (Set Move, [Pos])
+findMoves game = foldl' f z
   where
     z = (Set.empty, [])
 
@@ -42,11 +42,11 @@ findMoves play = foldl' f z
       | null thisMoves = (moves, p:ps)
       | otherwise      = (Set.union moves thisSet, ps)
       where
-        thisMoves = posMoves play p
+        thisMoves = posMoves game p
         thisSet   = Set.fromList thisMoves
 
-posMoves :: Play -> Pos -> [Move]
-posMoves play p
+posMoves :: Game -> Pos -> [Move]
+posMoves game p
   | Just (Empty 0) <- item = []
   | Just (Empty c) <- item =
     if | numMines == c               -> map OpenEmpty unopened
@@ -54,13 +54,13 @@ posMoves play p
        | otherwise                   -> []
   | otherwise              = []
   where
-    item = Play.item play p
-    ns   = Play.neighbors play p
+    item = Game.item game p
+    ns   = Game.neighbors game p
 
     (unopened, numMines) = foldl' f ([], 0) ns
       where
         f acc@(accUn, accMines) p =
-          case Play.item play p of
+          case Game.item game p of
             Nothing   -> (p:accUn, accMines)
             Just Mine -> (accUn, accMines+1)
             _         -> acc
@@ -75,10 +75,10 @@ strategy start = openEmpty start >>= loop
 
 loop :: [Pos] -> Strategy ()
 loop opened = do
-  play <- getPlay
-  let (moves, opened') = findMoves play opened
+  game <- getGame
+  let (moves, opened') = findMoves game opened
 
-  newOpened <- if | Set.null moves -> playGreedy play opened'
+  newOpened <- if | Set.null moves -> playGreedy game opened'
                   | otherwise      -> loopMoves (Set.toList moves)
 
   loop (newOpened ++ opened')
@@ -93,37 +93,37 @@ playMove (MarkMine p)  = markMine p >> return []
 type Prob = Ratio Int
 type Probs = [(Pos, Prob)]
 
-posProbs :: Play -> Pos -> [(Pos, Prob)]
-posProbs play p
+posProbs :: Game -> Pos -> [(Pos, Prob)]
+posProbs game p
   | Just (Empty 0) <- item = []
   | Just (Empty c) <- item =
       let prob = (c - numMines) % numUnopened
       in [(up, prob) | up <- unopened]
   | otherwise              = error "can't happen"
   where
-    item = Play.item play p
-    ns   = Play.neighbors play p
+    item = Game.item game p
+    ns   = Game.neighbors game p
 
-    unopened = filter (not . Play.isOpened play) ns
-    mines    = [p | p <- ns, Just Mine == Play.item play p]
+    unopened = filter (not . Game.isOpened game) ns
+    mines    = [p | p <- ns, Just Mine == Game.item game p]
 
     numUnopened = length unopened
     numMines    = length mines
 
-computeProbs :: Play -> [Pos] -> Probs
-computeProbs play = Map.toList . foldl' f z . concatMap (posProbs play)
+computeProbs :: Game -> [Pos] -> Probs
+computeProbs game = Map.toList . foldl' f z . concatMap (posProbs game)
   where
     z = Map.empty
     f acc (p, prob) = Map.insertWith max p prob acc
 
-playGreedy :: Play -> [Pos] -> Strategy [Pos]
-playGreedy play opened
-  | null probs = playRandom play
+playGreedy :: Game -> [Pos] -> Strategy [Pos]
+playGreedy game opened
+  | null probs = playRandom game
   | otherwise  = do
     posInfo [(p, showProb prob) | (p, prob) <- probs]
     randomGreedyMove
   where
-    probs = computeProbs play opened
+    probs = computeProbs game opened
 
     minProb = minimum (map snd probs)
     mins    = filter ((== minProb) . snd) probs
@@ -136,12 +136,12 @@ playGreedy play opened
 
     showProb prob = show (numerator prob) ++ "/" ++ show (denominator prob)
 
-playRandom :: Play -> Strategy [Pos]
-playRandom play = do
+playRandom :: Game -> Strategy [Pos]
+playRandom game = do
   i <- rand $ uniformR (0, n - 1)
   playMove (OpenEmpty $ unopened !! i)
 
   where
-    bounds   = Play.bounds play
-    unopened = filter (not . Play.isOpened play) (range bounds)
+    bounds   = Game.bounds game
+    unopened = filter (not . Game.isOpened game) (range bounds)
     n        = length unopened

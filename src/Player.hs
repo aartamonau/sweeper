@@ -3,7 +3,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Player
-  ( Move(OpenEmpty, MarkMine, GetPlay, PosInfo, RunST, RunRandom)
+  ( Move(OpenEmpty, MarkMine, GetGame, PosInfo, RunST, RunRandom)
   , Player(Player, name, strategy)
   , Strategy
   , Name
@@ -16,13 +16,13 @@ import Control.Monad.ST (RealWorld, ST, stToIO)
 import Control.Monad.Trans.Free as Free (FreeF(Free, Pure), FreeT)
 import Control.Monad.Trans.Free (runFreeT)
 
-import Play (Play, Pos)
+import Game (Game, Pos)
 import Rand (Gen, Rand, runRand)
 
 data Move next where
   OpenEmpty :: Pos -> ([Pos] -> next) -> Move next
   MarkMine  :: Pos -> next -> Move next
-  GetPlay   :: (Play -> next) -> Move next
+  GetGame   :: (Game -> next) -> Move next
   PosInfo   :: [(Pos, String)] -> next -> Move next
   RunST     :: ST RealWorld a -> (a -> next) -> Move next
   RunRandom :: Rand a -> (a -> next) -> Move next

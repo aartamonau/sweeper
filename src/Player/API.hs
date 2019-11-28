@@ -4,7 +4,7 @@ module Player.API
   , makePlayer
   , openEmpty
   , markMine
-  , getPlay
+  , getGame
   , surrender
   , posInfo
   , st
@@ -15,7 +15,7 @@ module Player.API
 import Control.Monad.ST (RealWorld, ST)
 import Control.Monad.Trans.Free (liftF)
 
-import Play (Play, Pos)
+import Game (Game, Pos)
 import Player (Move(..), Player, Strategy, makePlayer)
 import Rand (Rand, uniform, uniformR)
 
@@ -25,8 +25,8 @@ openEmpty p = liftF (OpenEmpty p id)
 markMine :: Pos -> Strategy ()
 markMine p = liftF (MarkMine p ())
 
-getPlay :: Strategy Play
-getPlay = liftF (GetPlay id)
+getGame :: Strategy Game
+getGame = liftF (GetGame id)
 
 surrender :: Strategy ()
 surrender = return ()

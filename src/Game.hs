@@ -152,7 +152,7 @@ isWon (Game {numRows, numColumns, numMines, numMinesMarked, numUncovered}) =
     numEmpty = numRows * numColumns - numMines
 
 isOpened :: Game -> Pos -> Bool
-isOpened (Game {fieldState}) p = isJust (fieldState ! p)
+isOpened game p = isJust (item game p)
 
 uncoverBox :: Game -> Pos -> Game
 uncoverBox game@(Game {field}) p =

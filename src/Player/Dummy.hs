@@ -20,7 +20,7 @@ player = makePlayer "dummy" strategy
 strategy :: Pos -> Strategy ()
 strategy start = do
   game <- getGame
-  let dims = (Game.rows game, Game.columns game)
+  let dims = (Game.numRows game, Game.numColumns game)
 
   _ <- openEmpty start
   loop dims

@@ -4,8 +4,9 @@ module Game
   , Pos
   , Item(Mine, Empty)
   , random
-  , rows
-  , columns
+  , numRows
+  , numColumns
+  , numMines
   , openEmpty
   , markMine
   , isWon
@@ -13,7 +14,6 @@ module Game
   , item
   , bounds
   , neighbors
-  , numMines
   , errorItem
   ) where
 
@@ -34,9 +34,9 @@ data Item
 
 data Game =
   Game
-    { rows    :: Int
-    , columns :: Int
-    , mines   :: Int
+    { numRows    :: Int
+    , numColumns :: Int
+    , numMines   :: Int
 
     , numMinesMarked :: Int
     , numUncovered   :: Int
@@ -75,9 +75,9 @@ random rows columns numMines start buffer = do
   mines <- randomSubset numMines positions
 
   return $ Game
-             { rows           = rows
-             , columns        = columns
-             , mines          = length mines
+             { numRows        = rows
+             , numColumns     = columns
+             , numMines       = length mines
              , numMinesMarked = 0
              , numUncovered   = 0
              , field          = mkMineField bounds mines
@@ -88,7 +88,7 @@ random rows columns numMines start buffer = do
     isClose (si, sj) (i, j) = abs (si - i) <= buffer && abs (sj - j) <= buffer
 
 bounds :: Game -> (Pos, Pos)
-bounds (Game {rows, columns}) = ((0, 0), (rows - 1, columns - 1))
+bounds (Game {numRows, numColumns}) = ((0, 0), (numRows - 1, numColumns - 1))
 
 item :: Game -> Pos -> Maybe Item
 item (Game {fieldState}) p  = fieldState ! p
@@ -102,9 +102,6 @@ neighbors game p@(pi, pj) =
   , q /= p
   , inRange (bounds game) q
   ]
-
-numMines :: Game -> Int
-numMines (Game {mines}) = mines
 
 openEmpty :: Game -> Pos -> PlayResult [Pos]
 openEmpty game@(Game {field}) p
@@ -149,10 +146,10 @@ markMine game p
     itm = item game p
 
 isWon :: Game -> Bool
-isWon (Game {rows, columns, mines, numMinesMarked, numUncovered}) =
-  numUncovered == numEmpty && numMinesMarked == mines
+isWon (Game {numRows, numColumns, numMines, numMinesMarked, numUncovered}) =
+  numUncovered == numEmpty && numMinesMarked == numMines
   where
-    numEmpty = rows * columns - mines
+    numEmpty = numRows * numColumns - numMines
 
 isOpened :: Game -> Pos -> Bool
 isOpened (Game {fieldState}) p = isJust (fieldState ! p)

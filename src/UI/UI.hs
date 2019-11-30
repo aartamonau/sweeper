@@ -126,13 +126,13 @@ boardRect :: Game -> Draw Rect
 boardRect game = do
   aspect <- aspectRatio
 
-  let columns' = fromIntegral (Game.columns game)
-  let rows'    = fromIntegral (Game.rows game)
+  let columns = fromIntegral (Game.numColumns game)
+  let rows    = fromIntegral (Game.numRows game)
 
-  let boxSide = min (aspect / columns') (1 / rows')
+  let boxSide = min (aspect / columns) (1 / rows)
 
-  let w = (columns' * boxSide) / aspect
-  let h = rows' * boxSide
+  let w = (columns * boxSide) / aspect
+  let h = rows * boxSide
   let x = (1 - w) / 2
   let y = (1 - h) / 2
 
@@ -144,8 +144,8 @@ drawBoard game = sequence_ [drawBox game p | p <- range (Game.bounds game)]
 withBox :: Game -> Pos -> Draw a -> Draw a
 withBox game (i, j) = restrict rect
   where
-    w = 1 / fromIntegral (Game.columns game)
-    h = 1 / fromIntegral (Game.rows game)
+    w = 1 / fromIntegral (Game.numColumns game)
+    h = 1 / fromIntegral (Game.numRows game)
     x = w * fromIntegral j
     y = h * fromIntegral i
 

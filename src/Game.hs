@@ -58,15 +58,9 @@ mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]
   where
     mineMap = accumArray (||) False bounds [(p, True) | p <- mines]
 
-    neighbors (i, j) = [p | di <- [-1, 0, 1],
-                        dj <- [-1, 0, 1],
-                        let p = (i + di, j + dj),
-                        p /= (i, j),
-                        inRange bounds p]
-
     hasMine = (mineMap !)
     item p | hasMine p = Mine
-           | otherwise = Empty (length $ filter hasMine (neighbors p))
+           | otherwise = Empty (length $ filter hasMine (neighbors' bounds p))
 
 random :: Int -> Int -> Int -> Pos -> Int -> Rand Game
 random rows columns numMines start buffer = do
@@ -94,13 +88,16 @@ item :: Game -> Pos -> Maybe Item
 item (Game {fieldState}) p  = fieldState ! p
 
 neighbors :: Game -> Pos -> [Pos]
-neighbors game p@(pi, pj) =
+neighbors game = neighbors' (bounds game)
+
+neighbors' :: (Pos, Pos) -> Pos -> [Pos]
+neighbors' bounds p@(pi, pj) =
   [ q
   | di <- [-1, 0, 1]
   , dj <- [-1, 0, 1]
   , let q = (pi + di, pj + dj)
   , q /= p
-  , inRange (bounds game) q
+  , inRange bounds q
   ]
 
 openEmpty :: Game -> Pos -> PlayResult [Pos]
@@ -121,18 +118,14 @@ openEmptyLoopEnter start@(p, _) game =
 
 openEmptyLoop :: (Pos, Int) -> ([Pos], Game) -> ([Pos], Game)
 openEmptyLoop (p, mines) acc@(seen, game)
-  | mines == 0 = foldl' (flip openEmptyLoop) (acc', game') neighbors
+  | mines == 0 = foldl' (flip openEmptyLoop) (acc', game') toExamine
   | otherwise  = acc
   where
-    (i, j)    = p
-    acc'      = map fst neighbors ++ seen
-    game'     = foldl' uncoverBox game (map fst neighbors)
-    neighbors = [ (np, count)
-                | di <- [-1, 0, 1]
-                , dj <- [-1, 0, 1]
-                , let np = (i + di, j + dj)
-                , np /= p
-                , inRange (bounds game) np
+    acc'      = map fst toExamine ++ seen
+    game'     = foldl' uncoverBox game (map fst toExamine)
+
+    toExamine = [ (np, count)
+                | np <- neighbors game p
                 , not (isOpened game np)
                 , let Empty count = field game ! np
                 ]

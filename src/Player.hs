@@ -3,7 +3,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Player
-  ( Move(OpenEmpty, MarkMine, GetGame, PosInfo, RunST, RunRandom)
+  ( Move(OpenEmpty, MarkMine, GetGame, PosInfo, RunRandom)
   , Player(Player, name, strategy)
   , Strategy
   , Name
@@ -12,7 +12,6 @@ module Player
   , module Free
   ) where
 
-import Control.Monad.ST (RealWorld, ST, stToIO)
 import Control.Monad.Trans.Free as Free (FreeF(Free, Pure), FreeT)
 import Control.Monad.Trans.Free (runFreeT)
 
@@ -24,7 +23,6 @@ data Move next where
   MarkMine  :: Pos -> next -> Move next
   GetGame   :: (Game -> next) -> Move next
   PosInfo   :: [(Pos, String)] -> next -> Move next
-  RunST     :: ST RealWorld a -> (a -> next) -> Move next
   RunRandom :: Rand a -> (a -> next) -> Move next
 
 deriving instance Functor Move
@@ -50,5 +48,4 @@ runStrategy gen s = loop s
     loop s = runFreeT s >>= iter
 
     iter (Free (RunRandom r k)) = runRand r gen >>= loop . k
-    iter (Free (RunST st k))    = stToIO st >>= loop . k
     iter move                   = return move

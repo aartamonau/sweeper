@@ -7,17 +7,15 @@ module Player.API
   , getGame
   , surrender
   , posInfo
-  , st
   , rand
   , module Rand
   ) where
 
-import Control.Monad.ST (RealWorld, ST)
 import Control.Monad.Trans.Free (liftF)
 
 import Game (Game, Pos)
 import Player
-  ( Move(GetGame, MarkMine, OpenEmpty, PosInfo, RunRandom, RunST)
+  ( Move(GetGame, MarkMine, OpenEmpty, PosInfo, RunRandom)
   , Player
   , Strategy
   , makePlayer
@@ -38,9 +36,6 @@ surrender = return ()
 
 posInfo :: [(Pos, String)] -> Strategy ()
 posInfo ps = liftF (PosInfo ps ())
-
-st :: ST RealWorld a -> Strategy a
-st action = liftF (RunST action id)
 
 rand :: Rand a -> Strategy a
 rand r = liftF (RunRandom r id)

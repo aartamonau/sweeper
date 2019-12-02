@@ -115,11 +115,11 @@ openEmpty game@(Game {field}) p
 
 openEmptyLoopEnter :: (Pos, Int) -> Game -> ([Pos], Game)
 openEmptyLoopEnter start@(p, _) game =
-  openEmptyLoop start ([p], uncoverBox game p)
+  openEmptyLoop ([p], uncoverBox game p) start
 
-openEmptyLoop :: (Pos, Int) -> ([Pos], Game) -> ([Pos], Game)
-openEmptyLoop (p, mines) acc@(seen, game)
-  | mines == 0 = foldl' (flip openEmptyLoop) (acc', game') toExamine
+openEmptyLoop :: ([Pos], Game) -> (Pos, Int) -> ([Pos], Game)
+openEmptyLoop acc@(seen, game) (p, mines)
+  | mines == 0 = foldl' openEmptyLoop (acc', game') toExamine
   | otherwise  = acc
   where
     acc'      = map fst toExamine ++ seen

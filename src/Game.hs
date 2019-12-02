@@ -22,6 +22,8 @@ module Game
 import Data.Array (Array, (!), (//), accumArray, inRange, listArray, range)
 import Data.List (foldl')
 import Data.Maybe (isJust)
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 import Rand (Rand, randomSubset)
 
@@ -103,33 +105,32 @@ neighbors' bounds p@(pi, pj) =
 
 openEmpty :: Game -> Pos -> PlayResult [Pos]
 openEmpty game@(Game {field}) p
-  | Just _ <- itm = retError game p ErrorAlreadyPlayed
-  | otherwise     =
+  | Just _ <- item game p = retError game p ErrorAlreadyPlayed
+  | otherwise =
     case field ! p of
-      Mine        -> retError game p ErrorKilled
-      Empty mines ->
-        let (ps, newGame) = (openEmptyLoopEnter (p, mines) game)
-        in ret newGame ps
+      Mine -> retError game p ErrorKilled
+      Empty _ ->
+        let ps = openEmptyLoop game p
+         in ret (foldl' uncoverBox game ps) ps
+
+openEmptyLoop :: Game -> Pos -> [Pos]
+openEmptyLoop game@(Game {field}) p = Set.toList (go Set.empty p)
   where
-    itm = item game p
-
-openEmptyLoopEnter :: (Pos, Int) -> Game -> ([Pos], Game)
-openEmptyLoopEnter start@(p, _) game =
-  openEmptyLoop ([p], uncoverBox game p) start
-
-openEmptyLoop :: ([Pos], Game) -> (Pos, Int) -> ([Pos], Game)
-openEmptyLoop acc@(seen, game) (p, mines)
-  | mines == 0 = foldl' openEmptyLoop (acc', game') toExamine
-  | otherwise  = acc
-  where
-    acc'      = map fst toExamine ++ seen
-    game'     = foldl' uncoverBox game (map fst toExamine)
-
-    toExamine = [ (np, count)
-                | np <- neighbors game p
-                , not (isOpened game np)
-                , let Empty count = field game ! np
-                ]
+    go :: Set Pos -> Pos -> Set Pos
+    go acc p
+      | Empty 0 <- item =
+        let ns =
+              [ np
+              | np <- neighbors game p
+              , not (isOpened game np)
+              , not (Set.member np acc)
+              ]
+         in foldl' go acc' ns
+      | Empty _ <- item = acc'
+      | otherwise = error "impossible"
+      where
+        item = field ! p
+        acc' = Set.insert p acc
 
 markMine :: Game -> Pos -> PlayResult ()
 markMine game p

@@ -23,8 +23,8 @@ loop dims = randomMove dims >> loop dims
 
 randomMove :: (Int, Int) -> Strategy ()
 randomMove (rows, columns) = do
-  (i, j) <- API.rand $ (,) <$> API.uniformR (0, rows-1)
-                           <*> API.uniformR (0, columns-1)
+  i <- API.rand $ API.uniformR (0, rows-1)
+  j <- API.rand $ API.uniformR (0, columns-1)
 
   _ <- API.openEmpty (i, j)
 

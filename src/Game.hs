@@ -21,7 +21,6 @@ module Game
 
 import Data.Array (Array, (!), (//), accumArray, inRange, listArray, range)
 import Data.List (foldl')
-import Data.Maybe (isJust)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -42,11 +41,11 @@ data Game =
     , numMines   :: Int
 
     , numMinesMarked :: Int
-    , numUncovered   :: Int
+    , numOpened      :: Int
 
-    , field      :: MineField
-    , fieldState :: Array Pos (Maybe Item)
-    , errorMove  :: Maybe Pos
+    , field     :: MineField
+    , opened    :: Array Pos Bool
+    , errorMove :: Maybe Pos
     }
 
 data PlayError
@@ -76,9 +75,9 @@ random rows columns numMines start buffer = do
              , numColumns     = columns
              , numMines       = length mines
              , numMinesMarked = 0
-             , numUncovered   = 0
+             , numOpened      = 0
              , field          = mkMineField bounds mines
-             , fieldState     = listArray bounds $ repeat Nothing
+             , opened         = listArray bounds $ repeat False
              , errorMove      = Nothing
              }
   where
@@ -88,7 +87,9 @@ bounds :: Game -> (Pos, Pos)
 bounds (Game {numRows, numColumns}) = ((0, 0), (numRows - 1, numColumns - 1))
 
 item :: Game -> Pos -> Maybe Item
-item (Game {fieldState}) p  = fieldState ! p
+item game@(Game {field}) p
+  | isOpened game p = Just $ field ! p
+  | otherwise = Nothing
 
 neighbors :: Game -> Pos -> [Pos]
 neighbors game = neighbors' (bounds game)
@@ -111,7 +112,7 @@ openEmpty game@(Game {field}) p
       Mine -> retError game p ErrorKilled
       Empty _ ->
         let ps = openEmptyLoop game p
-         in ret (foldl' uncoverBox game ps) ps
+         in ret (foldl' doOpen game ps) ps
 
 openEmptyLoop :: Game -> Pos -> [Pos]
 openEmptyLoop game@(Game {field}) p = Set.toList (go Set.empty p)
@@ -135,36 +136,31 @@ openEmptyLoop game@(Game {field}) p = Set.toList (go Set.empty p)
 markMine :: Game -> Pos -> PlayResult ()
 markMine game p
   | Just _ <- itm = retError game p ErrorAlreadyPlayed
-  | otherwise     = ret (markBox game p) ()
+  | otherwise     = ret (doOpen game p) ()
 
   where
     itm = item game p
 
 isWon :: Game -> Bool
-isWon (Game {numRows, numColumns, numMines, numMinesMarked, numUncovered}) =
-  numUncovered == numRows * numColumns && numMinesMarked == numMines
+isWon (Game {numRows, numColumns, numMines, numMinesMarked, numOpened}) =
+  numOpened == numRows * numColumns && numMinesMarked == numMines
 
 isOpened :: Game -> Pos -> Bool
-isOpened game p = isJust (item game p)
+isOpened (Game {opened}) p = opened ! p
 
-uncoverBox :: Game -> Pos -> Game
-uncoverBox game@(Game {field}) p =
-  incNumUncovered $ setBox game p (field ! p)
+doOpen :: Game -> Pos -> Game
+doOpen game@(Game {field, opened, numOpened, numMinesMarked}) p
+  | isOpened game p = game
+  | otherwise =
+    game
+      { opened = opened // [(p, True)]
+      , numOpened = numOpened + 1
+      , numMinesMarked = numMinesMarked'
+      }
 
-markBox :: Game -> Pos -> Game
-markBox game p = incMarkedMines $ uncoverBox game p
-
-setBox :: Game -> Pos -> Item -> Game
-setBox game@(Game {fieldState}) p item =
-  game {fieldState = fieldState // [(p, Just item)]}
-
-incMarkedMines :: Game -> Game
-incMarkedMines game@(Game {numMinesMarked}) =
-  game {numMinesMarked = numMinesMarked + 1}
-
-incNumUncovered :: Game -> Game
-incNumUncovered game@(Game {numUncovered}) =
-  game {numUncovered = numUncovered + 1}
+  where
+    numMinesMarked' | Mine <- field ! p = numMinesMarked + 1
+                    | otherwise = numMinesMarked
 
 retError :: Game -> Pos -> PlayError -> PlayResult a
 retError game lastMove error = (newGame, Left error)

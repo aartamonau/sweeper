@@ -142,9 +142,7 @@ markMine game p
 
 isWon :: Game -> Bool
 isWon (Game {numRows, numColumns, numMines, numMinesMarked, numUncovered}) =
-  numUncovered == numEmpty && numMinesMarked == numMines
-  where
-    numEmpty = numRows * numColumns - numMines
+  numUncovered == numRows * numColumns && numMinesMarked == numMines
 
 isOpened :: Game -> Pos -> Bool
 isOpened game p = isJust (item game p)
@@ -154,7 +152,7 @@ uncoverBox game@(Game {field}) p =
   incNumUncovered $ setBox game p (field ! p)
 
 markBox :: Game -> Pos -> Game
-markBox game p = incMarkedMines $ setBox game p Mine
+markBox game p = incMarkedMines $ uncoverBox game p
 
 setBox :: Game -> Pos -> Item -> Game
 setBox game@(Game {fieldState}) p item =

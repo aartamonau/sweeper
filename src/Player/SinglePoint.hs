@@ -19,6 +19,8 @@ import qualified Game
 import Player.API (Player, Strategy)
 import qualified Player.API as API
 
+import qualified Rand as Rand
+
 data Move
   = OpenEmpty Pos
   | MarkMine Pos
@@ -121,7 +123,7 @@ playGreedy game opened
 
     randomGreedyMove = do
       let n = length mins
-      i <- API.rand $ API.uniformR (0, n - 1)
+      i <- API.rand $ Rand.uniformR (0, n - 1)
       let (p, _) = mins !! i
       playMove (OpenEmpty p)
 
@@ -129,7 +131,7 @@ playGreedy game opened
 
 playRandom :: Game -> Strategy [Pos]
 playRandom game = do
-  i <- API.rand $ API.uniformR (0, n - 1)
+  i <- API.rand $ Rand.uniformR (0, n - 1)
   playMove (OpenEmpty $ unopened !! i)
 
   where

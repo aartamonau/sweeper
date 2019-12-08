@@ -8,7 +8,6 @@ module Player.API
   , surrender
   , posInfo
   , rand
-  , module Rand
   ) where
 
 import Control.Monad.Trans.Free (liftF)
@@ -20,7 +19,7 @@ import Player
   , Strategy
   , makePlayer
   )
-import Rand (Rand, uniform, uniformR)
+import Rand (Rand)
 
 openEmpty :: Pos -> Strategy [Pos]
 openEmpty p = liftF (OpenEmpty p id)

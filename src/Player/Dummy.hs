@@ -4,25 +4,18 @@ module Player.Dummy
 
 import Game (Pos)
 import qualified Game
-import Player.API
-  ( Player
-  , Strategy
-  , getGame
-  , makePlayer
-  , openEmpty
-  , rand
-  , uniformR
-  )
+import Player.API (Player, Strategy)
+import qualified Player.API as API
 
 player :: Player
-player = makePlayer "dummy" strategy
+player = API.makePlayer "dummy" strategy
 
 strategy :: Pos -> Strategy ()
 strategy start = do
-  game <- getGame
+  game <- API.getGame
   let dims = (Game.numRows game, Game.numColumns game)
 
-  _ <- openEmpty start
+  _ <- API.openEmpty start
   loop dims
 
 loop :: (Int, Int) -> Strategy ()
@@ -30,9 +23,9 @@ loop dims = randomMove dims >> loop dims
 
 randomMove :: (Int, Int) -> Strategy ()
 randomMove (rows, columns) = do
-  (i, j) <- rand $ (,) <$> uniformR (0, rows-1)
-                       <*> uniformR (0, columns-1)
+  (i, j) <- API.rand $ (,) <$> API.uniformR (0, rows-1)
+                           <*> API.uniformR (0, columns-1)
 
-  _ <- openEmpty (i, j)
+  _ <- API.openEmpty (i, j)
 
   return ()

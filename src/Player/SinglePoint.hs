@@ -16,17 +16,8 @@ import qualified Data.Set as Set
 import Game (Item(Empty, Mine), Game, Pos)
 import qualified Game
 
-import Player.API
-  ( Player
-  , Strategy
-  , getGame
-  , makePlayer
-  , markMine
-  , openEmpty
-  , posInfo
-  , rand
-  , uniformR
-  )
+import Player.API (Player, Strategy)
+import qualified Player.API as API
 
 data Move
   = OpenEmpty Pos
@@ -68,14 +59,14 @@ posMoves game p
     numUnopened = length unopened
 
 player :: Player
-player = makePlayer "single-point" strategy
+player = API.makePlayer "single-point" strategy
 
 strategy :: Pos -> Strategy ()
-strategy start = openEmpty start >>= loop
+strategy start = API.openEmpty start >>= loop
 
 loop :: [Pos] -> Strategy ()
 loop opened = do
-  game <- getGame
+  game <- API.getGame
   let (moves, opened') = findMoves game opened
 
   newOpened <- if | Set.null moves -> playGreedy game opened'
@@ -87,8 +78,8 @@ loopMoves :: [Move] -> Strategy [Pos]
 loopMoves moves = concat <$> mapM playMove moves
 
 playMove :: Move -> Strategy [Pos]
-playMove (OpenEmpty p) = openEmpty p
-playMove (MarkMine p)  = markMine p >> return []
+playMove (OpenEmpty p) = API.openEmpty p
+playMove (MarkMine p)  = API.markMine p >> return []
 
 type Prob = Ratio Int
 type Probs = [(Pos, Prob)]
@@ -120,7 +111,7 @@ playGreedy :: Game -> [Pos] -> Strategy [Pos]
 playGreedy game opened
   | null probs = playRandom game
   | otherwise  = do
-    posInfo [(p, showProb prob) | (p, prob) <- probs]
+    API.posInfo [(p, showProb prob) | (p, prob) <- probs]
     randomGreedyMove
   where
     probs = computeProbs game opened
@@ -130,7 +121,7 @@ playGreedy game opened
 
     randomGreedyMove = do
       let n = length mins
-      i <- rand $ uniformR (0, n - 1)
+      i <- API.rand $ API.uniformR (0, n - 1)
       let (p, _) = mins !! i
       playMove (OpenEmpty p)
 
@@ -138,7 +129,7 @@ playGreedy game opened
 
 playRandom :: Game -> Strategy [Pos]
 playRandom game = do
-  i <- rand $ uniformR (0, n - 1)
+  i <- API.rand $ API.uniformR (0, n - 1)
   playMove (OpenEmpty $ unopened !! i)
 
   where

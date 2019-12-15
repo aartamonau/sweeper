@@ -8,13 +8,12 @@ module Player
   , Player(Player, name, strategy)
   , Strategy
   , Name
+  , FreeF(Free, Pure)
   , makePlayer
   , runStrategy
-  , module Free
   ) where
 
-import Control.Monad.Trans.Free as Free (FreeF(Free, Pure), FreeT, MonadFree)
-import Control.Monad.Trans.Free (runFreeT)
+import Control.Monad.Trans.Free (FreeF(Free, Pure), FreeT, MonadFree, runFreeT)
 import Data.Bifunctor (second)
 
 import Game (Game, Pos)

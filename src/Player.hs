@@ -42,7 +42,7 @@ instance Show Player where
 makePlayer :: Name -> (Pos -> Strategy ()) -> Player
 makePlayer = Player
 
-runStrategy :: Gen -> Strategy () -> IO (FreeF Move () (FreeT Move IO ()))
+runStrategy :: Gen -> Strategy () -> IO (FreeF Move () (Strategy ()))
 runStrategy gen s = loop s
   where
     loop s = runFreeT s >>= iter

@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Player
@@ -12,8 +13,9 @@ module Player
   , module Free
   ) where
 
-import Control.Monad.Trans.Free as Free (FreeF(Free, Pure), FreeT)
+import Control.Monad.Trans.Free as Free (FreeF(Free, Pure), FreeT, MonadFree)
 import Control.Monad.Trans.Free (runFreeT)
+import Data.Bifunctor (second)
 
 import Game (Game, Pos)
 import Rand (Gen, Rand, runRand)
@@ -28,7 +30,11 @@ data Move next where
 deriving instance Functor Move
 
 type Name = String
-type Strategy a = FreeT Move IO a
+newtype Strategy a =
+  Strategy
+    { unStrategy :: FreeT Move IO a
+    }
+  deriving (Functor, Applicative, Monad, MonadFree Move)
 
 data Player =
   Player
@@ -43,7 +49,7 @@ makePlayer :: Name -> (Pos -> Strategy ()) -> Player
 makePlayer = Player
 
 runStrategy :: Gen -> Strategy () -> IO (FreeF Move () (Strategy ()))
-runStrategy gen s = loop s
+runStrategy gen s = fmap (second Strategy) (loop (unStrategy s))
   where
     loop s = runFreeT s >>= iter
 

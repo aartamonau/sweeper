@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Player
@@ -8,12 +9,19 @@ module Player
   , Player(Player, name, strategy)
   , Strategy
   , Name
+  , MonadPlayer(openEmpty, markMine, getGame, surrender, posInfo, rand)
   , FreeF(Free, Pure)
   , makePlayer
   , runStrategy
   ) where
 
-import Control.Monad.Trans.Free (FreeF(Free, Pure), FreeT, MonadFree, runFreeT)
+import Control.Monad.Trans.Free
+  ( FreeF(Free, Pure)
+  , FreeT
+  , MonadFree
+  , liftF
+  , runFreeT
+  )
 import Data.Bifunctor (second)
 
 import Game (Game, Pos)
@@ -44,7 +52,26 @@ data Player =
 instance Show Player where
   show = name
 
-makePlayer :: Name -> (Pos -> Strategy ()) -> Player
+class Monad m => MonadPlayer m where
+  openEmpty :: Pos -> m [Pos]
+  markMine :: Pos -> m ()
+  getGame :: m Game
+  surrender :: m ()
+  posInfo :: [(Pos, String)] -> m ()
+  rand :: Rand a -> m a
+
+instance MonadPlayer Strategy where
+  openEmpty p = liftMove (OpenEmpty p id)
+  markMine p = liftMove (MarkMine p ())
+  getGame = liftMove (GetGame id)
+  surrender = return ()
+  posInfo ps = liftMove (PosInfo ps ())
+  rand r = liftMove (RunRandom r id)
+
+liftMove :: Move a -> Strategy a
+liftMove = Strategy . liftF
+
+makePlayer :: Name -> (forall m. MonadPlayer m => Pos -> m ()) -> Player
 makePlayer = Player
 
 runStrategy :: Gen -> Strategy () -> IO (FreeF Move () (Strategy ()))

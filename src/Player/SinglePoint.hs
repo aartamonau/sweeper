@@ -16,7 +16,7 @@ import qualified Data.Set as Set
 import Game (Item(Empty, Mine), Game, Pos)
 import qualified Game
 
-import Player.API (MonadPlayer, Player)
+import Player.API (Player, PlayerL)
 import qualified Player.API as API
 
 import qualified Rand as Rand
@@ -63,10 +63,10 @@ posMoves game p
 player :: Player
 player = API.makePlayer "single-point" strategy
 
-strategy :: MonadPlayer m => Pos -> m ()
+strategy :: Pos -> PlayerL ()
 strategy start = API.openEmpty start >>= loop
 
-loop :: MonadPlayer m => [Pos] -> m ()
+loop :: [Pos] -> PlayerL ()
 loop opened = do
   game <- API.getGame
   let (moves, opened') = findMoves game opened
@@ -76,10 +76,10 @@ loop opened = do
 
   loop (newOpened ++ opened')
 
-loopMoves :: MonadPlayer m => [Move] -> m [Pos]
+loopMoves :: [Move] -> PlayerL [Pos]
 loopMoves moves = concat <$> mapM playMove moves
 
-playMove :: MonadPlayer m => Move -> m [Pos]
+playMove :: Move -> PlayerL [Pos]
 playMove (OpenEmpty p) = API.openEmpty p
 playMove (MarkMine p)  = API.markMine p >> return []
 
@@ -109,7 +109,7 @@ computeProbs game = Map.toList . foldl' f z . concatMap (posProbs game)
     z = Map.empty
     f acc (p, prob) = Map.insertWith max p prob acc
 
-playGreedy :: MonadPlayer m => Game -> [Pos] -> m [Pos]
+playGreedy :: Game -> [Pos] -> PlayerL [Pos]
 playGreedy game opened
   | null probs = playRandom game
   | otherwise  = do
@@ -129,7 +129,7 @@ playGreedy game opened
 
     showProb prob = show (numerator prob) ++ "/" ++ show (denominator prob)
 
-playRandom :: MonadPlayer m => Game -> m [Pos]
+playRandom :: Game -> PlayerL [Pos]
 playRandom game = do
   i <- API.rand $ Rand.uniformR (0, n - 1)
   playMove (OpenEmpty $ unopened !! i)

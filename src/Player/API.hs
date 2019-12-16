@@ -1,6 +1,6 @@
 module Player.API
-  ( MonadPlayer
-  , Player
+  ( Player
+  , PlayerL
   , makePlayer
   , openEmpty
   , markMine
@@ -11,8 +11,8 @@ module Player.API
   ) where
 
 import Player
-  ( MonadPlayer
-  , Player
+  ( Player
+  , PlayerL
   , makePlayer
   , openEmpty
   , markMine

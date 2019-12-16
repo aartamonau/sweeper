@@ -1,7 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Player
@@ -10,6 +9,7 @@ module Player
   , Strategy
   , Name
   , MonadPlayer(openEmpty, markMine, getGame, surrender, posInfo, rand)
+  , PlayerL
   , FreeF(Free, Pure)
   , makePlayer
   , runStrategy
@@ -67,6 +67,8 @@ instance MonadPlayer Strategy where
   surrender = return ()
   posInfo ps = liftMove (PosInfo ps ())
   rand r = liftMove (RunRandom r id)
+
+type PlayerL a = (forall m. MonadPlayer m => m a)
 
 liftMove :: Move a -> Strategy a
 liftMove = Strategy . liftF

@@ -50,3 +50,4 @@ executable sweeper-ai
   GHC-prof-options:    -fprof-auto -O2 -rtsopts
   default-extensions:  NamedFieldPuns
                        DuplicateRecordFields
+                       Rank2Types

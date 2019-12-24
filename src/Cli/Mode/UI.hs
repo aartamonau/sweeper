@@ -114,8 +114,8 @@ enterLoop uiCfg cfg deviceContext = do
         }
 
 loop :: Ctx -> IO ()
-loop ctx@(Ctx {cfg, rndGen}) = do
-  game <- randomGame rndGen cfg
+loop ctx@(Ctx {cfg}) = do
+  game <- randomGame cfg
   loopGame ctx game $
     strategy (Config.player cfg) (Config.startMove cfg)
 

@@ -24,7 +24,7 @@ import Data.List (foldl')
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Rand (Rand, randomSubset)
+import Rand (MonadRandom, randomSubset)
 
 type Pos = (Int, Int)
 type MineField = Array Pos Item
@@ -64,7 +64,7 @@ mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]
     item p | hasMine p = Mine
            | otherwise = Empty (length $ filter hasMine (neighbors' bounds p))
 
-random :: Int -> Int -> Int -> Pos -> Int -> Rand Game
+random :: MonadRandom m => Int -> Int -> Int -> Pos -> Int -> m Game
 random rows columns numMines start buffer = do
   let bounds    = ((0, 0), (rows-1, columns-1))
   let positions = [p | p <- range bounds, not (isClose start p)]

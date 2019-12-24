@@ -98,7 +98,7 @@ worker cfg tid n = do
 
 iter :: Config -> Gen -> PlayStats -> IO PlayStats
 iter cfg gen stats = do
-  game <- randomGame gen cfg
+  game <- randomGame cfg
 
   let initStrategy = strategy (Config.player cfg) (Config.startMove cfg)
   loop game initStrategy

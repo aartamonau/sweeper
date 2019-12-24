@@ -8,10 +8,10 @@ import qualified Cli.Config as Config
 import Game (Game)
 import qualified Game as Game
 
-import Rand (Gen, runRand)
+import Rand (MonadRandom)
 
-randomGame :: Gen -> Config -> IO Game
-randomGame gen cfg = runRand (Game.random rows cols mines startMove buffer) gen
+randomGame :: MonadRandom m => Config -> m Game
+randomGame cfg = Game.random rows cols mines startMove buffer
   where
     (rows, cols, mines) = Config.fieldSpec cfg
     startMove           = Config.startMove cfg

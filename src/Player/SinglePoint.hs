@@ -80,7 +80,14 @@ loopMoves :: [Move] -> PlayerL [Pos]
 loopMoves moves = concat <$> mapM playMove moves
 
 playMove :: Move -> PlayerL [Pos]
-playMove (OpenEmpty p) = API.openEmpty p
+playMove (OpenEmpty p) = do
+  game <- API.getGame
+
+  -- The square might have already gotten auto-opened as a side-effect of one
+  -- of the preceding moves.
+  if Game.isOpened game p
+    then return []
+    else API.openEmpty p
 playMove (MarkMine p)  = API.markMine p >> return []
 
 type Prob = Ratio Int

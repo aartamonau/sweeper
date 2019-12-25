@@ -79,9 +79,7 @@ type PlayerL a = (forall m. (MonadPlayer m, MonadRandom m) => m a)
 liftMove :: Move a -> Strategy a
 liftMove = Strategy . liftF
 
-makePlayer :: Name
-           -> (forall m. (MonadPlayer m, MonadRandom m) => Pos -> m ())
-           -> Player
+makePlayer :: Name -> (Pos -> PlayerL ()) -> Player
 makePlayer = Player
 
 runStrategy :: Strategy () -> IO (FreeF Move () (Strategy ()))

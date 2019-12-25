@@ -24,8 +24,8 @@ loop dims = randomMove dims >> loop dims
 
 randomMove :: (Int, Int) -> PlayerL ()
 randomMove (rows, columns) = do
-  i <- API.rand $ Rand.uniformR (0, rows-1)
-  j <- API.rand $ Rand.uniformR (0, columns-1)
+  i <- Rand.getRandomR (0, rows-1)
+  j <- Rand.getRandomR (0, columns-1)
 
   _ <- API.openEmpty (i, j)
 

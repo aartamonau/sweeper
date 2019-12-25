@@ -2,7 +2,6 @@ module Cli.Config
   ( Config
   , fieldSpec
   , startMove
-  , makeGen
   , buffer
   , player
   , seed
@@ -10,7 +9,6 @@ module Cli.Config
   ) where
 
 import Control.Applicative ((<|>))
-import Data.Bits (xor)
 import Data.List.Split (splitOn)
 import Options.Applicative
   ( Parser
@@ -32,8 +30,6 @@ import Player (Player(name))
 
 import qualified Player.Dummy as Dummy
 import qualified Player.SinglePoint as SinglePoint
-
-import Rand (Gen, newGen, systemGen)
 
 data FieldSpec
   = Easy
@@ -79,11 +75,6 @@ startMove cfg = decode $ rawStartMove cfg
     decode Center = (rows `div` 2, columns `div` 2)
       where
         (rows, columns, _) = fieldSpec cfg
-
-makeGen :: Config -> Int -> IO Gen
-makeGen (Config {seed}) tid
-  | Just s  <- seed = newGen (s `xor` tid)
-  | Nothing <- seed = systemGen
 
 knownPlayers :: [Player]
 knownPlayers = [Dummy.player, SinglePoint.player]

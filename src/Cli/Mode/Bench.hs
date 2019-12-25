@@ -34,7 +34,6 @@ import Player
   , strategy
   )
 import PlayStats (PlayStats, incLost, incStalled, incWon)
-import Rand (Gen)
 
 import Cli.Mode.Common (randomGame)
 
@@ -77,8 +76,8 @@ run (BenchCfg {numWorkers, numIters}) cfg = do
 
   setNumCapabilities numWorkers'
 
-  let jobs = [(i, workerIters numIters numWorkers' i) | i <- [0..numWorkers'-1]]
-  mapConcurrently (uncurry $ worker cfg) jobs >>= print . mconcat
+  let jobs = [workerIters numIters numWorkers' i | i <- [0..numWorkers'-1]]
+  mapConcurrently (worker cfg) jobs >>= print . mconcat
 
 workerIters :: Int -> Int -> Int -> Int
 workerIters total workers i = total `div` workers + extra
@@ -88,16 +87,15 @@ workerIters total workers i = total `div` workers + extra
       | i < rem   = 1
       | otherwise = 0
 
-worker :: Config -> Int -> Int -> IO PlayStats
-worker cfg tid n = do
-  gen <- Config.makeGen cfg tid
-  loop n gen mempty
+worker :: Config -> Int -> IO PlayStats
+worker cfg n = do
+  loop n mempty
   where
-    loop 0 _   stats = return stats
-    loop i gen stats = iter cfg gen stats >>= loop (i - 1) gen
+    loop 0 stats = return stats
+    loop i stats = iter cfg stats >>= loop (i - 1)
 
-iter :: Config -> Gen -> PlayStats -> IO PlayStats
-iter cfg gen stats = do
+iter :: Config -> PlayStats -> IO PlayStats
+iter cfg stats = do
   game <- randomGame cfg
 
   let initStrategy = strategy (Config.player cfg) (Config.startMove cfg)
@@ -106,7 +104,7 @@ iter cfg gen stats = do
   where
     loop game s
       | Game.isWon game = return $ incWon stats
-      | otherwise       = runStrategy gen s >>= handleStep game
+      | otherwise       = runStrategy s >>= handleStep game
 
     handleStep _    (Pure _)    = return $ incStalled stats
     handleStep game (Free move) = handleMove game move

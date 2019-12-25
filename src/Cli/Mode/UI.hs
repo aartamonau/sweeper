@@ -33,7 +33,6 @@ import Player
   , runStrategy
   )
 import PlayStats (PlayStats, incLost, incStalled, incWon)
-import Rand (Gen)
 
 import UI.UI
   ( DeviceContext
@@ -80,7 +79,6 @@ data Ctx =
     , uiCfg         :: UICfg
     , stats         :: PlayStats
     , deviceContext :: DeviceContext
-    , rndGen        :: Gen
     }
 
 run :: UICfg -> Config -> IO ()
@@ -101,16 +99,14 @@ wait (Ctx {deviceContext, uiCfg})
 
 enterLoop :: UICfg -> Config -> DeviceContext -> IO ()
 enterLoop uiCfg cfg deviceContext = do
-  gen <- Config.makeGen cfg 0
-  loop (ctx gen)
+  loop ctx
   where
-    ctx gen =
+    ctx =
       Ctx
         { cfg = cfg
         , uiCfg = uiCfg
         , stats = mempty
         , deviceContext = deviceContext
-        , rndGen = gen
         }
 
 loop :: Ctx -> IO ()
@@ -126,7 +122,7 @@ loopGame ctx game strategy = do
 
 loopStrategy :: Ctx -> Game -> Strategy () -> IO ()
 loopStrategy ctx game strategy = do
-  step <- runStrategy (rndGen ctx) strategy
+  step <- runStrategy strategy
   case step of
     Pure _                      -> surrender
     Free (PosInfo ps strategy') -> handlePosInfo ps strategy'

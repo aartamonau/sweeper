@@ -7,7 +7,6 @@ module Player.API
   , getGame
   , surrender
   , posInfo
-  , rand
   ) where
 
 import Player
@@ -20,5 +19,4 @@ import Player
   , surrender
   , surrender
   , posInfo
-  , rand
   )

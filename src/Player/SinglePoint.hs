@@ -130,7 +130,7 @@ playGreedy game opened
 
     randomGreedyMove = do
       let n = length mins
-      i <- API.rand $ Rand.uniformR (0, n - 1)
+      i <- Rand.getRandomR (0, n - 1)
       let (p, _) = mins !! i
       playMove (OpenEmpty p)
 
@@ -138,7 +138,7 @@ playGreedy game opened
 
 playRandom :: Game -> PlayerL [Pos]
 playRandom game = do
-  i <- API.rand $ Rand.uniformR (0, n - 1)
+  i <- Rand.getRandomR (0, n - 1)
   playMove (OpenEmpty $ unopened !! i)
 
   where

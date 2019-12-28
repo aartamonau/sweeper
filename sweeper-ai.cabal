@@ -47,6 +47,7 @@ executable sweeper-ai
   GHC-options:         -threaded -Wall -O2 -rtsopts -fno-warn-name-shadowing
   GHC-prof-options:    -fprof-auto -O2 -rtsopts
   default-extensions:  DuplicateRecordFields
+                       GeneralizedNewtypeDeriving
                        NamedFieldPuns
                        Rank2Types
                        TupleSections

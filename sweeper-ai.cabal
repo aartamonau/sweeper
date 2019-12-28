@@ -35,7 +35,7 @@ executable sweeper-ai
                        text,
                        blank-canvas,
                        colour,
-                       transformers,
+                       mtl,
                        free,
                        containers,
                        split,

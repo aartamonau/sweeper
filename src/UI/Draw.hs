@@ -23,8 +23,8 @@ module UI.Draw
   , (///)
   ) where
 
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader (ReaderT, asks, local, runReaderT)
+import Control.Monad.Reader (ReaderT, asks, local, runReaderT)
+import Control.Monad.Trans (lift)
 
 import Data.Text (pack)
 

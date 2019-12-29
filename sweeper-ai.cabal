@@ -20,6 +20,7 @@ executable sweeper-ai
                        Cli.Mode.UI
                        Cli.Read
                        Game
+                       GameRunner
                        Player
                        Player.API
                        Player.Dummy

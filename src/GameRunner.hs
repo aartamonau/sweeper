@@ -2,39 +2,42 @@ module GameRunner
   (
   ) where
 
-import Control.Monad.Cont (ContT, MonadCont, runContT, callCC)
+import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Random.Class
   ( MonadRandom(getRandom, getRandomR, getRandomRs, getRandoms)
   )
 import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, asks)
 import Data.Bifunctor (first)
-import Data.IORef (IORef, readIORef, writeIORef)
+import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import System.Random (StdGen)
 import qualified System.Random as Random
 
-import Game (Game)
+import Game (Game, Pos)
 import Player
   ( MonadPlayer(getGame, markMine, openEmpty, posInfo, surrender)
-  , Player
+  , PlayerL
   )
 
 data GameResult = GameAborted
 
 data Env =
   Env
-    { player :: Player
-    , game :: IORef Game
-    , rndGen :: IORef StdGen
-
-    , escapeCont :: forall a. GameResult -> Runner a
+    { game :: IORef Game
+    , gen :: IORef StdGen
     }
 
 newtype Runner a =
   Runner
-    { unRunner :: ContT GameResult (ReaderT Env IO) a
+    { unRunner :: ReaderT Env (ExceptT GameResult IO) a
     }
-  deriving (Functor, Applicative, Monad, MonadReader Env, MonadIO, MonadCont)
+  deriving ( Functor
+           , Applicative
+           , Monad
+           , MonadReader Env
+           , MonadIO
+           , MonadError GameResult
+           )
 
 modifyEnv :: (Env -> IORef a) -> (a -> (r, a)) -> Runner r
 modifyEnv accessor f = do
@@ -56,22 +59,33 @@ splitRandom :: (StdGen -> a) -> Runner a
 splitRandom f = liftRandom (first f . Random.split)
 
 liftRandom :: (StdGen -> (a, StdGen)) -> Runner a
-liftRandom = modifyEnv rndGen
+liftRandom = modifyEnv gen
 
 instance MonadPlayer Runner where
   openEmpty p = escape GameAborted
   markMine p = escape GameAborted
   getGame = escape GameAborted
   surrender = escape GameAborted
-  posInfo ps = escape GameAborted
+  posInfo = doPosInfo
+
+doPosInfo :: [(Pos, String)] -> Runner ()
+doPosInfo _ = return ()
 
 escape :: GameResult -> Runner a
-escape result = do
-  cont <- asks escapeCont
-  cont result
+escape result = throwError result
 
 runRunner :: Env -> Runner GameResult -> IO GameResult
-runRunner env runner = undefined
+runRunner env = fmap mergeEither . runExceptT . runReader . unRunner
+  where
+    runReader = flip runReaderT env
+    mergeEither = either id id
 
-run :: Player -> Game -> IO GameResult
-run = undefined
+run :: PlayerL () -> Game -> StdGen -> IO GameResult
+run player game gen = do
+  gameRef <- newIORef game
+  genRef <- newIORef gen
+  let env = Env {game = gameRef, gen = genRef}
+
+  runRunner env $ do
+    player
+    return GameAborted

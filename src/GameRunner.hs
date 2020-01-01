@@ -15,7 +15,7 @@ import qualified System.Random as Random
 
 import Game (Game, Pos)
 import Player
-  ( MonadPlayer(getGame, markMine, openEmpty, posInfo, surrender)
+  ( MonadPlayer(getGame, markMine, openEmpty, posInfo)
   , PlayerL
   )
 
@@ -65,7 +65,6 @@ instance MonadPlayer Runner where
   openEmpty p = escape GameAborted
   markMine p = escape GameAborted
   getGame = escape GameAborted
-  surrender = escape GameAborted
   posInfo = doPosInfo
 
 doPosInfo :: [(Pos, String)] -> Runner ()

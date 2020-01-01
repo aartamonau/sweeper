@@ -7,7 +7,7 @@ module Player
   , Player(Player, name, strategy)
   , Strategy
   , Name
-  , MonadPlayer(openEmpty, markMine, getGame, surrender, posInfo)
+  , MonadPlayer(openEmpty, markMine, getGame, posInfo)
   , PlayerL
   , FreeF(Free, Pure)
   , makePlayer
@@ -57,14 +57,12 @@ class Monad m => MonadPlayer m where
   openEmpty :: Pos -> m [Pos]
   markMine :: Pos -> m ()
   getGame :: m Game
-  surrender :: m ()
   posInfo :: [(Pos, String)] -> m ()
 
 instance MonadPlayer Strategy where
   openEmpty p = liftMove (OpenEmpty p id)
   markMine p = liftMove (MarkMine p ())
   getGame = liftMove (GetGame id)
-  surrender = return ()
   posInfo ps = liftMove (PosInfo ps ())
 
 instance MonadRandom Strategy where

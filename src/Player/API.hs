@@ -5,7 +5,6 @@ module Player.API
   , openEmpty
   , markMine
   , getGame
-  , surrender
   , posInfo
   ) where
 
@@ -16,7 +15,5 @@ import Player
   , openEmpty
   , markMine
   , getGame
-  , surrender
-  , surrender
   , posInfo
   )

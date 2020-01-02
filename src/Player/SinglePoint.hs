@@ -1,5 +1,3 @@
-{-# LANGUAGE MultiWayIf #-}
-
 module Player.SinglePoint
   ( player
   ) where

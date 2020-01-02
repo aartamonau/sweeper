@@ -1,5 +1,3 @@
-{-# LANGUAGE ApplicativeDo #-}
-
 module Cli.Mode.UI
   ( mode
   ) where

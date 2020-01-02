@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module UI.UI
   ( UI(UI, playerName, stats, game)
   , DeviceContext

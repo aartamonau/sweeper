@@ -50,6 +50,7 @@ executable sweeper-ai
   default-extensions:  ApplicativeDo
                        DuplicateRecordFields
                        GeneralizedNewtypeDeriving
+                       LambdaCase
                        MultiWayIf
                        NamedFieldPuns
                        OverloadedStrings

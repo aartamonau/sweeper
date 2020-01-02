@@ -1,7 +1,10 @@
 module GameRunner
   (
+    GameResult(GameWon, GameLost)
+  , run
   ) where
 
+import Control.Monad (when)
 import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Random.Class
@@ -10,16 +13,20 @@ import Control.Monad.Random.Class
 import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, asks)
 import Data.Bifunctor (first)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
-import System.Random (StdGen)
+import Data.Tuple (swap)
+import System.Random (StdGen, getStdGen)
 import qualified System.Random as Random
 
 import Game (Game, Pos)
+import qualified Game as Game
 import Player
   ( MonadPlayer(getGame, markMine, openEmpty, posInfo)
   , PlayerL
   )
 
-data GameResult = GameAborted
+data GameResult
+  = GameWon
+  | GameLost
 
 data Env =
   Env
@@ -38,6 +45,9 @@ newtype Runner a =
            , MonadIO
            , MonadError GameResult
            )
+
+readEnv :: (Env -> IORef a) -> Runner a
+readEnv accessor = asks accessor >>= liftIO . readIORef
 
 modifyEnv :: (Env -> IORef a) -> (a -> (r, a)) -> Runner r
 modifyEnv accessor f = do
@@ -62,16 +72,39 @@ liftRandom :: (StdGen -> (a, StdGen)) -> Runner a
 liftRandom = modifyEnv gen
 
 instance MonadPlayer Runner where
-  openEmpty p = escape GameAborted
-  markMine p = escape GameAborted
-  getGame = escape GameAborted
+  openEmpty = doOpenEmpty
+  markMine = doMarkMine
+  getGame = doGetGame
   posInfo = doPosInfo
+
+doOpenEmpty :: Pos -> Runner [Pos]
+doOpenEmpty p =
+  modifyEnv game open >>= \case
+    Left _ -> throwError GameLost
+    Right ps -> checkWon >> return ps
+
+  where
+    open game = swap (Game.openEmpty game p)
+
+doMarkMine :: Pos -> Runner ()
+doMarkMine p =
+  modifyEnv game mark >>= \case
+    Left _ -> throwError GameLost
+    Right () -> checkWon >> return ()
+
+  where
+    mark game = swap (Game.markMine game p)
+
+doGetGame :: Runner Game
+doGetGame = readEnv game
 
 doPosInfo :: [(Pos, String)] -> Runner ()
 doPosInfo _ = return ()
 
-escape :: GameResult -> Runner a
-escape result = throwError result
+checkWon :: Runner ()
+checkWon = do
+  isWon <- Game.isWon <$> readEnv game
+  when isWon (throwError GameWon)
 
 runRunner :: Env -> Runner GameResult -> IO GameResult
 runRunner env = fmap mergeEither . runExceptT . runReader . unRunner
@@ -79,12 +112,12 @@ runRunner env = fmap mergeEither . runExceptT . runReader . unRunner
     runReader = flip runReaderT env
     mergeEither = either id id
 
-run :: PlayerL () -> Game -> StdGen -> IO GameResult
-run player game gen = do
+run :: Game -> PlayerL () -> IO GameResult
+run game player = do
   gameRef <- newIORef game
-  genRef <- newIORef gen
+  genRef <- getStdGen >>= newIORef
   let env = Env {game = gameRef, gen = genRef}
 
   runRunner env $ do
     player
-    return GameAborted
+    return GameLost

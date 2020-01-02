@@ -23,14 +23,10 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
 
-import qualified Game as Game
-import Player
-  ( FreeF(Free, Pure)
-  , Move(GetGame, MarkMine, OpenEmpty, PosInfo)
-  , runStrategy
-  , strategy
-  )
-import PlayStats (PlayStats, incLost, incStalled, incWon)
+import GameRunner (GameResult(GameLost, GameWon))
+import qualified GameRunner as GameRunner
+import Player (strategy)
+import PlayStats (PlayStats, incLost, incWon)
 
 import Cli.Mode.Common (randomGame)
 
@@ -95,31 +91,10 @@ iter :: Config -> PlayStats -> IO PlayStats
 iter cfg stats = do
   game <- randomGame cfg
 
-  let initStrategy = strategy (Config.player cfg) (Config.startMove cfg)
-  loop game initStrategy
+  GameRunner.run game (strategy player startMove) >>= \case
+    GameLost -> return (incLost stats)
+    GameWon -> return (incWon stats)
 
   where
-    loop game s
-      | Game.isWon game = return $ incWon stats
-      | otherwise       = runStrategy s >>= handleStep game
-
-    handleStep _    (Pure _)    = return $ incStalled stats
-    handleStep game (Free move) = handleMove game move
-
-    handleMove game (PosInfo _ s)   = loop game s
-    handleMove game (OpenEmpty p k) = handleOpenEmpty game p k
-    handleMove game (MarkMine p s)  = handleMarkMine game p s
-    handleMove game (GetGame k)     = loop game (k game)
-    handleMove _ _                  = error "can't happen"
-
-    handleOpenEmpty game p k =
-      case Game.openEmpty game p of
-        (game', Right ps) -> loop game' (k ps)
-        (_, Left err)     -> handleError err
-
-    handleMarkMine game p s =
-      case Game.markMine game p of
-        (game', Right ()) -> loop game' s
-        (_, Left err)     -> handleError err
-
-    handleError _ = return $ incLost stats
+    startMove = Config.startMove cfg
+    player = Config.player cfg

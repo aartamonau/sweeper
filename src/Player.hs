@@ -47,7 +47,7 @@ newtype Strategy a =
 data Player =
   Player
     { name :: Name
-    , strategy :: Pos -> Strategy ()
+    , strategy :: Pos -> PlayerL ()
     }
 
 instance Show Player where

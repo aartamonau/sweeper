@@ -1,5 +1,4 @@
 {-# LANGUAGE ApplicativeDo #-}
-{-# LANGUAGE BangPatterns #-}
 
 module Cli.Mode.Bench
   ( mode

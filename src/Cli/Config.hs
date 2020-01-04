@@ -9,7 +9,7 @@ module Cli.Config
   ) where
 
 import Control.Applicative ((<|>))
-import Data.List.Split (splitOn)
+import Data.List.Extra (splitOn)
 import Options.Applicative
   ( Parser
   , ReadM

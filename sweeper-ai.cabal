@@ -39,7 +39,6 @@ executable sweeper-ai
                        mtl,
                        free,
                        containers,
-                       split,
                        optparse-applicative,
                        async,
                        MonadRandom,

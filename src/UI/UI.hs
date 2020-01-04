@@ -11,7 +11,9 @@ module UI.UI
   , runUI
   ) where
 
+import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (forM_)
+import Control.Monad.Extra (ifM)
 import Data.Ix (range)
 import Graphics.Blank
   ( DeviceContext
@@ -22,6 +24,7 @@ import Graphics.Blank
   , send
   , wait
   )
+import Web.Browser (openBrowser)
 
 import Game (Item(Empty, Mine), Game, Pos)
 import qualified Game as Game
@@ -116,8 +119,23 @@ waitKeypress context = do
 
 runUI :: (DeviceContext -> IO ()) -> IO ()
 runUI loop = do
-  putStrLn "To open the UI go to http://127.0.0.1:3000/"
-  blankCanvas 3000 {events = ["keydown", "mousedown"]} loop
+  forkOpenURL
+  blankCanvas settings {events = ["keydown", "mousedown"]} loop
+
+  where
+    settings = fromIntegral port
+    port = 3000 :: Int
+    url = "http://127.0.0.1:" ++ show port ++ "/"
+    forkOpenURL =
+      -- this is ugly, but there's no other way to interject into the
+      -- web-server startup to know that the listening port was bound
+      forkIO (threadDelay (100 * 1e3) >> openURL) >> return ()
+
+    openURL =
+      ifM
+        (openBrowser url)
+        (putStrLn "The UI has been opened in your browser")
+        (putStrLn $ "To open the UI go to " ++ url)
 
 -- internal
 boardRect :: Game -> Draw Rect

@@ -11,7 +11,8 @@ module UI.UI
   , runUI
   ) where
 
-import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent.Async (withAsync, link)
+import Control.Concurrent (threadDelay)
 import Control.Monad (forM_)
 import Control.Monad.Extra (ifM)
 import Data.Ix (range)
@@ -118,18 +119,20 @@ waitKeypress context = do
       | otherwise            = error "can't happen"
 
 runUI :: (DeviceContext -> IO ()) -> IO ()
-runUI loop = do
-  forkOpenURL
-  blankCanvas settings {events = ["keydown", "mousedown"]} loop
+runUI loop =
+  withAsync waitAndOpenURL $ \opener -> do
+    link opener
+    blankCanvas settings {events = ["keydown", "mousedown"]} loop
 
   where
     settings = fromIntegral port
     port = 3000 :: Int
     url = "http://127.0.0.1:" ++ show port ++ "/"
-    forkOpenURL =
+
+    waitAndOpenURL
       -- this is ugly, but there's no other way to interject into the
       -- web-server startup to know that the listening port was bound
-      forkIO (threadDelay (100 * 1e3) >> openURL) >> return ()
+      = threadDelay (100 * 1e3) >> openURL
 
     openURL =
       ifM

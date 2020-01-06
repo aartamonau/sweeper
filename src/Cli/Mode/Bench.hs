@@ -2,7 +2,6 @@ module Cli.Mode.Bench
   ( mode
   ) where
 
-import Control.Concurrent (setNumCapabilities)
 import Control.Concurrent.Async (mapConcurrently)
 import Data.Maybe (fromMaybe)
 import GHC.Conc (getNumProcessors)
@@ -66,8 +65,6 @@ run (BenchCfg {numWorkers, numIters}) cfg = do
 
   putStrLn $ "Number of iterations: " ++ show numIters
   putStrLn $ "Number of workers: " ++ show numWorkers'
-
-  setNumCapabilities numWorkers'
 
   let jobs = [workerIters numIters numWorkers' i | i <- [0..numWorkers'-1]]
   mapConcurrently (worker cfg) jobs >>= print . mconcat

@@ -18,16 +18,14 @@ import Options.Applicative
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config
+import Cli.Mode.Common (randomGame)
 import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
-
 import GameRunner (GameResult(GameLost, GameWon))
 import qualified GameRunner as GameRunner
 import Player (strategy)
 import PlayStats (PlayStats, incLost, incWon)
-
-import Cli.Mode.Common (randomGame)
 
 data BenchCfg =
   BenchCfg

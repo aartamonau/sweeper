@@ -11,7 +11,7 @@ module UI.UI
   , runUI
   ) where
 
-import Control.Concurrent.Async (withAsync, link)
+import Control.Concurrent.Async (concurrently_)
 import Control.Concurrent (threadDelay)
 import Control.Monad (forM_)
 import Control.Monad.Extra (ifM)
@@ -120,10 +120,9 @@ waitKeypress context = do
 
 runUI :: (DeviceContext -> IO ()) -> IO ()
 runUI loop =
-  withAsync waitAndOpenURL $ \opener -> do
-    link opener
-    blankCanvas settings {events = ["keydown", "mousedown"]} loop
-
+  concurrently_
+    waitAndOpenURL
+    (blankCanvas settings {events = ["keydown", "mousedown"]} loop)
   where
     settings = fromIntegral port
     port = 3000 :: Int

@@ -1,0 +1,61 @@
+module Utils.Chan
+  ( Chan
+  , new
+  , close
+  , put
+  , take
+  ) where
+
+import Prelude hiding (take)
+
+import Control.Concurrent.STM
+  ( STM
+  , TMVar
+  , TVar
+  , atomically
+  , newEmptyTMVarIO
+  , newTVarIO
+  , orElse
+  , putTMVar
+  , readTVar
+  , retry
+  , takeTMVar
+  , writeTVar
+  )
+import Control.Monad.Extra (ifM, whenM)
+
+data Chan a =
+  Chan
+    { closed :: TVar Bool
+    , box :: TMVar a
+    }
+
+new :: IO (Chan a)
+new = Chan <$> newTVarIO False <*> newEmptyTMVarIO
+
+close :: Chan a -> IO ()
+close chan@(Chan {closed}) =
+  atomically $ do
+    errorIfClosed "Chan.close" chan
+    writeTVar closed True
+
+put :: Chan a -> a -> IO ()
+put chan@(Chan {box}) value =
+  atomically $ do
+    errorIfClosed "Chan.put" chan
+    putTMVar box value
+
+take :: Chan a -> IO (Maybe a)
+take chan@(Chan {box}) =
+  atomically $ tryTake `orElse` checkClosed
+  where
+    tryTake = Just <$> takeTMVar box
+    checkClosed = ifM (isClosed chan) (return Nothing) retry
+
+errorIfClosed :: String -> Chan a -> STM ()
+errorIfClosed op chan = whenM (isClosed chan) (error msg)
+  where
+    msg = op ++ ": channel closed"
+
+isClosed :: Chan a -> STM Bool
+isClosed = readTVar . closed

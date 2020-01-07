@@ -52,6 +52,7 @@ executable sweeper-ai
                        -rtsopts -with-rtsopts=-N
   GHC-prof-options:    -fprof-auto
   default-extensions:  ApplicativeDo
+                       BangPatterns
                        DuplicateRecordFields
                        GeneralizedNewtypeDeriving
                        LambdaCase

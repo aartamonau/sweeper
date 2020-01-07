@@ -82,7 +82,7 @@ dispatcher numIters chan =
 worker :: Chan () -> Config -> IO PlayStats
 worker jobs cfg = loop mempty
   where
-    loop stats =
+    loop !stats =
       Chan.take jobs >>= \case
         Nothing -> return stats
         Just _ -> workerIter cfg stats >>= loop

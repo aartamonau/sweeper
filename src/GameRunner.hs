@@ -14,7 +14,7 @@ import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, asks)
 import Data.Bifunctor (first)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.Tuple (swap)
-import System.Random (StdGen, getStdGen)
+import System.Random (StdGen)
 import qualified System.Random as Random
 
 import Game (Game, Pos)
@@ -112,10 +112,10 @@ runRunner env = fmap mergeEither . runExceptT . runReader . unRunner
     runReader = flip runReaderT env
     mergeEither = either id id
 
-run :: Game -> PlayerL () -> IO GameResult
-run game player = do
+run :: StdGen -> Game -> PlayerL () -> IO GameResult
+run gen game player = do
   gameRef <- newIORef game
-  genRef <- getStdGen >>= newIORef
+  genRef <- newIORef gen
   let env = Env {game = gameRef, gen = genRef}
 
   runRunner env $ do

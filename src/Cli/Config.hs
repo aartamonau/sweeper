@@ -4,7 +4,7 @@ module Cli.Config
   , startMove
   , buffer
   , player
-  , seed
+  , getRandomGen
   , parse
   ) where
 
@@ -21,6 +21,7 @@ import Options.Applicative
   , showDefault
   , value
   )
+import System.Random (StdGen, getStdGen, mkStdGen)
 import Text.Read (readMaybe)
 
 import Cli.Helpers (presentList)
@@ -59,6 +60,11 @@ data Config =
     , player       :: Player
     , seed         :: Maybe Int
     }
+
+getRandomGen :: Config -> IO StdGen
+getRandomGen (Config {seed})
+  | Nothing <- seed = getStdGen
+  | Just seed' <- seed = return $ mkStdGen seed'
 
 fieldSpec :: Config -> (Int, Int, Int)
 fieldSpec = decode . rawFieldSpec

@@ -3,7 +3,7 @@ module Cli.Mode.Bench
   ) where
 
 import Control.Concurrent.Async (concurrently, replicateConcurrently)
-import Control.Monad (replicateM_)
+import Data.List (unfoldr)
 import Data.Maybe (fromMaybe)
 import GHC.Conc (getNumProcessors)
 import Options.Applicative
@@ -16,6 +16,7 @@ import Options.Applicative
   , showDefaultWith
   , value
   )
+import System.Random (StdGen, split)
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config
@@ -72,26 +73,30 @@ run (BenchCfg {numWorkers, numIters}) cfg = do
 doRun :: Int -> Int -> Config -> IO PlayStats
 doRun numIters numWorkers cfg = do
   jobs <- Chan.new
+  gen <- Config.getRandomGen cfg
   snd <$>
-    concurrently (dispatcher numIters jobs) (runWorkers numWorkers jobs cfg)
+    concurrently (dispatcher gen numIters jobs) (runWorkers numWorkers jobs cfg)
 
-dispatcher :: Int -> Chan () -> IO ()
-dispatcher numIters chan =
-  replicateM_ numIters (Chan.put chan ()) >> Chan.close chan
+dispatcher :: StdGen -> Int -> Chan StdGen -> IO ()
+dispatcher gen numIters chan =
+  mapM_ (Chan.put chan) (take numIters gens) >> Chan.close chan
+  where
+    gens = unfoldr (Just . split) gen
 
-worker :: Chan () -> Config -> IO PlayStats
+worker :: Chan StdGen -> Config -> IO PlayStats
 worker jobs cfg = loop mempty
   where
     loop !stats =
       Chan.take jobs >>= \case
         Nothing -> return stats
-        Just _ -> workerIter cfg stats >>= loop
+        Just gen -> workerIter gen cfg stats >>= loop
 
-workerIter :: Config -> PlayStats -> IO PlayStats
-workerIter cfg stats = do
-  game <- randomGame cfg
+workerIter :: StdGen -> Config -> PlayStats -> IO PlayStats
+workerIter gen cfg stats = do
+  let (gameGen, runnerGen) = split gen
+  let game = randomGame gameGen cfg
 
-  GameRunner.run game (strategy player startMove) >>= \case
+  GameRunner.run runnerGen game (strategy player startMove) >>= \case
     GameLost -> return (incLost stats)
     GameWon -> return (incWon stats)
 
@@ -99,6 +104,6 @@ workerIter cfg stats = do
     startMove = Config.startMove cfg
     player = Config.player cfg
 
-runWorkers :: Int -> Chan () -> Config -> IO PlayStats
+runWorkers :: Int -> Chan StdGen -> Config -> IO PlayStats
 runWorkers numWorkers jobs cfg =
   mconcat <$> replicateConcurrently numWorkers (worker jobs cfg)

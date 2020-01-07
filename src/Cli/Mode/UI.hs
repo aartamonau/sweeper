@@ -16,7 +16,7 @@ import Options.Applicative
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config
-import Cli.Mode.Common (randomGame)
+import Cli.Mode.Common (randomGameIO)
 import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type
 import qualified Cli.Read as Read
@@ -109,7 +109,7 @@ enterLoop uiCfg cfg deviceContext = do
 
 loop :: Ctx -> IO ()
 loop ctx@(Ctx {cfg}) = do
-  game <- randomGame cfg
+  game <- randomGameIO cfg
   loopGame ctx game $
     strategy (Config.player cfg) (Config.startMove cfg)
 

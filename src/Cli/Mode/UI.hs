@@ -17,8 +17,7 @@ import Options.Applicative
 import Cli.Config (Config)
 import qualified Cli.Config as Config
 import Cli.Mode.Common (randomGameIO)
-import Cli.Mode.Type (Mode(Mode))
-import qualified Cli.Mode.Type
+import Cli.Mode.Type (Mode(Mode, _name, _help, _parse))
 import qualified Cli.Read as Read
 
 import Game (Game, PlayError(ErrorKilled, ErrorAlreadyPlayed))
@@ -52,7 +51,7 @@ data UICfg =
     }
 
 mode :: Mode
-mode = Mode {name, help, parse}
+mode = Mode {_name = name, _help = help, _parse = parse}
   where
     name = "ui"
     help = "View a bot play using Web interface"

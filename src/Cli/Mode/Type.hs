@@ -1,14 +1,19 @@
 module Cli.Mode.Type
-  ( Mode(Mode, name, help, parse)
+  ( Mode(Mode, _name, _help, _parse)
+  , name
+  , help
+  , parse
   ) where
 
+import Lens.Micro.TH (makeLenses)
 import Options.Applicative (Parser)
 
 import Cli.Config (Config)
 
 data Mode =
   Mode
-    { name :: String
-    , help :: String
-    , parse :: Parser (Config -> IO ())
+    { _name :: String
+    , _help :: String
+    , _parse :: Parser (Config -> IO ())
     }
+makeLenses ''Mode

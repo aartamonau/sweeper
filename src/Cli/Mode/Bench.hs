@@ -21,8 +21,7 @@ import System.Random (StdGen, split)
 import Cli.Config (Config)
 import qualified Cli.Config as Config
 import Cli.Mode.Common (randomGame)
-import Cli.Mode.Type (Mode(Mode))
-import qualified Cli.Mode.Type
+import Cli.Mode.Type (Mode(Mode, _name, _help, _parse))
 import qualified Cli.Read as Read
 import GameRunner (GameResult(GameLost, GameWon))
 import qualified GameRunner as GameRunner
@@ -38,7 +37,7 @@ data BenchCfg =
     }
 
 mode :: Mode
-mode = Mode {name, help, parse}
+mode = Mode {_name = name, _help = help, _parse = parse}
   where
     name = "bench"
     help = "Benchmark bot's performance"

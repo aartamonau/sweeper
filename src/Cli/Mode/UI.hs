@@ -23,7 +23,7 @@ import Cli.Mode.Type (Mode(Mode))
 -- -XDisambiguateRecordFields.
 --
 -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#extension-DisambiguateRecordFields
-import qualified Cli.Mode.Type
+import qualified Cli.Mode.Type as Type (Mode(name, help, parse))
 import qualified Cli.Read as Read
 
 import Game (Game, PlayError(ErrorKilled, ErrorAlreadyPlayed))

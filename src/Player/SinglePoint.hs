@@ -8,6 +8,7 @@ import qualified Data.Map.Strict as Map
 import Data.Ratio (Ratio, (%), denominator, numerator)
 import Data.Set (Set)
 import qualified Data.Set as Set
+import System.IO.Unsafe (unsafePerformIO)
 
 import Game (Item(Empty, Mine), Game, Pos)
 import qualified Game as Game
@@ -114,7 +115,7 @@ playGreedy :: Game -> [Pos] -> PlayerL [Pos]
 playGreedy game opened
   | null probs = playRandom game
   | otherwise  = do
-    API.posInfo [(p, showProb prob) | (p, prob) <- probs]
+    posInfo [(p, showProb prob) | (p, prob) <- probs]
     randomGreedyMove
   where
     probs = computeProbs game opened
@@ -129,6 +130,9 @@ playGreedy game opened
       playMove (OpenEmpty p)
 
     showProb prob = show (numerator prob) ++ "/" ++ show (denominator prob)
+
+posInfo :: [(Pos, String)] -> PlayerL ()
+posInfo ps = pure $ unsafePerformIO $ print ps
 
 playRandom :: Game -> PlayerL [Pos]
 playRandom game = do

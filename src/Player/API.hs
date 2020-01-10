@@ -5,7 +5,6 @@ module Player.API
   , openEmpty
   , markMine
   , getGame
-  , posInfo
   ) where
 
 import Player
@@ -15,5 +14,4 @@ import Player
   , openEmpty
   , markMine
   , getGame
-  , posInfo
   )

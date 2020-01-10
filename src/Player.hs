@@ -3,11 +3,11 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Player
-  ( Move(OpenEmpty, MarkMine, GetGame, PosInfo, RunRandom)
+  ( Move(OpenEmpty, MarkMine, GetGame, RunRandom)
   , Player(Player, name, strategy)
   , Strategy
   , Name
-  , MonadPlayer(openEmpty, markMine, getGame, posInfo)
+  , MonadPlayer(openEmpty, markMine, getGame)
   , PlayerL
   , FreeF(Free, Pure)
   , makePlayer
@@ -32,7 +32,6 @@ data Move next where
   OpenEmpty :: Pos -> ([Pos] -> next) -> Move next
   MarkMine  :: Pos -> next -> Move next
   GetGame   :: (Game -> next) -> Move next
-  PosInfo   :: [(Pos, String)] -> next -> Move next
   RunRandom :: Rand a -> (a -> next) -> Move next
 
 deriving instance Functor Move
@@ -57,13 +56,11 @@ class Monad m => MonadPlayer m where
   openEmpty :: Pos -> m [Pos]
   markMine :: Pos -> m ()
   getGame :: m Game
-  posInfo :: [(Pos, String)] -> m ()
 
 instance MonadPlayer Strategy where
   openEmpty p = liftMove (OpenEmpty p id)
   markMine p = liftMove (MarkMine p ())
   getGame = liftMove (GetGame id)
-  posInfo ps = liftMove (PosInfo ps ())
 
 instance MonadRandom Strategy where
   getRandomRs bounds = liftMove (RunRandom (getRandomRs bounds) id)

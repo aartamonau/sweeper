@@ -20,7 +20,7 @@ import qualified System.Random as Random
 import Game (Game, Pos)
 import qualified Game as Game
 import Player
-  ( MonadPlayer(getGame, markMine, openEmpty, posInfo)
+  ( MonadPlayer(getGame, markMine, openEmpty)
   , PlayerL
   )
 
@@ -75,7 +75,6 @@ instance MonadPlayer Runner where
   openEmpty = doOpenEmpty
   markMine = doMarkMine
   getGame = doGetGame
-  posInfo = doPosInfo
 
 doOpenEmpty :: Pos -> Runner [Pos]
 doOpenEmpty p =
@@ -97,9 +96,6 @@ doMarkMine p =
 
 doGetGame :: Runner Game
 doGetGame = readEnv game
-
-doPosInfo :: [(Pos, String)] -> Runner ()
-doPosInfo _ = return ()
 
 checkWon :: Runner ()
 checkWon = do

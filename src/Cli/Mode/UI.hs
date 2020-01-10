@@ -30,7 +30,7 @@ import Game (Game, PlayError(ErrorKilled, ErrorAlreadyPlayed))
 import qualified Game as Game
 import Player
   ( FreeF(Free, Pure)
-  , Move(GetGame, MarkMine, OpenEmpty, PosInfo)
+  , Move(GetGame, MarkMine, OpenEmpty)
   , Player(name, strategy)
   , Strategy
   , runStrategy
@@ -44,7 +44,6 @@ import UI.UI
   , display
   , drawError
   , drawMsg
-  , drawPosInfo
   , drawUI
   , runUI
   , waitKeypress
@@ -128,7 +127,6 @@ loopStrategy ctx game strategy = do
   step <- runStrategy strategy
   case step of
     Pure _                      -> surrender
-    Free (PosInfo ps strategy') -> handlePosInfo ps strategy'
     Free (OpenEmpty p k)        -> handleOpenEmpty k (Game.openEmpty game p)
     Free (MarkMine p strategy') ->
       handleMarkMine strategy' (Game.markMine game p)
@@ -136,10 +134,6 @@ loopStrategy ctx game strategy = do
     _                           -> error "can't happen"
 
   where
-    handlePosInfo ps strategy = do
-      present ctx (drawPosInfo game ps)
-      nextStep strategy
-
     handleOpenEmpty k (game, Left err) = handleError game err (k [])
     handleOpenEmpty k (game, Right r)  = success game (k r)
 

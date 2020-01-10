@@ -4,19 +4,15 @@ module Player.SinglePoint
 
 import Data.Ix (range)
 import Data.List (foldl')
-import Data.Ratio (Ratio, (%), denominator, numerator)
-
 import qualified Data.Map.Strict as Map
-
+import Data.Ratio (Ratio, (%), denominator, numerator)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Game (Item(Empty, Mine), Game, Pos)
-import qualified Game
-
+import qualified Game as Game
 import Player.API (Player, PlayerL)
 import qualified Player.API as API
-
 import qualified Rand as Rand
 
 data Move

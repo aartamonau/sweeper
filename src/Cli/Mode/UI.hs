@@ -84,7 +84,7 @@ data Ctx =
     }
 
 run :: UICfg -> Config -> IO ()
-run uiCfg  = runUI . enterLoop uiCfg
+run uiCfg = runUI . enterLoop uiCfg
 
 draw :: Ctx -> Game -> Draw ()
 draw (Ctx {stats, cfg}) game = drawUI $ UI {game, stats, playerName}

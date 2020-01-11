@@ -21,7 +21,7 @@ import Options.Applicative
   , showDefault
   , value
   )
-import System.Random (StdGen, getStdGen, mkStdGen)
+import System.Random (StdGen, newStdGen, mkStdGen)
 import Text.Read (readMaybe)
 
 import Cli.Helpers (presentList)
@@ -63,7 +63,7 @@ data Config =
 
 getRandomGen :: Config -> IO StdGen
 getRandomGen (Config {seed})
-  | Nothing <- seed = getStdGen
+  | Nothing <- seed = newStdGen
   | Just seed' <- seed = return $ mkStdGen seed'
 
 fieldSpec :: Config -> (Int, Int, Int)

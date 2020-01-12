@@ -21,16 +21,15 @@ import Options.Applicative
   , showDefault
   , value
   )
-import System.Random (StdGen, newStdGen, mkStdGen)
 import Text.Read (readMaybe)
 
 import Cli.Helpers (presentList)
 import qualified Cli.Read as Read
-
 import Player (Player(name))
-
 import qualified Player.Dummy as Dummy
 import qualified Player.SinglePoint as SinglePoint
+import Utils.Random (StdGen)
+import qualified Utils.Random as Random
 
 data FieldSpec
   = Easy
@@ -63,8 +62,8 @@ data Config =
 
 getRandomGen :: Config -> IO StdGen
 getRandomGen (Config {seed})
-  | Nothing <- seed = newStdGen
-  | Just seed' <- seed = return $ mkStdGen seed'
+  | Nothing <- seed = Random.newStdGen
+  | Just seed' <- seed = return $ Random.mkStdGen seed'
 
 fieldSpec :: Config -> (Int, Int, Int)
 fieldSpec = decode . rawFieldSpec

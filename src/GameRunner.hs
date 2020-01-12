@@ -10,20 +10,20 @@ import Control.Monad (when)
 import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
 import Control.Monad.Extra (whenJustM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Random.Class
-  ( MonadRandom(getRandom, getRandomR, getRandomRs, getRandoms)
-  )
 import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, asks)
 import Control.Monad.Trans (MonadTrans, lift)
 import Data.Bifunctor (first)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.Tuple (swap)
-import System.Random (StdGen)
-import qualified System.Random as Random
 
 import Game (Game, Pos)
 import qualified Game as Game
 import Player (MonadPlayer(getGame, markMine, openEmpty), PlayerL)
+import Utils.Random
+  ( MonadRandom(getRandom, getRandomR, getRandomRs, getRandoms)
+  , StdGen
+  )
+import qualified Utils.Random as Random
 
 data GameResult
   = GameWon

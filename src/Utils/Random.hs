@@ -1,15 +1,35 @@
 module Utils.Random
   ( MonadRandom(getRandom, getRandomR, getRandomRs, getRandoms)
+  , StdGen
+  , evalRand
+  , mkStdGen
+  , newStdGen
+  , random
+  , randomR
+  , randomRs
   , randomSubset
+  , randoms
+  , split
   ) where
 
 import Control.Monad (forM, when)
 import Control.Monad.Random.Class
   ( MonadRandom(getRandom, getRandomR, getRandomRs, getRandoms)
   )
+import Control.Monad.Random.Strict (evalRand)
 import Control.Monad.ST (ST, runST)
 import qualified Data.Array.MArray as MArr
 import Data.Array.ST (STArray)
+import System.Random
+  ( StdGen
+  , mkStdGen
+  , newStdGen
+  , random
+  , randomR
+  , randomRs
+  , randoms
+  , split
+  )
 
 randomSubset :: MonadRandom m => Int -> [a] -> m [a]
 randomSubset k xs = do

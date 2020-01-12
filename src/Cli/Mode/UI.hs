@@ -13,7 +13,6 @@ import Options.Applicative
   , showDefault
   , value
   )
-import System.Random (newStdGen)
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config
@@ -26,13 +25,11 @@ import Cli.Mode.Type (Mode(Mode))
 -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#extension-DisambiguateRecordFields
 import qualified Cli.Mode.Type as Type (Mode(name, help, parse))
 import qualified Cli.Read as Read
-
 import Game (Game)
 import GameRunner (GameResult(GameLost, GameWon))
 import qualified GameRunner as GameRunner
 import Player (Player(name, strategy))
 import PlayStats (PlayStats, incLost, incWon)
-
 import UI.UI
   ( DeviceContext
   , Draw
@@ -44,6 +41,7 @@ import UI.UI
   , runUI
   , waitKeypress
   )
+import qualified Utils.Random as Random
 
 data UICfg =
   UICfg
@@ -110,7 +108,7 @@ enterLoop uiCfg cfg deviceContext = do
 loop :: Ctx -> IO ()
 loop ctx@(Ctx {cfg, stats}) = do
   game <- randomGameIO cfg
-  gen <- newStdGen
+  gen <- Random.newStdGen
 
   presentGame game
   result <- GameRunner.trace presentGame gen game (strategy player startMove)

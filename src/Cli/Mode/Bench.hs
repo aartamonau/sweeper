@@ -16,7 +16,6 @@ import Options.Applicative
   , showDefaultWith
   , value
   )
-import System.Random (StdGen, split)
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config
@@ -35,6 +34,8 @@ import Player (strategy)
 import PlayStats (PlayStats, incLost, incWon)
 import Utils.Chan (Chan)
 import qualified Utils.Chan as Chan
+import Utils.Random (StdGen)
+import qualified Utils.Random as Random
 
 data BenchCfg =
   BenchCfg
@@ -86,7 +87,7 @@ dispatcher :: StdGen -> Int -> Chan StdGen -> IO ()
 dispatcher gen numIters chan =
   mapM_ (Chan.put chan) (take numIters gens) >> Chan.close chan
   where
-    gens = unfoldr (Just . split) gen
+    gens = unfoldr (Just . Random.split) gen
 
 worker :: Chan StdGen -> Config -> IO PlayStats
 worker jobs cfg = loop mempty
@@ -98,7 +99,7 @@ worker jobs cfg = loop mempty
 
 workerIter :: StdGen -> Config -> PlayStats -> IO PlayStats
 workerIter gen cfg stats = do
-  let (gameGen, runnerGen) = split gen
+  let (gameGen, runnerGen) = Random.split gen
   let game = randomGame gameGen cfg
 
   GameRunner.run runnerGen game (strategy player startMove) >>= \case

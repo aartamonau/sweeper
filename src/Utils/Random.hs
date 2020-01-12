@@ -1,4 +1,4 @@
-module Rand
+module Utils.Random
   ( MonadRandom(getRandom, getRandomR, getRandomRs, getRandoms)
   , randomSubset
   ) where

@@ -26,11 +26,11 @@ executable sweeper-ai
                        Player.Dummy
                        Player.SinglePoint
                        PlayStats
-                       Rand
                        UI.Colors
                        UI.Draw
                        UI.UI
                        Utils.Chan
+                       Utils.Random
   build-depends:       base,
                        array,
                        random,

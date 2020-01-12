@@ -6,7 +6,7 @@ import Game (Pos)
 import qualified Game
 import Player.API (Player, PlayerL)
 import qualified Player.API as API
-import qualified Rand as Rand
+import qualified Utils.Random as Random
 
 player :: Player
 player = API.makePlayer "dummy" strategy
@@ -24,8 +24,8 @@ loop dims = randomMove dims >> loop dims
 
 randomMove :: (Int, Int) -> PlayerL ()
 randomMove (rows, columns) = do
-  i <- Rand.getRandomR (0, rows-1)
-  j <- Rand.getRandomR (0, columns-1)
+  i <- Random.getRandomR (0, rows-1)
+  j <- Random.getRandomR (0, columns-1)
 
   _ <- API.openEmpty (i, j)
 

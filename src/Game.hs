@@ -24,7 +24,7 @@ import Data.List (foldl')
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Rand (MonadRandom, randomSubset)
+import Utils.Random (MonadRandom, randomSubset)
 
 type Pos = (Int, Int)
 type MineField = Array Pos Item

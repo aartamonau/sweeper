@@ -14,7 +14,7 @@ import Game (Item(Empty, Mine), Game, Pos)
 import qualified Game as Game
 import Player.API (Player, PlayerL)
 import qualified Player.API as API
-import qualified Rand as Rand
+import qualified Utils.Random as Random
 
 data Move
   = OpenEmpty Pos
@@ -125,7 +125,7 @@ playGreedy game opened
 
     randomGreedyMove = do
       let n = length mins
-      i <- Rand.getRandomR (0, n - 1)
+      i <- Random.getRandomR (0, n - 1)
       let (p, _) = mins !! i
       playMove (OpenEmpty p)
 
@@ -136,7 +136,7 @@ posInfo ps = pure $ unsafePerformIO $ print ps
 
 playRandom :: Game -> PlayerL [Pos]
 playRandom game = do
-  i <- Rand.getRandomR (0, n - 1)
+  i <- Random.getRandomR (0, n - 1)
   playMove (OpenEmpty $ unopened !! i)
 
   where

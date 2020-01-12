@@ -7,7 +7,7 @@ module Player
   ) where
 
 import Game (Game, Pos)
-import Rand (MonadRandom)
+import Utils.Random (MonadRandom)
 
 type Name = String
 data Player =

@@ -13,6 +13,7 @@ import Options.Applicative
   , showDefault
   , value
   )
+import System.Random (newStdGen)
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config
@@ -26,16 +27,11 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type as Type (Mode(name, help, parse))
 import qualified Cli.Read as Read
 
-import Game (Game, PlayError(ErrorKilled, ErrorAlreadyPlayed))
-import qualified Game as Game
-import Player
-  ( FreeF(Free, Pure)
-  , Move(GetGame, MarkMine, OpenEmpty)
-  , Player(name, strategy)
-  , Strategy
-  , runStrategy
-  )
-import PlayStats (PlayStats, incLost, incStalled, incWon)
+import Game (Game)
+import GameRunner (GameResult(GameLost, GameWon))
+import qualified GameRunner as GameRunner
+import Player (Player(name, strategy))
+import PlayStats (PlayStats, incLost, incWon)
 
 import UI.UI
   ( DeviceContext
@@ -112,56 +108,25 @@ enterLoop uiCfg cfg deviceContext = do
         }
 
 loop :: Ctx -> IO ()
-loop ctx@(Ctx {cfg}) = do
+loop ctx@(Ctx {cfg, stats}) = do
   game <- randomGameIO cfg
-  loopGame ctx game $
-    strategy (Config.player cfg) (Config.startMove cfg)
+  gen <- newStdGen
 
-loopGame :: Ctx -> Game -> Strategy () -> IO ()
-loopGame ctx game strategy = do
-  present ctx (draw ctx game)
-  loopStrategy ctx game strategy
-
-loopStrategy :: Ctx -> Game -> Strategy () -> IO ()
-loopStrategy ctx game strategy = do
-  step <- runStrategy strategy
-  case step of
-    Pure _                      -> surrender
-    Free (OpenEmpty p k)        -> handleOpenEmpty k (Game.openEmpty game p)
-    Free (MarkMine p strategy') ->
-      handleMarkMine strategy' (Game.markMine game p)
-    Free (GetGame k)            -> nextStep (k game)
-    _                           -> error "can't happen"
+  presentGame game
+  result <- GameRunner.trace presentGame gen game (strategy player startMove)
+  presentResult result
+  loop (ctx {stats = incStats result})
 
   where
-    handleOpenEmpty k (game, Left err) = handleError game err (k [])
-    handleOpenEmpty k (game, Right r)  = success game (k r)
+    startMove = Config.startMove cfg
+    player = Config.player cfg
+    presentGame game = present ctx (draw ctx game)
 
-    handleMarkMine strategy (game, Left err) = handleError game err strategy
-    handleMarkMine strategy (game, Right ()) = success game strategy
+    showMsg msg = present ctx (drawMsg msg)
+    showError msg = present ctx (drawError msg)
 
-    restart :: (PlayStats -> PlayStats) -> IO ()
-    restart inc = loop (ctx {stats = inc stats})
-      where
-        Ctx {stats} = ctx
+    presentResult GameWon = showMsg "Player wins"
+    presentResult GameLost = showError "Player loses"
 
-    continue game strategy = loopGame ctx game strategy
-    nextStep strategy      = loopStrategy ctx game strategy
-
-    surrender = do
-      present ctx (draw ctx game >> drawError "Player surrenders")
-      restart incStalled
-
-    handleError game err _               = do
-      present ctx (draw ctx game >> drawError (describeError err))
-      restart incLost
-
-    describeError ErrorKilled         = "Player explodes on a mine"
-    describeError ErrorAlreadyPlayed  =
-      "Player attempted to play a square that had already been opened"
-
-    success game strategy
-      | Game.isWon game = do
-        present ctx (draw ctx game >> drawMsg "Player wins")
-        restart incWon
-      | otherwise = continue game strategy
+    incStats GameWon = incWon stats
+    incStats GameLost = incLost stats

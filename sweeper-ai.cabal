@@ -38,7 +38,6 @@ executable sweeper-ai
                        blank-canvas,
                        colour,
                        mtl,
-                       free,
                        containers,
                        optparse-applicative,
                        async,
@@ -56,9 +55,11 @@ executable sweeper-ai
                        DuplicateRecordFields
                        GeneralizedNewtypeDeriving
                        LambdaCase
+                       MultiParamTypeClasses
                        MultiWayIf
                        NamedFieldPuns
                        NumDecimals
                        OverloadedStrings
                        Rank2Types
+                       StandaloneDeriving
                        TupleSections

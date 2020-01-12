@@ -2,15 +2,19 @@ module GameRunner
   (
     GameResult(GameWon, GameLost)
   , run
+  , trace
   ) where
 
+import Control.Applicative ((<*))
 import Control.Monad (when)
 import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
+import Control.Monad.Extra (whenJustM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Random.Class
   ( MonadRandom(getRandom, getRandomR, getRandomRs, getRandoms)
   )
 import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, asks)
+import Control.Monad.Trans (MonadTrans, lift)
 import Data.Bifunctor (first)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.Tuple (swap)
@@ -28,28 +32,32 @@ data GameResult
   = GameWon
   | GameLost
 
-data Env =
+data Env m =
   Env
     { game :: IORef Game
     , gen :: IORef StdGen
+    , tracer :: Maybe (Game -> m ())
     }
 
-newtype Runner a =
+newtype Runner m a =
   Runner
-    { unRunner :: ReaderT Env (ExceptT GameResult IO) a
+    { unRunner :: ReaderT (Env m) (ExceptT GameResult m) a
     }
-  deriving ( Functor
-           , Applicative
-           , Monad
-           , MonadReader Env
-           , MonadIO
-           , MonadError GameResult
-           )
 
-readEnv :: (Env -> IORef a) -> Runner a
+deriving instance Functor m => Functor (Runner m)
+deriving instance Monad m => Applicative (Runner m)
+deriving instance Monad m => Monad (Runner m)
+deriving instance Monad m => MonadReader (Env m) (Runner m)
+deriving instance MonadIO m => MonadIO (Runner m)
+deriving instance Monad m => MonadError GameResult (Runner m)
+
+instance MonadTrans Runner where
+  lift = Runner . lift . lift
+
+readEnv :: MonadIO m => (Env m -> IORef a) -> Runner m a
 readEnv accessor = asks accessor >>= liftIO . readIORef
 
-modifyEnv :: (Env -> IORef a) -> (a -> (r, a)) -> Runner r
+modifyEnv :: MonadIO m => (Env m -> IORef a) -> (a -> (r, a)) -> Runner m r
 modifyEnv accessor f = do
   ref <- asks accessor
   liftIO $ do
@@ -59,60 +67,82 @@ modifyEnv accessor f = do
 
     return result
 
-instance MonadRandom Runner where
+modifyGame :: MonadIO m => (Game -> (r, Game)) -> Runner m r
+modifyGame f = modifyEnv game f <* notify
+
+instance MonadIO m => MonadRandom (Runner m) where
   getRandom = liftRandom Random.random
   getRandoms = splitRandom Random.randoms
   getRandomR bounds = liftRandom (Random.randomR bounds)
   getRandomRs bounds = splitRandom (Random.randomRs bounds)
 
-splitRandom :: (StdGen -> a) -> Runner a
+splitRandom :: MonadIO m => (StdGen -> a) -> Runner m a
 splitRandom f = liftRandom (first f . Random.split)
 
-liftRandom :: (StdGen -> (a, StdGen)) -> Runner a
+liftRandom :: MonadIO m => (StdGen -> (a, StdGen)) -> Runner m a
 liftRandom = modifyEnv gen
 
-instance MonadPlayer Runner where
+instance MonadIO m => MonadPlayer (Runner m) where
   openEmpty = doOpenEmpty
   markMine = doMarkMine
   getGame = doGetGame
 
-doOpenEmpty :: Pos -> Runner [Pos]
+notify :: MonadIO m => Runner m ()
+notify =
+  whenJustM (asks tracer) $ \f -> do
+    game <- readEnv game
+    lift $ f game
+
+doOpenEmpty :: MonadIO m => Pos -> Runner m [Pos]
 doOpenEmpty p =
-  modifyEnv game open >>= \case
+  modifyGame open >>= \case
     Left _ -> throwError GameLost
     Right ps -> checkWon >> return ps
 
   where
     open game = swap (Game.openEmpty game p)
 
-doMarkMine :: Pos -> Runner ()
+doMarkMine :: MonadIO m => Pos -> Runner m ()
 doMarkMine p =
-  modifyEnv game mark >>= \case
+  modifyGame mark >>= \case
     Left _ -> throwError GameLost
     Right () -> checkWon >> return ()
 
   where
     mark game = swap (Game.markMine game p)
 
-doGetGame :: Runner Game
+doGetGame :: MonadIO m => Runner m Game
 doGetGame = readEnv game
 
-checkWon :: Runner ()
+checkWon :: MonadIO m => Runner m ()
 checkWon = do
   isWon <- Game.isWon <$> readEnv game
   when isWon (throwError GameWon)
 
-runRunner :: Env -> Runner GameResult -> IO GameResult
+runRunner :: MonadIO m => Env m -> Runner m GameResult -> m GameResult
 runRunner env = fmap mergeEither . runExceptT . runReader . unRunner
   where
     runReader = flip runReaderT env
     mergeEither = either id id
 
-run :: StdGen -> Game -> PlayerL () -> IO GameResult
-run gen game player = do
-  gameRef <- newIORef game
-  genRef <- newIORef gen
-  let env = Env {game = gameRef, gen = genRef}
+run :: MonadIO m => StdGen -> Game -> PlayerL () -> m GameResult
+run = run' Nothing
+
+trace ::
+     MonadIO m => (Game -> m ()) -> StdGen -> Game -> PlayerL () -> m GameResult
+trace tracer = run' (Just tracer)
+
+run' ::
+     MonadIO m
+  => Maybe (Game -> m ())
+  -> StdGen
+  -> Game
+  -> PlayerL ()
+  -> m GameResult
+run' tracer gen game player = do
+  gameRef <- liftIO $ newIORef game
+  genRef <- liftIO $ newIORef gen
+  let env = Env {game = gameRef, gen = genRef, tracer}
 
   runRunner env $ do
     player

@@ -23,10 +23,7 @@ import qualified System.Random as Random
 
 import Game (Game, Pos)
 import qualified Game as Game
-import Player
-  ( MonadPlayer(getGame, markMine, openEmpty)
-  , PlayerL
-  )
+import Player (MonadPlayer(getGame, markMine, openEmpty), PlayerL)
 
 data GameResult
   = GameWon

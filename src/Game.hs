@@ -50,6 +50,7 @@ data Game =
 
 data PlayError
   = ErrorKilled
+  | ErrorIncompetent
   | ErrorAlreadyPlayed
   deriving (Show)
 
@@ -134,12 +135,13 @@ openEmptyLoop game@(Game {field}) p = Set.toList (go Set.empty p)
         acc' = Set.insert p acc
 
 markMine :: Game -> Pos -> PlayResult ()
-markMine game p
-  | Just _ <- itm = retError game p ErrorAlreadyPlayed
-  | otherwise     = ret (doOpen game p) ()
+markMine game@(Game {field}) p
+  | isOpened game p = retError game p ErrorAlreadyPlayed
+  | Empty _ <- item = retError game p ErrorIncompetent
+  | Mine <- item = ret (doOpen game p) ()
 
   where
-    itm = item game p
+    item = field ! p
 
 isWon :: Game -> Bool
 isWon (Game {numRows, numColumns, numMines, numMinesMarked, numOpened}) =

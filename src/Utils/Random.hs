@@ -10,6 +10,7 @@ module Utils.Random
   , randomSubset
   , randoms
   , split
+  , splits
   ) where
 
 import Control.Monad (forM, when)
@@ -20,6 +21,7 @@ import Control.Monad.Random.Strict (evalRand)
 import Control.Monad.ST (ST, runST)
 import qualified Data.Array.MArray as MArr
 import Data.Array.ST (STArray)
+import Data.List (unfoldr)
 import System.Random
   ( StdGen
   , mkStdGen
@@ -48,3 +50,6 @@ randomSubset k xs = do
     maybeSwap :: STArray s Int a -> (Int, a) -> ST s ()
     maybeSwap arr (r, x) = do
       when (r < k) $ MArr.writeArray arr r x
+
+splits :: StdGen -> [StdGen]
+splits = unfoldr (Just . split)

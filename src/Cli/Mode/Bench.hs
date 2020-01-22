@@ -3,7 +3,6 @@ module Cli.Mode.Bench
   ) where
 
 import Control.Concurrent.Async (concurrently, replicateConcurrently)
-import Data.List (unfoldr)
 import Data.Maybe (fromMaybe)
 import GHC.Conc (getNumProcessors)
 import Options.Applicative
@@ -87,7 +86,7 @@ dispatcher :: StdGen -> Int -> Chan StdGen -> IO ()
 dispatcher gen numIters chan =
   mapM_ (Chan.put chan) (take numIters gens) >> Chan.close chan
   where
-    gens = unfoldr (Just . Random.split) gen
+    gens = Random.splits gen
 
 worker :: Chan StdGen -> Config -> IO PlayStats
 worker jobs cfg = loop mempty

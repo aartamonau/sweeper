@@ -3,6 +3,7 @@ module Cli.Mode.UI
   ) where
 
 import Control.Concurrent (threadDelay)
+import Control.Monad (foldM_)
 import Options.Applicative
   ( Parser
   , flag
@@ -16,7 +17,7 @@ import Options.Applicative
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config
-import Cli.Mode.Common (randomGameIO)
+import Cli.Mode.Common (randomGame)
 import Cli.Mode.Type (Mode(Mode))
 -- Cli.Mode.Type is imported qualified only for Mode's record fields, which,
 -- somewhat confusingly, can be used unqualified in conjunction with
@@ -41,6 +42,7 @@ import UI.UI
   , runUI
   , waitKeypress
   )
+import Utils.Random (StdGen)
 import qualified Utils.Random as Random
 
 data UICfg =
@@ -78,7 +80,7 @@ data Ctx =
     }
 
 run :: UICfg -> Config -> IO ()
-run uiCfg = runUI . enterLoop uiCfg
+run uiCfg = runUI . loop uiCfg
 
 draw :: Ctx -> Game -> Draw ()
 draw (Ctx {stats, cfg}) game = drawUI $ UI {game, stats, playerName}
@@ -93,9 +95,10 @@ wait (Ctx {deviceContext, uiCfg})
   | interactive uiCfg = waitKeypress deviceContext
   | otherwise         = threadDelay (1000 * delay uiCfg)
 
-enterLoop :: UICfg -> Config -> DeviceContext -> IO ()
-enterLoop uiCfg cfg deviceContext = do
-  loop ctx
+loop :: UICfg -> Config -> DeviceContext -> IO ()
+loop uiCfg cfg deviceContext = do
+  gens <- Random.splits <$> Config.getRandomGen cfg
+  foldM_ iter ctx gens
   where
     ctx =
       Ctx
@@ -105,17 +108,18 @@ enterLoop uiCfg cfg deviceContext = do
         , deviceContext = deviceContext
         }
 
-loop :: Ctx -> IO ()
-loop ctx@(Ctx {cfg, stats}) = do
-  game <- randomGameIO cfg
-  gen <- Random.newStdGen
-
+iter :: Ctx -> StdGen -> IO Ctx
+iter ctx@(Ctx {cfg, stats}) gen = do
   presentGame game
-  result <- GameRunner.trace presentGame gen game (strategy player startMove)
+  result <-
+    GameRunner.trace presentGame runnerGen game (strategy player startMove)
   presentResult result
-  loop (ctx {stats = incStats result})
+  return (ctx {stats = incStats result} :: Ctx)
 
   where
+    (gameGen, runnerGen) = Random.split gen
+    game = randomGame gameGen cfg
+
     startMove = Config.startMove cfg
     player = Config.player cfg
     presentGame game = present ctx (draw ctx game)

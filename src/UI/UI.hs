@@ -169,6 +169,9 @@ withBox game (i, j) = restrict rect
 
     rect = (x, y, w, h)
 
+gridLineWidth :: Double
+gridLineWidth = 0.03
+
 drawBox :: Game -> Pos -> Draw ()
 drawBox game p = withBox game p (draw maybeItem)
   where
@@ -179,7 +182,7 @@ drawBox game p = withBox game p (draw maybeItem)
 
 drawClosedBox :: Draw ()
 drawClosedBox = do
-  setLineWidth 0.075
+  setLineWidth gridLineWidth
   setStrokeColor black
   setFillColor grey
   fill
@@ -187,7 +190,7 @@ drawClosedBox = do
 
 drawOpenBox :: Item -> Draw ()
 drawOpenBox item = do
-  setLineWidth 0.05
+  setLineWidth gridLineWidth
   setStrokeColor black
   setFillColor lightgrey
   fill

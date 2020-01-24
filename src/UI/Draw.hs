@@ -19,6 +19,7 @@ module UI.Draw
   , dimRect
   , (|||)
   , (///)
+  , fillTriangle
   ) where
 
 import Control.Monad.Reader (ReaderT, asks, local, runReaderT)
@@ -156,3 +157,17 @@ left ||| right = restrict (0, 0, 0.5, 1) left >> restrict (0.5, 0, 0.5, 1) right
 
 (///) :: Draw () -> Draw () -> Draw ()
 up /// down = restrict (0, 0, 1, 0.5) up >> restrict (0, 0.5, 1, 0.5) down
+
+fillTriangle :: Point -> Point -> Point -> Draw ()
+fillTriangle pa pb pc = do
+  a <- transPoint pa
+  b <- transPoint pb
+  c <- transPoint pc
+
+  lift $ do
+    Blank.beginPath ()
+    Blank.moveTo a
+    Blank.lineTo b
+    Blank.lineTo c
+    Blank.closePath ()
+    Blank.fill ()

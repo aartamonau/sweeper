@@ -44,6 +44,7 @@ import UI.Colors
   , lightgrey
   , purple
   , red
+  , darkgrey
   )
 import UI.Draw
   ( Draw
@@ -55,6 +56,7 @@ import UI.Draw
   , fill
   , fillCircle
   , fillRect
+  , fillTriangle
   , restrict
   , runDraw
   , setFillColor
@@ -182,11 +184,18 @@ drawBox game p = withBox game p (draw maybeItem)
 
 drawClosedBox :: Draw ()
 drawClosedBox = do
+  setFillColor lightgrey
+  fillTriangle (0, 0) (1, 0) (0, 1)
+
+  setFillColor dimgrey
+  fillTriangle (1, 1) (0, 1) (1, 0)
+
   setLineWidth gridLineWidth
   setStrokeColor black
-  setFillColor grey
-  fill
   stroke
+
+  setFillColor darkgrey
+  restrict (0.1, 0.1, 0.8, 0.8) fill
 
 drawOpenBox :: Item -> Draw ()
 drawOpenBox item = do

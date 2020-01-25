@@ -6,12 +6,12 @@ import Control.Concurrent (threadDelay)
 import Control.Monad (foldM_)
 import Options.Applicative
   ( Parser
-  , flag
   , help
   , long
   , metavar
   , option
   , showDefault
+  , switch
   , value
   )
 
@@ -65,9 +65,8 @@ parse = do
               <> value 200
               <> showDefault
               <> help "Delay (in ms) to use in non-interactive mode")
-  interactive <- flag True False
-                   (long "non-interactive"
-                    <> help "Run in non-interactive mode")
+  interactive <- not <$> switch (long "non-interactive"
+                                 <> help "Run in non-interactive mode")
 
   return $ run (UICfg {delay, interactive})
 

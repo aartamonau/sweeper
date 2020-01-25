@@ -2,7 +2,11 @@ module Cli.Mode.Bench
   ( mode
   ) where
 
-import Control.Concurrent.Async (concurrently, replicateConcurrently)
+import Control.Concurrent.Async
+  ( Concurrently(Concurrently)
+  , replicateConcurrently
+  , runConcurrently
+  )
 import Data.Maybe (fromMaybe)
 import GHC.Conc (getNumProcessors)
 import Options.Applicative
@@ -79,8 +83,10 @@ doRun :: Int -> Int -> Config -> IO PlayStats
 doRun numIters numWorkers cfg = do
   jobs <- Chan.new
   gen <- Config.getRandomGen cfg
-  snd <$>
-    concurrently (dispatcher gen numIters jobs) (runWorkers numWorkers jobs cfg)
+
+  runConcurrently $
+    Concurrently (dispatcher gen numIters jobs) *>
+    Concurrently (runWorkers numWorkers jobs cfg)
 
 dispatcher :: StdGen -> Int -> Chan StdGen -> IO ()
 dispatcher gen numIters chan =

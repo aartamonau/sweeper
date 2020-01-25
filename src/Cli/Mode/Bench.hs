@@ -7,6 +7,8 @@ import Control.Concurrent.Async
   , replicateConcurrently
   , runConcurrently
   )
+import Control.Monad (forM_)
+import Data.List.Extra (chunksOf)
 import Data.Maybe (fromMaybe)
 import GHC.Conc (getNumProcessors)
 import Options.Applicative
@@ -19,6 +21,7 @@ import Options.Applicative
   , showDefaultWith
   , value
   )
+import System.Console.AsciiProgress as Progress
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config
@@ -84,15 +87,36 @@ doRun numIters numWorkers cfg = do
   jobs <- Chan.new
   gen <- Config.getRandomGen cfg
 
-  runConcurrently $
-    Concurrently (dispatcher gen numIters jobs) *>
-    Concurrently (runWorkers numWorkers jobs cfg)
+  withProgressBar numIters $ \tick ->
+    runConcurrently $
+      Concurrently (dispatcher gen numIters jobs tick) *>
+      Concurrently (runWorkers numWorkers jobs cfg)
 
-dispatcher :: StdGen -> Int -> Chan StdGen -> IO ()
-dispatcher gen numIters chan =
-  mapM_ (Chan.put chan) (take numIters gens) >> Chan.close chan
+withProgressBar :: Int -> ((Int -> IO ()) -> IO a) -> IO a
+withProgressBar ticks body =
+  Progress.displayConsoleRegions $ do
+    progressBar <- Progress.newProgressBar config
+    let tick n = Progress.tickN progressBar n
+    body tick <* Progress.complete progressBar
+
   where
-    gens = Random.splits gen
+    config =
+      Progress.def
+        { pgTotal = toInteger ticks
+        , pgCompletedChar = '#'
+        , pgPendingChar = '-'
+        , pgFormat = ":bar :percent (:etas remaining)"
+        , pgOnCompletion = Just "Completed in :elapseds"
+        }
+
+dispatcher :: StdGen -> Int -> Chan StdGen -> (Int -> IO ()) -> IO ()
+dispatcher gen numIters chan tick = do
+  forM_ (chunksOf itersPerTick gens) $ \chunk ->
+    mapM_ (Chan.put chan) chunk >> tick itersPerTick
+  Chan.close chan
+  where
+    itersPerTick = 100
+    gens = take numIters $ Random.splits gen
 
 worker :: Chan StdGen -> Config -> IO PlayStats
 worker jobs cfg = loop mempty

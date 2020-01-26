@@ -79,7 +79,7 @@ display context drawing = send context (runDraw context drawing)
 
 drawUI :: UI -> Draw ()
 drawUI (UI {playerName, stats, game}) = do
-  setFillColor dimgrey
+  setFillColor darkgrey
   fillRect (0, 0, 1, 1)
   withBoard game (drawBoard game)
   drawPlayInfo game stats

@@ -78,8 +78,8 @@ playMove :: Move -> PlayerL [Pos]
 playMove (OpenEmpty p) = do
   game <- API.getGame
 
-  -- The square might have already gotten auto-opened as a side-effect of one
-  -- of the preceding moves.
+  -- The cell might have already gotten auto-opened as a side-effect of one of
+  -- the preceding moves.
   if Game.isOpened game p
     then return []
     else API.openEmpty p

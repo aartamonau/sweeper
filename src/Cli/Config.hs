@@ -145,7 +145,7 @@ parseBufferZone =
     <> metavar "ROWS"
     <> value 0
     <> showDefault
-    <> help "Number of empty boxes surrounding start position"
+    <> help "Number of empty cells surrounding start position"
 
 parseSeed :: Parser (Maybe Int)
 parseSeed =

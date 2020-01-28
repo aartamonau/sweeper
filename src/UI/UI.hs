@@ -84,11 +84,11 @@ drawUI (UI {playerName, stats, game}) = do
   withBoard game (drawBoard game)
   drawPlayInfo game stats
   drawPlayerName playerName
-  maybeDrawErrorBox
+  maybeDrawErrorCell
 
   where
-    maybeDrawErrorBox
-      | Just (p, item) <- Game.errorItem game = drawErrorBox game p item
+    maybeDrawErrorCell
+      | Just (p, item) <- Game.errorItem game = drawErrorCell game p item
       | otherwise = return ()
 
 drawPosInfo :: Game -> [(Pos, String)] -> Draw ()
@@ -98,7 +98,7 @@ drawPosInfo game ps = do
 
   forM_ ps $ \(p, info) ->
     withBoard game $
-    withBox game p $ do
+    withCell game p $ do
       setFont "monospace" 0.4
       drawText info (0.5, 0.5)
 
@@ -149,20 +149,20 @@ boardRect game = do
   let columns = fromIntegral (Game.numColumns game)
   let rows    = fromIntegral (Game.numRows game)
 
-  let boxSide = min (aspect / columns) (1 / rows)
+  let cellSide = min (aspect / columns) (1 / rows)
 
-  let w = (columns * boxSide) / aspect
-  let h = rows * boxSide
+  let w = (columns * cellSide) / aspect
+  let h = rows * cellSide
   let x = (1 - w) / 2
   let y = (1 - h) / 2
 
   return (x, y, w, h)
 
 drawBoard :: Game -> Draw ()
-drawBoard game = sequence_ [drawBox game p | p <- range (Game.bounds game)]
+drawBoard game = sequence_ [drawCell game p | p <- range (Game.bounds game)]
 
-withBox :: Game -> Pos -> Draw a -> Draw a
-withBox game (i, j) = restrict rect
+withCell :: Game -> Pos -> Draw a -> Draw a
+withCell game (i, j) = restrict rect
   where
     w = 1 / fromIntegral (Game.numColumns game)
     h = 1 / fromIntegral (Game.numRows game)
@@ -174,16 +174,16 @@ withBox game (i, j) = restrict rect
 gridLineWidth :: Double
 gridLineWidth = 0.03
 
-drawBox :: Game -> Pos -> Draw ()
-drawBox game p = withBox game p (draw maybeItem)
+drawCell :: Game -> Pos -> Draw ()
+drawCell game p = withCell game p (draw maybeItem)
   where
     maybeItem = Game.item game p
 
-    draw Nothing     = drawClosedBox
-    draw (Just item) = drawOpenBox item
+    draw Nothing     = drawClosedCell
+    draw (Just item) = drawOpenCell item
 
-drawClosedBox :: Draw ()
-drawClosedBox = do
+drawClosedCell :: Draw ()
+drawClosedCell = do
   setFillColor lightgrey
   fillTriangle (0, 0) (1, 0) (0, 1)
 
@@ -197,8 +197,8 @@ drawClosedBox = do
   setFillColor darkgrey
   restrict (0.1, 0.1, 0.8, 0.8) fill
 
-drawOpenBox :: Item -> Draw ()
-drawOpenBox item = do
+drawOpenCell :: Item -> Draw ()
+drawOpenCell item = do
   setLineWidth gridLineWidth
   setStrokeColor black
   setFillColor lightgrey
@@ -311,6 +311,6 @@ drawX =
     strokeLine (0, 0) (1, 1)
     strokeLine (1, 0) (0, 1)
 
-drawErrorBox :: Game -> Pos -> Item -> Draw ()
-drawErrorBox game p item =
-  withBoard game $ withBox game p (drawOpenBox item >> drawX)
+drawErrorCell :: Game -> Pos -> Item -> Draw ()
+drawErrorCell game p item =
+  withBoard game $ withCell game p (drawOpenCell item >> drawX)

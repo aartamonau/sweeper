@@ -41,7 +41,7 @@ import qualified Cli.Read as Read
 import GameRunner (GameResult(GameLost, GameWon))
 import qualified GameRunner as GameRunner
 import Player (strategy)
-import PlayStats (PlayStats, incLost, incWon)
+import Stats (Stats, incLost, incWon)
 import Utils.Chan (Chan)
 import qualified Utils.Chan as Chan
 import Utils.Random (StdGen)
@@ -86,7 +86,7 @@ run (BenchCfg {numWorkers, numIters}) cfg = do
 
   doRun numIters numWorkers' cfg >>= print
 
-doRun :: Int -> Int -> Config -> IO PlayStats
+doRun :: Int -> Int -> Config -> IO Stats
 doRun numIters numWorkers cfg = do
   jobs <- Chan.new
   gen <- Config.getRandomGen cfg
@@ -122,7 +122,7 @@ dispatcher gen numIters chan tick = do
     itersPerTick = 100
     gens = take numIters $ Random.splits gen
 
-worker :: Chan StdGen -> Config -> IO PlayStats
+worker :: Chan StdGen -> Config -> IO Stats
 worker jobs cfg = loop mempty
   where
     loop !stats =
@@ -130,7 +130,7 @@ worker jobs cfg = loop mempty
         Nothing -> return stats
         Just gen -> workerIter gen cfg stats >>= loop
 
-workerIter :: StdGen -> Config -> PlayStats -> IO PlayStats
+workerIter :: StdGen -> Config -> Stats -> IO Stats
 workerIter gen cfg stats = do
   let (gameGen, runnerGen) = Random.split gen
   let game = randomGame gameGen cfg
@@ -143,6 +143,6 @@ workerIter gen cfg stats = do
     startMove = Config.startMove cfg
     player = Config.player cfg
 
-runWorkers :: Int -> Chan StdGen -> Config -> IO PlayStats
+runWorkers :: Int -> Chan StdGen -> Config -> IO Stats
 runWorkers numWorkers jobs cfg =
   mconcat <$> replicateConcurrently numWorkers (worker jobs cfg)

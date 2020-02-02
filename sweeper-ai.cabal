@@ -25,7 +25,7 @@ executable sweeper-ai
                        Player.API
                        Player.Dummy
                        Player.SinglePoint
-                       PlayStats
+                       Stats
                        UI.Colors
                        UI.Draw
                        UI.UI

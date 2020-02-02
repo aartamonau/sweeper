@@ -30,7 +30,7 @@ import Game (Game)
 import GameRunner (GameResult(GameLost, GameWon))
 import qualified GameRunner as GameRunner
 import Player (Player(name, strategy))
-import PlayStats (PlayStats, incLost, incWon)
+import Stats (Stats, incLost, incWon)
 import UI.UI
   ( DeviceContext
   , Draw
@@ -74,7 +74,7 @@ data Ctx =
   Ctx
     { cfg           :: Config
     , uiCfg         :: UICfg
-    , stats         :: PlayStats
+    , stats         :: Stats
     , deviceContext :: DeviceContext
     }
 

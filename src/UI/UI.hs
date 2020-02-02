@@ -29,7 +29,7 @@ import Web.Browser (openBrowser)
 
 import Game (Item(Empty, Mine), Game, Pos)
 import qualified Game as Game
-import PlayStats (PlayStats, numPlayed, numWon)
+import Stats (Stats, numPlayed, numWon)
 
 import UI.Colors
   ( Color
@@ -70,7 +70,7 @@ import UI.Draw
 data UI =
   UI
     { playerName :: String
-    , stats :: PlayStats
+    , stats :: Stats
     , game :: Game
     }
 
@@ -257,7 +257,7 @@ withBoard game drawing =
     rect <- boardRect game
     restrict rect drawing
 
-drawPlayInfo :: Game -> PlayStats -> Draw ()
+drawPlayInfo :: Game -> Stats -> Draw ()
 drawPlayInfo game stats = do
   setStrokeColor black
   setFillColor black

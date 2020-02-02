@@ -21,7 +21,11 @@ import Options.Applicative
   , showDefaultWith
   , value
   )
-import System.Console.AsciiProgress as Progress
+import System.Console.AsciiProgress
+  ( Options(pgCompletedChar, pgFormat, pgOnCompletion, pgPendingChar,
+        pgTotal)
+  )
+import qualified System.Console.AsciiProgress as Progress
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config

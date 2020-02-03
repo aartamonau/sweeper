@@ -12,8 +12,8 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import Game (Item(Empty, Mine), Game, Pos)
 import qualified Game as Game
-import Player.API (Player, PlayerL)
-import qualified Player.API as API
+import Player (Player, PlayerL)
+import qualified Player as Player
 import qualified Utils.Random as Random
 
 data Move
@@ -56,14 +56,14 @@ posMoves game p
     numUnopened = length unopened
 
 player :: Player
-player = API.makePlayer "single-point" strategy
+player = Player.makePlayer "single-point" strategy
 
 strategy :: Pos -> PlayerL ()
-strategy start = API.openEmpty start >>= loop
+strategy start = Player.openEmpty start >>= loop
 
 loop :: [Pos] -> PlayerL ()
 loop opened = do
-  game <- API.getGame
+  game <- Player.getGame
   let (moves, opened') = findMoves game opened
 
   newOpened <- if | Set.null moves -> playGreedy game opened'
@@ -76,14 +76,14 @@ loopMoves moves = concat <$> mapM playMove moves
 
 playMove :: Move -> PlayerL [Pos]
 playMove (OpenEmpty p) = do
-  game <- API.getGame
+  game <- Player.getGame
 
   -- The cell might have already gotten auto-opened as a side-effect of one of
   -- the preceding moves.
   if Game.isOpened game p
     then return []
-    else API.openEmpty p
-playMove (MarkMine p)  = API.markMine p >> return []
+    else Player.openEmpty p
+playMove (MarkMine p)  = Player.markMine p >> return []
 
 type Prob = Ratio Int
 type Probs = [(Pos, Prob)]

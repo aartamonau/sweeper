@@ -22,7 +22,6 @@ executable sweeper-ai
                        Game
                        GameRunner
                        Player
-                       Player.API
                        Player.Dummy
                        Player.SinglePoint
                        Stats

@@ -18,7 +18,12 @@ import Data.Tuple (swap)
 
 import Game (Game, Pos)
 import qualified Game as Game
-import Player (MonadPlayer(getGame, markMine, openEmpty), PlayerL)
+import Player
+  ( MonadPlayer(getPlayerView, markMine, openEmpty)
+  , PlayerL
+  , PlayerView
+  , makePlayerView
+  )
 import Utils.Random
   ( MonadRandom(getRandom, getRandomR, getRandomRs, getRandoms)
   , StdGen
@@ -82,7 +87,7 @@ liftRandom = modifyEnv gen
 instance MonadIO m => MonadPlayer (Runner m) where
   openEmpty = doOpenEmpty
   markMine = doMarkMine
-  getGame = doGetGame
+  getPlayerView = doGetPlayerView
 
 notify :: MonadIO m => Runner m ()
 notify =
@@ -108,8 +113,8 @@ doMarkMine p =
   where
     mark game = swap (Game.markMine game p)
 
-doGetGame :: MonadIO m => Runner m Game
-doGetGame = readEnv game
+doGetPlayerView :: MonadIO m => Runner m PlayerView
+doGetPlayerView = makePlayerView <$> readEnv game
 
 checkWon :: MonadIO m => Runner m ()
 checkWon = do

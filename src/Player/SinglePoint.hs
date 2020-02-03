@@ -10,9 +10,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import System.IO.Unsafe (unsafePerformIO)
 
-import Game (Item(Empty, Mine), Game, Pos)
-import qualified Game as Game
-import Player (Player, PlayerL)
+import Player (Item(Mine, Empty), Player, PlayerL, PlayerView, Pos)
 import qualified Player as Player
 import qualified Utils.Random as Random
 
@@ -21,8 +19,8 @@ data Move
   | MarkMine Pos
   deriving (Eq, Ord)
 
-findMoves :: Game -> [Pos] -> (Set Move, [Pos])
-findMoves game = foldl' f z
+findMoves :: PlayerView -> [Pos] -> (Set Move, [Pos])
+findMoves view = foldl' f z
   where
     z = (Set.empty, [])
 
@@ -30,11 +28,11 @@ findMoves game = foldl' f z
       | null thisMoves = (moves, p:ps)
       | otherwise      = (Set.union moves thisSet, ps)
       where
-        thisMoves = posMoves game p
+        thisMoves = posMoves view p
         thisSet   = Set.fromList thisMoves
 
-posMoves :: Game -> Pos -> [Move]
-posMoves game p
+posMoves :: PlayerView -> Pos -> [Move]
+posMoves view p
   | Just (Empty 0) <- item = []
   | Just (Empty c) <- item =
     if | numMines == c               -> map OpenEmpty unopened
@@ -42,13 +40,13 @@ posMoves game p
        | otherwise                   -> []
   | otherwise              = []
   where
-    item = Game.item game p
-    ns   = Game.neighbors game p
+    item = Player.item view p
+    ns   = Player.neighbors view p
 
     (unopened, numMines) = foldl' f ([], 0) ns
       where
         f acc@(accUn, accMines) p =
-          case Game.item game p of
+          case Player.item view p of
             Nothing   -> (p:accUn, accMines)
             Just Mine -> (accUn, accMines+1)
             _         -> acc
@@ -63,10 +61,10 @@ strategy start = Player.openEmpty start >>= loop
 
 loop :: [Pos] -> PlayerL ()
 loop opened = do
-  game <- Player.getGame
-  let (moves, opened') = findMoves game opened
+  view <- Player.getPlayerView
+  let (moves, opened') = findMoves view opened
 
-  newOpened <- if | Set.null moves -> playGreedy game opened'
+  newOpened <- if | Set.null moves -> playGreedy view opened'
                   | otherwise      -> loopMoves (Set.toList moves)
 
   loop (newOpened ++ opened')
@@ -76,11 +74,11 @@ loopMoves moves = concat <$> mapM playMove moves
 
 playMove :: Move -> PlayerL [Pos]
 playMove (OpenEmpty p) = do
-  game <- Player.getGame
+  view <- Player.getPlayerView
 
   -- The cell might have already gotten auto-opened as a side-effect of one of
   -- the preceding moves.
-  if Game.isOpened game p
+  if Player.isOpened view p
     then return []
     else Player.openEmpty p
 playMove (MarkMine p)  = Player.markMine p >> return []
@@ -88,37 +86,37 @@ playMove (MarkMine p)  = Player.markMine p >> return []
 type Prob = Ratio Int
 type Probs = [(Pos, Prob)]
 
-posProbs :: Game -> Pos -> [(Pos, Prob)]
-posProbs game p
+posProbs :: PlayerView -> Pos -> [(Pos, Prob)]
+posProbs view p
   | Just (Empty 0) <- item = []
   | Just (Empty c) <- item =
       let prob = (c - numMines) % numUnopened
       in [(up, prob) | up <- unopened]
   | otherwise              = error "can't happen"
   where
-    item = Game.item game p
-    ns   = Game.neighbors game p
+    item = Player.item view p
+    ns   = Player.neighbors view p
 
-    unopened = filter (not . Game.isOpened game) ns
-    mines    = [p | p <- ns, Just Mine == Game.item game p]
+    unopened = filter (not . Player.isOpened view) ns
+    mines    = [p | p <- ns, Just Mine == Player.item view p]
 
     numUnopened = length unopened
     numMines    = length mines
 
-computeProbs :: Game -> [Pos] -> Probs
-computeProbs game = Map.toList . foldl' f z . concatMap (posProbs game)
+computeProbs :: PlayerView -> [Pos] -> Probs
+computeProbs view = Map.toList . foldl' f z . concatMap (posProbs view)
   where
     z = Map.empty
     f acc (p, prob) = Map.insertWith max p prob acc
 
-playGreedy :: Game -> [Pos] -> PlayerL [Pos]
-playGreedy game opened
-  | null probs = playRandom game
+playGreedy :: PlayerView -> [Pos] -> PlayerL [Pos]
+playGreedy view opened
+  | null probs = playRandom view
   | otherwise  = do
     posInfo [(p, showProb prob) | (p, prob) <- probs]
     randomGreedyMove
   where
-    probs = computeProbs game opened
+    probs = computeProbs view opened
 
     minProb = minimum (map snd probs)
     mins    = filter ((== minProb) . snd) probs
@@ -134,12 +132,12 @@ playGreedy game opened
 posInfo :: [(Pos, String)] -> PlayerL ()
 posInfo ps = pure $ unsafePerformIO $ print ps
 
-playRandom :: Game -> PlayerL [Pos]
-playRandom game = do
+playRandom :: PlayerView -> PlayerL [Pos]
+playRandom view = do
   i <- Random.getRandomR (0, n - 1)
   playMove (OpenEmpty $ unopened !! i)
 
   where
-    bounds   = Game.bounds game
-    unopened = filter (not . Game.isOpened game) (range bounds)
+    bounds   = Player.bounds view
+    unopened = filter (not . Player.isOpened view) (range bounds)
     n        = length unopened

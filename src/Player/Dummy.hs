@@ -2,9 +2,7 @@ module Player.Dummy
   ( player
   ) where
 
-import Game (Pos)
-import qualified Game
-import Player (Player, PlayerL)
+import Player (Player, PlayerL, Pos)
 import qualified Player as Player
 import qualified Utils.Random as Random
 
@@ -13,8 +11,8 @@ player = Player.makePlayer "dummy" strategy
 
 strategy :: Pos -> PlayerL ()
 strategy start = do
-  game <- Player.getGame
-  let dims = (Game.numRows game, Game.numColumns game)
+  view <- Player.getPlayerView
+  let dims = (Player.numRows view, Player.numColumns view)
 
   _ <- Player.openEmpty start
   loop dims

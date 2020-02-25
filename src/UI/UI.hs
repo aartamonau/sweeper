@@ -29,7 +29,8 @@ import Web.Browser (openBrowser)
 
 import Game (Item(Empty, Mine), Game, Pos)
 import qualified Game as Game
-import Stats (Stats, numPlayed, numWon)
+import Stats (Stats)
+import qualified Stats
 
 import UI.Colors
   ( Color
@@ -274,8 +275,8 @@ drawPlayInfo game stats = do
       setFont "monospace" 0.4
       drawText ("Mines: " ++ mines) (0.5, 0.5)
 
-    won = numWon stats
-    total = numPlayed stats
+    won = Stats.numWon stats
+    total = Stats.numPlayed stats
 
     drawStats = do
       setFont "monospace" 0.4

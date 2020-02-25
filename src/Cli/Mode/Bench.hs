@@ -41,7 +41,8 @@ import qualified Cli.Read as Read
 import GameRunner (GameResult(GameLost, GameWon))
 import qualified GameRunner as GameRunner
 import Player (strategy)
-import Stats (Stats, incLost, incWon)
+import Stats (Stats)
+import qualified Stats
 import Utils.Chan (Chan)
 import qualified Utils.Chan as Chan
 import Utils.Random (StdGen)
@@ -136,8 +137,8 @@ workerIter gen cfg stats = do
   let game = randomGame gameGen cfg
 
   GameRunner.run runnerGen game (strategy player startMove) >>= \case
-    GameLost -> return (incLost stats)
-    GameWon -> return (incWon stats)
+    GameLost -> return (Stats.incLost stats)
+    GameWon -> return (Stats.incWon stats)
 
   where
     startMove = Config.startMove cfg

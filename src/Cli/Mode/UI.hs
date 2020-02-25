@@ -30,7 +30,8 @@ import Game (Game)
 import GameRunner (GameResult(GameLost, GameWon))
 import qualified GameRunner as GameRunner
 import Player (Player(name, strategy))
-import Stats (Stats, incLost, incWon)
+import Stats (Stats)
+import qualified Stats
 import UI.UI
   ( DeviceContext
   , Draw
@@ -129,5 +130,5 @@ iter ctx@(Ctx {cfg, stats}) gen = do
     presentResult GameWon = showMsg "Player wins"
     presentResult GameLost = showError "Player loses"
 
-    incStats GameWon = incWon stats
-    incStats GameLost = incLost stats
+    incStats GameWon = Stats.incWon stats
+    incStats GameLost = Stats.incLost stats

@@ -6,7 +6,6 @@ module Cli.Read
   ) where
 
 import Control.Applicative ((<|>))
-import Data.List (lookup)
 import Options.Applicative (ReadM, auto, eitherReader, readerError)
 
 import Cli.Helpers (presentList)

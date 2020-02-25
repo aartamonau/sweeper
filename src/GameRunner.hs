@@ -5,7 +5,6 @@ module GameRunner
   , trace
   ) where
 
-import Control.Applicative ((<*))
 import Control.Monad (when)
 import Control.Monad.Except (ExceptT, MonadError, runExceptT, throwError)
 import Control.Monad.Extra (whenJustM)

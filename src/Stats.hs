@@ -4,10 +4,10 @@ module Stats
   , numLost
   , numStalled
   , numPlayed
-  , incWon
-  , incLost
-  , incStalled
+  , update
   ) where
+
+import GameRunner (GameResult(GameLost, GameWon))
 
 data Stats =
   Stats
@@ -27,11 +27,12 @@ numPlayed :: Stats -> Int
 numPlayed (Stats {numWon, numLost, numStalled}) =
   numWon + numLost + numStalled
 
+update :: GameResult -> Stats -> Stats
+update GameWon = incWon
+update GameLost = incLost
+
 incWon :: Stats -> Stats
 incWon stats@(Stats {numWon}) = stats {numWon = numWon + 1}
 
 incLost :: Stats -> Stats
 incLost stats@(Stats {numLost}) = stats {numLost = numLost + 1}
-
-incStalled :: Stats -> Stats
-incStalled stats@(Stats {numStalled}) = stats {numStalled = numStalled + 1}

@@ -114,7 +114,7 @@ iter ctx@(Ctx {cfg, stats}) gen = do
   result <-
     GameRunner.trace presentGame runnerGen game (strategy player startMove)
   presentResult result
-  return (ctx {stats = incStats result} :: Ctx)
+  return (ctx {stats = Stats.update result stats} :: Ctx)
 
   where
     (gameGen, runnerGen) = Random.split gen
@@ -129,6 +129,3 @@ iter ctx@(Ctx {cfg, stats}) gen = do
 
     presentResult GameWon = showMsg "Player wins"
     presentResult GameLost = showError "Player loses"
-
-    incStats GameWon = Stats.incWon stats
-    incStats GameLost = Stats.incLost stats

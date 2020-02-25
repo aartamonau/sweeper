@@ -38,7 +38,6 @@ import Cli.Mode.Type (Mode(Mode))
 -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#extension-DisambiguateRecordFields
 import qualified Cli.Mode.Type as Type (Mode(name, help, parse))
 import qualified Cli.Read as Read
-import GameRunner (GameResult(GameLost, GameWon))
 import qualified GameRunner as GameRunner
 import Player (strategy)
 import Stats (Stats)
@@ -136,9 +135,8 @@ workerIter gen cfg stats = do
   let (gameGen, runnerGen) = Random.split gen
   let game = randomGame gameGen cfg
 
-  GameRunner.run runnerGen game (strategy player startMove) >>= \case
-    GameLost -> return (Stats.incLost stats)
-    GameWon -> return (Stats.incWon stats)
+  result <- GameRunner.run runnerGen game (strategy player startMove)
+  return $ Stats.update result stats
 
   where
     startMove = Config.startMove cfg

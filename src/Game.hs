@@ -16,10 +16,21 @@ module Game
   , bounds
   , neighbors
   , errorItem
+  , unveilMines
   ) where
 
 
-import Data.Array (Array, (!), (//), accumArray, inRange, listArray, range)
+import Data.Array
+  ( Array
+  , (!)
+  , (//)
+  , accum
+  , accumArray
+  , assocs
+  , inRange
+  , listArray
+  , range
+  )
 import Data.List (foldl')
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -176,3 +187,9 @@ errorItem :: Game -> Maybe (Pos, Item)
 errorItem (Game {field, errorMove}) = f <$> errorMove
   where
     f p = (p, field ! p)
+
+unveilMines :: Game -> Game
+unveilMines game@(Game {field, opened}) = game {opened = opened'}
+  where
+    mines = [(p, True) | (p, Mine) <- assocs field]
+    opened' = accum (||) opened mines

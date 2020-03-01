@@ -82,15 +82,17 @@ drawUI :: UI -> Draw ()
 drawUI (UI {playerName, stats, game}) = do
   setFillColor darkgrey
   fillRect (0, 0, 1, 1)
-  withBoard game (drawBoard game)
   drawPlayInfo game stats
   drawPlayerName playerName
-  maybeDrawErrorCell
+
+  case errorItem of
+    Just (p, item) ->
+      drawGame (Game.unveilMines game) >> drawErrorCell game p item
+    Nothing -> drawGame game
 
   where
-    maybeDrawErrorCell
-      | Just (p, item) <- Game.errorItem game = drawErrorCell game p item
-      | otherwise = return ()
+    drawGame game = withBoard game (drawBoard game)
+    errorItem = Game.errorItem game
 
 drawPosInfo :: Game -> [(Pos, String)] -> Draw ()
 drawPosInfo game ps = do

@@ -30,7 +30,7 @@ import Data.Text (pack)
 import Graphics.Blank (Canvas, DeviceContext)
 import qualified Graphics.Blank as Blank
 
-import UI.Colors (Color)
+import UI.Color (Color)
 
 type Point = (Double, Double)
 type Rect = (Double, Double, Double, Double)

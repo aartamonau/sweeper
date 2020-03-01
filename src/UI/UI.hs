@@ -32,7 +32,7 @@ import qualified Game as Game
 import Stats (Stats)
 import qualified Stats
 
-import UI.Colors
+import UI.Color
   ( Color
   , black
   , blue

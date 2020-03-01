@@ -4,6 +4,7 @@ module Player.Dummy
 
 import Player (Player, PlayerL, Pos)
 import qualified Player as Player
+import Utils.Random (Coin(Heads, Tails))
 import qualified Utils.Random as Random
 
 player :: Player
@@ -25,6 +26,7 @@ randomMove (rows, columns) = do
   i <- Random.getRandomR (0, rows-1)
   j <- Random.getRandomR (0, columns-1)
 
-  _ <- Player.openEmpty (i, j)
-
-  return ()
+  let pos = (i, j)
+  Random.coin >>= \case
+    Heads -> Player.openEmpty pos >> return ()
+    Tails -> Player.markMine pos

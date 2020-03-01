@@ -1,6 +1,8 @@
 module Utils.Random
   ( MonadRandom(getRandom, getRandomR, getRandomRs, getRandoms)
   , StdGen
+  , Coin(Heads, Tails)
+  , coin
   , evalRand
   , mkStdGen
   , newStdGen
@@ -53,3 +55,11 @@ randomSubset k xs = do
 
 splits :: StdGen -> [StdGen]
 splits = unfoldr (Just . split)
+
+data Coin = Heads | Tails
+
+coin :: MonadRandom m => m Coin
+coin =
+  getRandomR (0, 1 :: Int) >>= \case
+    0 -> return Heads
+    _ -> return Tails

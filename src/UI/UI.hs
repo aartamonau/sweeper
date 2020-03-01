@@ -187,11 +187,11 @@ drawClosedCell = do
   setFillColor Color.darkgrey
   restrict (0.1, 0.1, 0.8, 0.8) fill
 
-drawOpenCell :: Item -> Draw ()
-drawOpenCell item = do
+drawOpenCellWithBackground :: Color -> Item -> Draw ()
+drawOpenCellWithBackground bg item = do
   setLineWidth gridLineWidth
   setStrokeColor Color.black
-  setFillColor Color.lightgrey
+  setFillColor bg
   fill
   stroke
   draw item
@@ -199,6 +199,10 @@ drawOpenCell item = do
   where
     draw Mine      = drawMine
     draw (Empty m) = drawEmpty m
+
+
+drawOpenCell :: Item -> Draw ()
+drawOpenCell = drawOpenCellWithBackground Color.lightgrey
 
 drawEmpty :: Int -> Draw ()
 drawEmpty 0     = return ()
@@ -293,14 +297,7 @@ drawMsgWithColor color msg = do
 
     drawText msg (0.5, 0.5)
 
-drawX :: Draw ()
-drawX =
-  restrict (0.1, 0.1, 0.8, 0.8) $ do
-    setLineWidth 0.1
-    setStrokeColor Color.red
-    strokeLine (0, 0) (1, 1)
-    strokeLine (1, 0) (0, 1)
-
 drawErrorCell :: Game -> Pos -> Item -> Draw ()
 drawErrorCell game p item =
-  withBoard game $ withCell game p (drawOpenCell item >> drawX)
+  withBoard game (withCell game p $
+                  drawOpenCellWithBackground Color.lightcoral item)

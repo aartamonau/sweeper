@@ -12,6 +12,7 @@ module UI.Color
   , brown
   , lightgrey
   , darkgrey
+  , lightcoral
   ) where
 
 import Data.Colour (Colour)
@@ -61,3 +62,6 @@ lightgrey = showColor Names.lightgrey
 
 darkgrey :: Color
 darkgrey = showColor Names.darkgrey
+
+lightcoral :: Color
+lightcoral = showColor Names.lightcoral

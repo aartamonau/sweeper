@@ -1,4 +1,18 @@
-module UI.Color where
+module UI.Color
+  ( Color
+  , dimgrey
+  , grey
+  , black
+  , red
+  , blue
+  , green
+  , khaki
+  , purple
+  , darkred
+  , brown
+  , lightgrey
+  , darkgrey
+  ) where
 
 import Data.Colour (Colour)
 import Data.Colour.SRGB (sRGB24show)

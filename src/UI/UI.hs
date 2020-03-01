@@ -32,21 +32,8 @@ import qualified Game as Game
 import Stats (Stats)
 import qualified Stats
 
-import UI.Color
-  ( Color
-  , black
-  , blue
-  , brown
-  , darkred
-  , dimgrey
-  , green
-  , grey
-  , khaki
-  , lightgrey
-  , purple
-  , red
-  , darkgrey
-  )
+import UI.Color (Color)
+import qualified UI.Color as Color
 import UI.Draw
   ( Draw
   , Rect
@@ -80,7 +67,7 @@ display context drawing = send context (runDraw context drawing)
 
 drawUI :: UI -> Draw ()
 drawUI (UI {playerName, stats, game}) = do
-  setFillColor darkgrey
+  setFillColor Color.darkgrey
   fillRect (0, 0, 1, 1)
   drawPlayInfo game stats
   drawPlayerName playerName
@@ -96,8 +83,8 @@ drawUI (UI {playerName, stats, game}) = do
 
 drawPosInfo :: Game -> [(Pos, String)] -> Draw ()
 drawPosInfo game ps = do
-  setFillColor black
-  setStrokeColor black
+  setFillColor Color.black
+  setStrokeColor Color.black
 
   forM_ ps $ \(p, info) ->
     withBoard game $
@@ -106,10 +93,10 @@ drawPosInfo game ps = do
       drawText info (0.5, 0.5)
 
 drawMsg :: String -> Draw ()
-drawMsg = drawMsgWithColor lightgrey
+drawMsg = drawMsgWithColor Color.lightgrey
 
 drawError :: String -> Draw ()
-drawError = drawMsgWithColor red
+drawError = drawMsgWithColor Color.red
 
 waitKeypress :: DeviceContext -> IO ()
 waitKeypress context = do
@@ -187,24 +174,24 @@ drawCell game p = withCell game p (draw maybeItem)
 
 drawClosedCell :: Draw ()
 drawClosedCell = do
-  setFillColor lightgrey
+  setFillColor Color.lightgrey
   fillTriangle (0, 0) (1, 0) (0, 1)
 
-  setFillColor dimgrey
+  setFillColor Color.dimgrey
   fillTriangle (1, 1) (0, 1) (1, 0)
 
   setLineWidth gridLineWidth
-  setStrokeColor black
+  setStrokeColor Color.black
   stroke
 
-  setFillColor darkgrey
+  setFillColor Color.darkgrey
   restrict (0.1, 0.1, 0.8, 0.8) fill
 
 drawOpenCell :: Item -> Draw ()
 drawOpenCell item = do
   setLineWidth gridLineWidth
-  setStrokeColor black
-  setFillColor lightgrey
+  setStrokeColor Color.black
+  setFillColor Color.lightgrey
   fill
   stroke
   draw item
@@ -217,25 +204,25 @@ drawEmpty :: Int -> Draw ()
 drawEmpty 0     = return ()
 drawEmpty mines = do
   setFont "monospace" 0.7
-  setStrokeColor dimgrey
+  setStrokeColor Color.dimgrey
   setFillColor (color mines)
   drawText (show mines) (0.5, 0.5)
 
   where
-    color 1 = blue
-    color 2 = green
-    color 3 = khaki
-    color 4 = purple
-    color 5 = red
-    color 6 = darkred
-    color 7 = brown
-    color 8 = black
+    color 1 = Color.blue
+    color 2 = Color.green
+    color 3 = Color.khaki
+    color 4 = Color.purple
+    color 5 = Color.red
+    color 6 = Color.darkred
+    color 7 = Color.brown
+    color 8 = Color.black
     color _ = error "can't happen"
 
 drawMine :: Draw ()
 drawMine = do
-  setStrokeColor black
-  setFillColor black
+  setStrokeColor Color.black
+  setFillColor Color.black
   setLineWidth 0.125
 
   restrict (0.1, 0.1, 0.8, 0.8) $ do
@@ -247,8 +234,8 @@ drawMine = do
     strokeLine (0.15, 0.15) (0.85, 0.85)
     strokeLine (0.15, 0.85) (0.85, 0.15)
 
-    setStrokeColor grey
-    setFillColor grey
+    setStrokeColor Color.grey
+    setFillColor Color.grey
     fillCircle (0.2, 0.2, 0.3, 0.3)
 
 margins :: Rect
@@ -262,8 +249,8 @@ withBoard game drawing =
 
 drawPlayInfo :: Game -> Stats -> Draw ()
 drawPlayInfo game stats = do
-  setStrokeColor black
-  setFillColor black
+  setStrokeColor Color.black
+  setFillColor Color.black
 
   restrict rect $ drawStats ||| drawNumMines
 
@@ -288,8 +275,8 @@ drawPlayerName :: String -> Draw ()
 drawPlayerName player =
   restrict rect $ do
     setFont "monospace" 0.4
-    setStrokeColor black
-    setFillColor black
+    setStrokeColor Color.black
+    setFillColor Color.black
 
     drawText ("Player: " ++ player) (0.5, 0.5)
   where
@@ -310,7 +297,7 @@ drawX :: Draw ()
 drawX =
   restrict (0.1, 0.1, 0.8, 0.8) $ do
     setLineWidth 0.1
-    setStrokeColor red
+    setStrokeColor Color.red
     strokeLine (0, 0) (1, 1)
     strokeLine (1, 0) (0, 1)
 

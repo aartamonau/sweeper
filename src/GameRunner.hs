@@ -146,5 +146,6 @@ run' tracer gen game player = do
   let env = Env {game = gameRef, gen = genRef, tracer}
 
   runRunner env $ do
+    notify
     player
     return GameLost

@@ -110,7 +110,6 @@ loop uiCfg cfg deviceContext = do
 
 iter :: Ctx -> StdGen -> IO Ctx
 iter ctx@(Ctx {cfg, stats}) gen = do
-  presentGame game
   result <-
     GameRunner.trace presentGame runnerGen game (strategy player startMove)
   presentResult result

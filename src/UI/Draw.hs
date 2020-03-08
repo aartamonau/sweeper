@@ -17,8 +17,9 @@ module UI.Draw
   , setLineWidth
   , strokeLine
   , dimRect
-  , (|||)
   , fillTriangle
+  , left
+  , right
   ) where
 
 import Control.Monad.Reader (ReaderT, asks, local, runReaderT)
@@ -151,8 +152,11 @@ dimRect alpha =
     Blank.fillRect rect
     Blank.restore ()
 
-(|||) :: Draw () -> Draw () -> Draw ()
-left ||| right = restrict (0, 0, 0.5, 1) left >> restrict (0.5, 0, 0.5, 1) right
+left :: Draw () -> Draw ()
+left drawing = restrict (0, 0, 0.5, 1) drawing
+
+right :: Draw () -> Draw ()
+right drawing = restrict (0.5, 0, 0.5, 1) drawing
 
 fillTriangle :: Point -> Point -> Point -> Draw ()
 fillTriangle pa pb pc = do

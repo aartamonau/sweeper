@@ -37,7 +37,6 @@ import qualified UI.Color as Color
 import UI.Draw
   ( Draw
   , Rect
-  , (|||)
   , aspectRatio
   , dimRect
   , drawText
@@ -45,7 +44,9 @@ import UI.Draw
   , fillCircle
   , fillRect
   , fillTriangle
+  , left
   , restrict
+  , right
   , runDraw
   , setFillColor
   , setFont
@@ -261,7 +262,7 @@ drawGameInfo game stats = do
   setStrokeColor Color.black
   setFillColor Color.black
 
-  restrict rect $ drawStats ||| drawNumMines
+  restrict rect $ left drawStats >> right drawNumMines
 
   where
     (mx, my, mw, _) = margins

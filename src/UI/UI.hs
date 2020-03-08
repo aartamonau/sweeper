@@ -69,7 +69,8 @@ display context drawing = send context (runDraw context drawing)
 drawUI :: UI -> Draw ()
 drawUI (UI {playerName, stats, game}) = do
   drawBackground
-  drawGameInfo game stats
+  drawStats stats
+  drawGameInfo game
   drawPlayerName playerName
 
   case errorItem of
@@ -257,29 +258,36 @@ withBoard game drawing =
     rect <- boardRect game
     restrict rect drawing
 
-drawGameInfo :: Game -> Stats -> Draw ()
-drawGameInfo game stats = do
-  setStrokeColor Color.black
-  setFillColor Color.black
-
-  restrict rect $ left drawStats >> right drawNumMines
-
+withInfoArea :: Draw () -> Draw ()
+withInfoArea drawing = restrict rect drawing
   where
     (mx, my, mw, _) = margins
     rect = (mx, 0, mw, my)
-    frac n d = show n ++ "/" ++ show d
-    mines = frac (Game.numMinesMarked game) (Game.numMines game)
 
-    drawNumMines = do
-      setFont "monospace" 0.4
-      drawText ("Mines: " ++ mines) (0.5, 0.5)
+drawStats :: Stats -> Draw ()
+drawStats stats =
+  withInfoArea $ left $ do
+    let won = Stats.numWon stats
+    let total = Stats.numPlayed stats
 
-    won = Stats.numWon stats
-    total = Stats.numPlayed stats
+    setStrokeColor Color.black
+    setFillColor Color.black
+    setFont "monospace" 0.4
 
-    drawStats = do
-      setFont "monospace" 0.4
-      drawText ("Games won: " ++ frac won total) (0.5, 0.5)
+    drawText ("Games won: " ++ show won ++ "/" ++ show total) (0.5, 0.5)
+
+
+drawGameInfo :: Game -> Draw ()
+drawGameInfo game = do
+  withInfoArea $ right $ do
+    let marked = Game.numMinesMarked game
+    let total = Game.numMines game
+
+    setStrokeColor Color.black
+    setFillColor Color.black
+    setFont "monospace" 0.4
+
+    drawText ("Mines: " ++ show marked ++ "/" ++ show total) (0.5, 0.5)
 
 drawPlayerName :: String -> Draw ()
 drawPlayerName player =

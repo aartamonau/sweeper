@@ -67,8 +67,7 @@ display context drawing = send context (runDraw context drawing)
 
 drawUI :: UI -> Draw ()
 drawUI (UI {playerName, stats, game}) = do
-  setFillColor Color.darkgrey
-  fillRect (0, 0, 1, 1)
+  drawBackground
   drawGameInfo game stats
   drawPlayerName playerName
 
@@ -80,6 +79,11 @@ drawUI (UI {playerName, stats, game}) = do
   where
     drawGame game = withBoard game (drawBoard game)
     errorItem = Game.errorItem game
+
+drawBackground :: Draw ()
+drawBackground = do
+  setFillColor Color.darkgrey
+  fillRect (0, 0, 1, 1)
 
 drawPosInfo :: Game -> [(Pos, String)] -> Draw ()
 drawPosInfo game ps = do

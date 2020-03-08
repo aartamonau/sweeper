@@ -18,7 +18,6 @@ module UI.Draw
   , strokeLine
   , dimRect
   , (|||)
-  , (///)
   , fillTriangle
   ) where
 
@@ -154,9 +153,6 @@ dimRect alpha =
 
 (|||) :: Draw () -> Draw () -> Draw ()
 left ||| right = restrict (0, 0, 0.5, 1) left >> restrict (0.5, 0, 0.5, 1) right
-
-(///) :: Draw () -> Draw () -> Draw ()
-up /// down = restrict (0, 0, 1, 0.5) up >> restrict (0, 0.5, 1, 0.5) down
 
 fillTriangle :: Point -> Point -> Point -> Draw ()
 fillTriangle pa pb pc = do

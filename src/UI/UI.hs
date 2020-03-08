@@ -69,7 +69,7 @@ drawUI :: UI -> Draw ()
 drawUI (UI {playerName, stats, game}) = do
   setFillColor Color.darkgrey
   fillRect (0, 0, 1, 1)
-  drawPlayInfo game stats
+  drawGameInfo game stats
   drawPlayerName playerName
 
   case errorItem of
@@ -251,8 +251,8 @@ withBoard game drawing =
     rect <- boardRect game
     restrict rect drawing
 
-drawPlayInfo :: Game -> Stats -> Draw ()
-drawPlayInfo game stats = do
+drawGameInfo :: Game -> Stats -> Draw ()
+drawGameInfo game stats = do
   setStrokeColor Color.black
   setFillColor Color.black
 

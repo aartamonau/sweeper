@@ -77,7 +77,6 @@ drawUI (UI {playerName, stats, game}) = do
     Nothing -> drawGame game
 
   where
-    drawGame game = withBoard game (drawBoard game)
     errorItem = Game.errorItem game
 
 drawBackground :: Draw ()
@@ -152,8 +151,10 @@ boardRect game = do
 
   return (x, y, w, h)
 
-drawBoard :: Game -> Draw ()
-drawBoard game = sequence_ [drawCell game p | p <- range (Game.bounds game)]
+drawGame :: Game -> Draw ()
+drawGame game = do
+  withBoard game $ do
+    sequence_ [drawCell game p | p <- range (Game.bounds game)]
 
 withCell :: Game -> Pos -> Draw a -> Draw a
 withCell game (i, j) = restrict rect

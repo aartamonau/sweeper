@@ -16,6 +16,7 @@ module Game
   , bounds
   , neighbors
   , errorItem
+  , unveil
   , unveilMines
   ) where
 
@@ -187,6 +188,9 @@ errorItem :: Game -> Maybe (Pos, Item)
 errorItem (Game {field, errorMove}) = f <$> errorMove
   where
     f p = (p, field ! p)
+
+unveil :: Pos -> Game -> Game
+unveil p game@(Game {opened}) = game {opened = opened // [(p, True)]}
 
 unveilMines :: Game -> Game
 unveilMines game@(Game {field, opened}) = game {opened = opened'}

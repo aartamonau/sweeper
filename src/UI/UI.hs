@@ -6,6 +6,7 @@ module UI.UI
   , drawUI
   , drawMsg
   , drawError
+  , drawErrorMove
   , drawPosInfo
   , waitKeypress
   , runUI
@@ -14,7 +15,7 @@ module UI.UI
 import Control.Concurrent.Async (concurrently_)
 import Control.Concurrent (threadDelay)
 import Control.Monad (forM_)
-import Control.Monad.Extra (ifM)
+import Control.Monad.Extra (ifM, whenJust)
 import Data.Ix (range)
 import Graphics.Blank
   ( DeviceContext
@@ -72,14 +73,7 @@ drawUI (UI {playerName, stats, game}) = do
   drawStats stats
   drawGameInfo game
   drawPlayerName playerName
-
-  case errorItem of
-    Just (p, item) ->
-      drawGame (Game.unveilMines game) >> drawErrorCell game p item
-    Nothing -> drawGame game
-
-  where
-    errorItem = Game.errorItem game
+  drawGame game
 
 drawBackground :: Draw ()
 drawBackground = do
@@ -311,7 +305,8 @@ drawMsgWithColor color msg = do
 
     drawText msg (0.5, 0.5)
 
-drawErrorCell :: Game -> Pos -> Item -> Draw ()
-drawErrorCell game p item =
-  withBoard game (withCell game p $
-                  drawOpenCellWithBackground Color.lightcoral item)
+drawErrorMove :: Game -> Pos -> Draw ()
+drawErrorMove game p =
+  whenJust (Game.item game p) $ \item ->
+    withBoard game (withCell game p $
+                    drawOpenCellWithBackground Color.lightcoral item)

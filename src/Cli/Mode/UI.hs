@@ -27,6 +27,7 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type as Type (Mode(name, help, parse))
 import qualified Cli.Read as Read
 import Game (Game)
+import qualified Game
 import GameRunner
   ( GameResult(GameLost, GameWon)
   , TraceEvent(TraceMoveError, TraceMoveOk, TraceStart)
@@ -41,6 +42,7 @@ import UI.UI
   , UI(UI, game, playerName, stats)
   , display
   , drawError
+  , drawErrorMove
   , drawMsg
   , drawUI
   , runUI
@@ -124,6 +126,9 @@ iter ctx@(Ctx {cfg, stats}) gen = do
     startMove = Config.startMove cfg
     player = Config.player cfg
     presentGame game = present ctx (draw ctx game)
+    presentGameError p game =
+      let game' = Game.unveil p (Game.unveilMines game)
+       in present ctx (draw ctx game' >> drawErrorMove game' p)
 
     showMsg msg = present ctx (drawMsg msg)
     showError msg = present ctx (drawError msg)
@@ -133,4 +138,4 @@ iter ctx@(Ctx {cfg, stats}) gen = do
 
     tracer (TraceStart game) = presentGame game
     tracer (TraceMoveOk game) = presentGame game
-    tracer (TraceMoveError _ game) = presentGame game
+    tracer (TraceMoveError p game) = presentGameError p game

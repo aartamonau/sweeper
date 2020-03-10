@@ -1,6 +1,7 @@
 module GameRunner
   (
     GameResult(GameWon, GameLost)
+  , TraceEvent(TraceStart, TraceMoveOk, TraceMoveError)
   , run
   , trace
   ) where
@@ -33,11 +34,16 @@ data GameResult
   = GameWon
   | GameLost
 
+data TraceEvent
+  = TraceStart Game
+  | TraceMoveOk Game
+  | TraceMoveError Pos Game
+
 data Env m =
   Env
     { game :: IORef Game
     , gen :: IORef StdGen
-    , tracer :: Maybe (Game -> m ())
+    , tracer :: Maybe (TraceEvent -> m ())
     }
 
 newtype Runner m a =
@@ -68,8 +74,12 @@ modifyEnv accessor f = do
 
     return result
 
-modifyGame :: MonadIO m => (Game -> (r, Game)) -> Runner m r
-modifyGame f = modifyEnv game f <* notify
+modifyGame :: MonadIO m => (Game -> (r, Game)) -> Runner m (r, Game)
+modifyGame f = modifyEnv game g
+  where
+    g game =
+      let (r, game') = f game
+       in ((r, game'), game')
 
 instance MonadIO m => MonadRandom (Runner m) where
   getRandom = liftRandom Random.random
@@ -88,17 +98,23 @@ instance MonadIO m => MonadPlayer (Runner m) where
   markMine = doMarkMine
   getPlayerView = doGetPlayerView
 
-notify :: MonadIO m => Runner m ()
-notify =
-  whenJustM (asks tracer) $ \f -> do
-    game <- readEnv game
-    lift $ f game
+traceEvent :: MonadIO m => TraceEvent -> Runner m ()
+traceEvent event = whenJustM (asks tracer) $ \f -> lift (f event)
+
+traceStart :: MonadIO m => Game -> Runner m ()
+traceStart = traceEvent . TraceStart
+
+traceMoveOk :: MonadIO m => Game -> Runner m ()
+traceMoveOk = traceEvent . TraceMoveOk
+
+traceMoveError :: MonadIO m => Pos -> Game -> Runner m ()
+traceMoveError pos game = traceEvent (TraceMoveError pos game)
 
 doOpenEmpty :: MonadIO m => Pos -> Runner m [Pos]
 doOpenEmpty p =
   modifyGame open >>= \case
-    Left _ -> throwError GameLost
-    Right ps -> checkWon >> return ps
+    (Left _, game) -> traceMoveError p game >> throwError GameLost
+    (Right ps, game) -> traceMoveOk game >> checkWon >> return ps
 
   where
     open game = swap (Game.openEmpty game p)
@@ -106,8 +122,8 @@ doOpenEmpty p =
 doMarkMine :: MonadIO m => Pos -> Runner m ()
 doMarkMine p =
   modifyGame mark >>= \case
-    Left _ -> throwError GameLost
-    Right () -> checkWon >> return ()
+    (Left _, game) -> traceMoveError p game >> throwError GameLost
+    (Right (), game) -> traceMoveOk game >> checkWon >> return ()
 
   where
     mark game = swap (Game.markMine game p)
@@ -130,12 +146,17 @@ run :: MonadIO m => StdGen -> Game -> PlayerL () -> m GameResult
 run = run' Nothing
 
 trace ::
-     MonadIO m => (Game -> m ()) -> StdGen -> Game -> PlayerL () -> m GameResult
+     MonadIO m
+  => (TraceEvent -> m ())
+  -> StdGen
+  -> Game
+  -> PlayerL ()
+  -> m GameResult
 trace tracer = run' (Just tracer)
 
 run' ::
      MonadIO m
-  => Maybe (Game -> m ())
+  => Maybe (TraceEvent -> m ())
   -> StdGen
   -> Game
   -> PlayerL ()
@@ -146,6 +167,6 @@ run' tracer gen game player = do
   let env = Env {game = gameRef, gen = genRef, tracer}
 
   runRunner env $ do
-    notify
+    traceStart game
     player
     return GameLost

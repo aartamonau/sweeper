@@ -27,7 +27,10 @@ import Cli.Mode.Type (Mode(Mode))
 import qualified Cli.Mode.Type as Type (Mode(name, help, parse))
 import qualified Cli.Read as Read
 import Game (Game)
-import GameRunner (GameResult(GameLost, GameWon))
+import GameRunner
+  ( GameResult(GameLost, GameWon)
+  , TraceEvent(TraceMoveError, TraceMoveOk, TraceStart)
+  )
 import qualified GameRunner as GameRunner
 import Player (Player(name, strategy))
 import Stats (Stats)
@@ -110,8 +113,7 @@ loop uiCfg cfg deviceContext = do
 
 iter :: Ctx -> StdGen -> IO Ctx
 iter ctx@(Ctx {cfg, stats}) gen = do
-  result <-
-    GameRunner.trace presentGame runnerGen game (strategy player startMove)
+  result <- GameRunner.trace tracer runnerGen game (strategy player startMove)
   presentResult result
   return (ctx {stats = Stats.update result stats} :: Ctx)
 
@@ -128,3 +130,7 @@ iter ctx@(Ctx {cfg, stats}) gen = do
 
     presentResult GameWon = showMsg "Player wins"
     presentResult GameLost = showError "Player loses"
+
+    tracer (TraceStart game) = presentGame game
+    tracer (TraceMoveOk game) = presentGame game
+    tracer (TraceMoveError _ game) = presentGame game

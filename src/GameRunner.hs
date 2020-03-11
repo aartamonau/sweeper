@@ -14,7 +14,6 @@ import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, asks)
 import Control.Monad.Trans (MonadTrans, lift)
 import Data.Bifunctor (first)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
-import Data.Tuple (swap)
 
 import Game (Game, Pos)
 import qualified Game as Game
@@ -74,12 +73,18 @@ modifyEnv accessor f = do
 
     return result
 
-modifyGame :: MonadIO m => (Game -> (r, Game)) -> Runner m (r, Game)
+modifyGame ::
+     MonadIO m
+  => (Game -> Either err (r, Game))
+  -> Runner m (Either err r, Game)
 modifyGame f = modifyEnv game g
   where
     g game =
-      let (r, game') = f game
-       in ((r, game'), game')
+      case f game of
+        Left err -> ret (Left err) game
+        Right (r, game') -> ret (Right r) game'
+
+    ret r game = ((r, game), game)
 
 instance MonadIO m => MonadRandom (Runner m) where
   getRandom = liftRandom Random.random
@@ -117,7 +122,7 @@ doOpenEmpty p =
     (Right ps, game) -> traceMoveOk game >> checkWon >> return ps
 
   where
-    open game = swap (Game.openEmpty game p)
+    open game = Game.openEmpty game p
 
 doMarkMine :: MonadIO m => Pos -> Runner m ()
 doMarkMine p =
@@ -126,7 +131,7 @@ doMarkMine p =
     (Right (), game) -> traceMoveOk game >> checkWon >> return ()
 
   where
-    mark game = swap (Game.markMine game p)
+    mark game = Game.markMine game p
 
 doGetPlayerView :: MonadIO m => Runner m PlayerView
 doGetPlayerView = makePlayerView <$> readEnv game

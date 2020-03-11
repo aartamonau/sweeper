@@ -15,7 +15,6 @@ module Game
   , item
   , bounds
   , neighbors
-  , errorItem
   , unveil
   , unveilMines
   ) where
@@ -57,7 +56,6 @@ data Game =
 
     , field     :: MineField
     , opened    :: Array Pos Bool
-    , errorMove :: Maybe Pos
     }
 
 data PlayError
@@ -66,7 +64,7 @@ data PlayError
   | ErrorAlreadyPlayed
   deriving (Show)
 
-type PlayResult r = (Game, Either PlayError r)
+type PlayResult r = Either PlayError (r, Game)
 
 mkMineField :: (Pos, Pos) -> [Pos] -> MineField
 mkMineField bounds mines = listArray bounds $ [item p | p <- range bounds]
@@ -91,7 +89,6 @@ random rows columns numMines start buffer = do
              , numOpened      = 0
              , field          = mkMineField bounds mines
              , opened         = listArray bounds $ repeat False
-             , errorMove      = Nothing
              }
   where
     isClose (si, sj) (i, j) = abs (si - i) <= buffer && abs (sj - j) <= buffer
@@ -119,13 +116,14 @@ neighbors' bounds p@(pi, pj) =
 
 openEmpty :: Game -> Pos -> PlayResult [Pos]
 openEmpty game@(Game {field}) p
-  | Just _ <- item game p = retError game p ErrorAlreadyPlayed
+  | Just _ <- item game p = Left ErrorAlreadyPlayed
   | otherwise =
     case field ! p of
-      Mine -> retError game p ErrorKilled
+      Mine -> Left ErrorKilled
       Empty _ ->
         let ps = openEmptyLoop game p
-         in ret (foldl' doOpen game ps) ps
+            game' = (foldl' doOpen game ps)
+         in Right (ps, game')
 
 openEmptyLoop :: Game -> Pos -> [Pos]
 openEmptyLoop game@(Game {field}) p = Set.toList (go Set.empty p)
@@ -148,9 +146,9 @@ openEmptyLoop game@(Game {field}) p = Set.toList (go Set.empty p)
 
 markMine :: Game -> Pos -> PlayResult ()
 markMine game@(Game {field}) p
-  | isOpened game p = retError game p ErrorAlreadyPlayed
-  | Empty _ <- item = retError game p ErrorIncompetent
-  | Mine <- item = ret (doOpen game p) ()
+  | isOpened game p = Left ErrorAlreadyPlayed
+  | Empty _ <- item = Left ErrorIncompetent
+  | Mine <- item = Right ((), doOpen game p)
 
   where
     item = field ! p
@@ -175,19 +173,6 @@ doOpen game@(Game {field, opened, numOpened, numMinesMarked}) p
   where
     numMinesMarked' | Mine <- field ! p = numMinesMarked + 1
                     | otherwise = numMinesMarked
-
-retError :: Game -> Pos -> PlayError -> PlayResult a
-retError game lastMove error = (newGame, Left error)
-  where
-    newGame = game {errorMove = Just lastMove}
-
-ret :: Game -> a -> PlayResult a
-ret game r = (game, Right r)
-
-errorItem :: Game -> Maybe (Pos, Item)
-errorItem (Game {field, errorMove}) = f <$> errorMove
-  where
-    f p = (p, field ! p)
 
 unveil :: Pos -> Game -> Game
 unveil p game@(Game {opened}) = game {opened = opened // [(p, True)]}

@@ -62,18 +62,20 @@ doMove p move =
     MoveEmpty -> Player.openEmpty p
 
 findMove :: State -> Maybe (Pos, Move)
-findMove (State {frontier, view}) =
+findMove state@(State {frontier}) =
   case filter isInfeasible moves of
     [] -> Nothing
     ((pos, move):_) -> Just (pos, flipMove move)
   where
     ps = Set.toList frontier
     moves = [(p, MoveMine) | p <- ps] ++ [(p, MoveEmpty) | p <- ps]
-    isInfeasible = not . uncurry (isFeasibleMove view)
+    isInfeasible = not . uncurry (isFeasibleMove state)
 
-isFeasibleMove :: PlayerView -> Pos -> Move -> Bool
-isFeasibleMove view pos move =
-  isFeasibleAssignment view (Map.singleton pos move)
+isFeasibleMove :: State -> Pos -> Move -> Bool
+isFeasibleMove (State {view}) pos move =
+  isFeasibleAssignment view moves
+  where
+    moves = Map.singleton pos move
 
 isFeasibleAssignment :: PlayerView -> Map Pos Move -> Bool
 isFeasibleAssignment view moves = all (checkPosition view moves) neighbors

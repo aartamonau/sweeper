@@ -71,11 +71,38 @@ findMove state@(State {frontier}) =
     moves = [(p, MoveMine) | p <- ps] ++ [(p, MoveEmpty) | p <- ps]
     isInfeasible = not . uncurry (isFeasibleMove state)
 
+frontierNeighborsDepth :: State -> Pos -> Int -> [Pos]
+frontierNeighborsDepth state pos depth =
+  tail $ go depth (Set.singleton pos) [pos]
+  where
+    expand ps seen =
+      filter (not . (`Set.member` seen)) $
+      concatMap (frontierNeighbors state) ps
+
+    go 0 _ acc = reverse acc
+    go i seen acc =
+      let new = expand acc seen
+          seen' = Set.union seen (Set.fromList new)
+       in go (i - 1) seen' (new ++ acc)
+
+frontierNeighbors :: State -> Pos -> [Pos]
+frontierNeighbors (State {view, frontier}) pos =
+  filter (`Set.member` frontier) $ Player.neighbors view pos
+
 isFeasibleMove :: State -> Pos -> Move -> Bool
-isFeasibleMove (State {view}) pos move =
-  isFeasibleAssignment view moves
+isFeasibleMove state@(State {view}) pos move =
+  isFeasibleAssignment view moves && checkNeighbors moves neighbors
   where
     moves = Map.singleton pos move
+    neighbors = frontierNeighborsDepth state pos 3
+
+    checkNeighbors _ [] = True
+    checkNeighbors moves (p:ps) =
+      try p MoveMine moves ps || try p MoveEmpty moves ps
+
+    try pos move moves rest =
+      let moves' = Map.insert pos move moves
+       in isFeasibleAssignment view moves' && checkNeighbors moves' rest
 
 isFeasibleAssignment :: PlayerView -> Map Pos Move -> Bool
 isFeasibleAssignment view moves = all (checkPosition view moves) neighbors

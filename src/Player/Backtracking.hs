@@ -73,22 +73,18 @@ findMove state@(State {frontier}) =
     find depth = filter (isInfeasible depth) moves
 
 frontierNeighborsDepth :: State -> Int -> Pos -> [Pos]
-frontierNeighborsDepth state depth pos =
+frontierNeighborsDepth (State {view, frontier}) depth pos =
   tail $ go depth (Set.singleton pos) [pos]
   where
     expand ps seen =
       filter (not . (`Set.member` seen)) $
-      concatMap (frontierNeighbors state) ps
+      concatMap (Player.neighbors view) ps
 
-    go 0 _ acc = reverse acc
+    go 0 _ acc = reverse $ filter (`Set.member` frontier) acc
     go i seen acc =
       let new = expand acc seen
           seen' = Set.union seen (Set.fromList new)
        in go (i - 1) seen' (new ++ acc)
-
-frontierNeighbors :: State -> Pos -> [Pos]
-frontierNeighbors (State {view, frontier}) pos =
-  filter (`Set.member` frontier) $ Player.neighbors view pos
 
 isFeasibleMove :: State -> Int -> Pos -> Move -> Bool
 isFeasibleMove state@(State {view}) depth pos move =

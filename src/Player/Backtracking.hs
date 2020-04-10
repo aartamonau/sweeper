@@ -63,16 +63,17 @@ doMove p move =
 
 findMove :: State -> Maybe (Pos, Move)
 findMove state@(State {frontier}) =
-  case filter isInfeasible moves of
+  case concatMap find [0..2] of
     [] -> Nothing
     ((pos, move):_) -> Just (pos, flipMove move)
   where
     ps = Set.toList frontier
     moves = [(p, MoveMine) | p <- ps] ++ [(p, MoveEmpty) | p <- ps]
-    isInfeasible = not . uncurry (isFeasibleMove state)
+    isInfeasible depth = not . uncurry (isFeasibleMove state depth)
+    find depth = filter (isInfeasible depth) moves
 
-frontierNeighborsDepth :: State -> Pos -> Int -> [Pos]
-frontierNeighborsDepth state pos depth =
+frontierNeighborsDepth :: State -> Int -> Pos -> [Pos]
+frontierNeighborsDepth state depth pos =
   tail $ go depth (Set.singleton pos) [pos]
   where
     expand ps seen =
@@ -89,12 +90,12 @@ frontierNeighbors :: State -> Pos -> [Pos]
 frontierNeighbors (State {view, frontier}) pos =
   filter (`Set.member` frontier) $ Player.neighbors view pos
 
-isFeasibleMove :: State -> Pos -> Move -> Bool
-isFeasibleMove state@(State {view}) pos move =
+isFeasibleMove :: State -> Int -> Pos -> Move -> Bool
+isFeasibleMove state@(State {view}) depth pos move =
   isFeasibleAssignment view moves && checkNeighbors moves neighbors
   where
     moves = Map.singleton pos move
-    neighbors = frontierNeighborsDepth state pos 3
+    neighbors = frontierNeighborsDepth state depth pos
 
     checkNeighbors _ [] = True
     checkNeighbors moves (p:ps) =

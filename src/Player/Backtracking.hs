@@ -61,9 +61,16 @@ doMove p move =
     MoveMine -> Player.markMine p >> return []
     MoveEmpty -> Player.openEmpty p
 
+-- TODO: make these parameters configurable
+maxDepth :: Int
+maxDepth = 3
+
+maxNeighbors :: Int
+maxNeighbors = 20
+
 findMove :: State -> Maybe (Pos, Move)
 findMove state@(State {frontier}) =
-  case concatMap find [0..2] of
+  case concatMap find [0..maxDepth] of
     [] -> Nothing
     ((pos, move):_) -> Just (pos, flipMove move)
   where
@@ -91,7 +98,7 @@ isFeasibleMove state@(State {view}) depth pos move =
   isFeasibleAssignment view moves && checkNeighbors moves neighbors
   where
     moves = Map.singleton pos move
-    neighbors = frontierNeighborsDepth state depth pos
+    neighbors = take maxNeighbors $ frontierNeighborsDepth state depth pos
 
     checkNeighbors _ [] = True
     checkNeighbors moves (p:ps) =

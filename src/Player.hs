@@ -16,6 +16,7 @@ module Player
   , numMinesMarked
   , numRows
   , numColumns
+  , numUnopened
   ) where
 
 import Game (Game, Item(Mine, Empty), Pos)
@@ -70,3 +71,6 @@ numMines = Game.numMines . unPlayerView
 
 numMinesMarked :: PlayerView -> Int
 numMinesMarked = Game.numMinesMarked . unPlayerView
+
+numUnopened :: PlayerView -> Int
+numUnopened = Game.numUnopened . unPlayerView

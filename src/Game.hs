@@ -8,6 +8,7 @@ module Game
   , numColumns
   , numMines
   , numMinesMarked
+  , numUnopened
   , openEmpty
   , markMine
   , isWon
@@ -182,3 +183,7 @@ unveilMines game@(Game {field, opened}) = game {opened = opened'}
   where
     mines = [(p, True) | (p, Mine) <- assocs field]
     opened' = accum (||) opened mines
+
+numUnopened :: Game -> Int
+numUnopened (Game {numRows, numColumns, numOpened}) =
+  numRows * numColumns - numOpened

@@ -117,11 +117,17 @@ isFeasibleAssignment view moves =
     usort = nub . sort
 
 checkNumMinesTotal :: PlayerView -> Map Pos Move -> Bool
-checkNumMinesTotal view moves = minesMarked + minesTentative <= minesTotal
+checkNumMinesTotal view moves
+  | numMoves < numUnopened = mines <= minesTotal
+  | otherwise = mines == minesTotal
   where
     minesTotal = Player.numMines view
     minesMarked = Player.numMinesMarked view
     minesTentative = Map.size $ Map.filter (== MoveMine) moves
+    mines = minesMarked + minesTentative
+
+    numMoves = Map.size moves
+    numUnopened = Player.numUnopened view
 
 checkPosition :: PlayerView -> Map Pos Move -> Pos -> Bool
 checkPosition view moves pos =

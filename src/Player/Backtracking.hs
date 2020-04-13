@@ -57,6 +57,7 @@ updateState move opened (State {frontier}) = do
 
 doMove :: Pos -> Move -> PlayerL [Pos]
 doMove p move =
+  (p :) <$>
   case move of
     MoveMine -> Player.markMine p >> return []
     MoveEmpty -> Player.openEmpty p

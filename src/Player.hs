@@ -12,6 +12,8 @@ module Player
   , makePlayer
   , makePlayerView
   , neighbors
+  , numMines
+  , numMinesMarked
   , numRows
   , numColumns
   ) where
@@ -62,3 +64,9 @@ item view = Game.item (unPlayerView view)
 
 neighbors :: PlayerView -> Pos -> [Pos]
 neighbors view = Game.neighbors (unPlayerView view)
+
+numMines :: PlayerView -> Int
+numMines = Game.numMines . unPlayerView
+
+numMinesMarked :: PlayerView -> Int
+numMinesMarked = Game.numMinesMarked . unPlayerView

@@ -35,7 +35,7 @@ loop state =
 data Move
   = MoveMine
   | MoveEmpty
-  deriving Show
+  deriving (Eq, Show)
 
 flipMove :: Move -> Move
 flipMove MoveMine = MoveEmpty
@@ -109,11 +109,19 @@ isFeasibleMove state@(State {view}) depth pos move =
        in isFeasibleAssignment view moves' && checkNeighbors moves' rest
 
 isFeasibleAssignment :: PlayerView -> Map Pos Move -> Bool
-isFeasibleAssignment view moves = all (checkPosition view moves) neighbors
+isFeasibleAssignment view moves =
+  checkNumMinesTotal view moves && all (checkPosition view moves) neighbors
   where
     positions = Map.keys moves
     neighbors = usort $ concatMap (Player.neighbors view) positions
     usort = nub . sort
+
+checkNumMinesTotal :: PlayerView -> Map Pos Move -> Bool
+checkNumMinesTotal view moves = minesMarked + minesTentative <= minesTotal
+  where
+    minesTotal = Player.numMines view
+    minesMarked = Player.numMinesMarked view
+    minesTentative = Map.size $ Map.filter (== MoveMine) moves
 
 checkPosition :: PlayerView -> Map Pos Move -> Pos -> Bool
 checkPosition view moves pos =

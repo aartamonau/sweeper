@@ -1,6 +1,8 @@
 module Utils.Chan
   ( Chan
+  , Delay
   , new
+  , newDelay
   , close
   , put
   , take
@@ -22,6 +24,7 @@ import Control.Concurrent.STM
   , takeTMVar
   , writeTVar
   )
+import Control.Concurrent.STM.Delay (Delay, newDelay, waitDelay)
 import Control.Monad.Extra (ifM, whenM)
 
 data Chan a =
@@ -39,11 +42,12 @@ close chan@(Chan {closed}) =
     errorIfClosed "Chan.close" chan
     writeTVar closed True
 
-put :: Chan a -> a -> IO ()
-put chan@(Chan {box}) value =
+put :: Chan a -> a -> Delay -> IO Bool
+put chan@(Chan {box}) value delay =
   atomically $ do
     errorIfClosed "Chan.put" chan
-    putTMVar box value
+    (waitDelay delay >> return False) `orElse`
+      (putTMVar box value >> return True)
 
 take :: Chan a -> IO (Maybe a)
 take chan@(Chan {box}) =

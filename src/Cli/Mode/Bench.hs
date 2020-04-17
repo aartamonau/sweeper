@@ -7,8 +7,6 @@ import Control.Concurrent.Async
   , replicateConcurrently
   , runConcurrently
   )
-import Control.Monad (forM_)
-import Data.List.Extra (chunksOf)
 import Data.Maybe (fromMaybe)
 import GHC.Conc (getNumProcessors)
 import Options.Applicative
@@ -115,12 +113,25 @@ withProgressBar ticks body =
 
 dispatcher :: StdGen -> Int -> Chan StdGen -> (Int -> IO ()) -> IO ()
 dispatcher gen numIters chan tick = do
-  forM_ (chunksOf itersPerTick gens) $ \chunk ->
-    mapM_ (Chan.put chan) chunk >> tick itersPerTick
+  delay <- mkDelay
+  loop gens delay 0
   Chan.close chan
   where
-    itersPerTick = 100
     gens = take numIters $ Random.splits gen
+
+    -- Update progress every 200 milliseconds.
+    updateInterval = 200 * 1000
+    mkDelay = Chan.newDelay updateInterval
+
+    loop [] _ iters = tick iters
+    loop gs@(g:rest) delay iters = do
+      ok <- Chan.put chan g delay
+      if ok
+        then loop rest delay (iters + 1)
+        else do
+          tick iters
+          delay' <- mkDelay
+          loop gs delay' 0
 
 worker :: Chan StdGen -> Config -> IO Stats
 worker jobs cfg = loop mempty

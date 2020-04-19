@@ -77,7 +77,7 @@ findMove state@(State {frontier}) =
   where
     ps = Set.toList frontier
     moves = [(p, MoveMine) | p <- ps] ++ [(p, MoveEmpty) | p <- ps]
-    isInfeasible depth = not . uncurry (isFeasibleMove state depth)
+    isInfeasible depth = not . isFeasibleMove state depth
     find depth = filter (isInfeasible depth) moves
 
 frontierNeighborsDepth :: State -> Int -> Pos -> [Pos]
@@ -94,13 +94,13 @@ frontierNeighborsDepth (State {view, frontier}) depth pos =
           seen' = Set.union seen (Set.fromList new)
        in go (i - 1) seen' (new ++ acc)
 
-isFeasibleMove :: State -> Int -> Pos -> Move -> Bool
-isFeasibleMove state depth pos move =
-  assessMove state depth pos move False True (||)
+isFeasibleMove :: State -> Int -> (Pos, Move) -> Bool
+isFeasibleMove state depth posMove =
+  assessMove state depth posMove False True (||)
 
 assessMove ::
-     State -> Int -> Pos -> Move -> a -> a -> (a -> a -> a) -> a
-assessMove state@(State {view}) depth pos move z u f
+     State -> Int -> (Pos, Move) -> a -> a -> (a -> a -> a) -> a
+assessMove state@(State {view}) depth (pos, move) z u f
   | isFeasibleAssignment view moves = checkNeighbors moves neighbors
   | otherwise = z
   where

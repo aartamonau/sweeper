@@ -95,19 +95,30 @@ frontierNeighborsDepth (State {view, frontier}) depth pos =
        in go (i - 1) seen' (new ++ acc)
 
 isFeasibleMove :: State -> Int -> Pos -> Move -> Bool
-isFeasibleMove state@(State {view}) depth pos move =
-  isFeasibleAssignment view moves && checkNeighbors moves neighbors
+isFeasibleMove state depth pos move =
+  assessMove state depth pos move False True (||)
+
+assessMove ::
+     State -> Int -> Pos -> Move -> a -> a -> (a -> a -> a) -> a
+assessMove state@(State {view}) depth pos move z u f
+  | isFeasibleAssignment view moves = checkNeighbors moves neighbors
+  | otherwise = z
   where
     moves = Map.singleton pos move
     neighbors = take maxNeighbors $ frontierNeighborsDepth state depth pos
 
-    checkNeighbors _ [] = True
+    checkNeighbors _ [] = u
     checkNeighbors moves (p:ps) =
-      try p MoveMine moves ps || try p MoveEmpty moves ps
+      let mine = try p MoveMine moves ps
+          empty = try p MoveEmpty moves ps
+       in f mine empty
 
     try pos move moves rest =
       let moves' = Map.insert pos move moves
-       in isFeasibleAssignment view moves' && checkNeighbors moves' rest
+          feasible = isFeasibleAssignment view moves'
+       in if feasible
+            then checkNeighbors moves' rest
+            else z
 
 isFeasibleAssignment :: PlayerView -> Map Pos Move -> Bool
 isFeasibleAssignment view moves =

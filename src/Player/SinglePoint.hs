@@ -5,10 +5,9 @@ module Player.SinglePoint
 import Data.Ix (range)
 import Data.List (foldl')
 import qualified Data.Map.Strict as Map
-import Data.Ratio (Ratio, (%), denominator, numerator)
+import Data.Ratio (Ratio, (%))
 import Data.Set (Set)
 import qualified Data.Set as Set
-import System.IO.Unsafe (unsafePerformIO)
 
 import Player (Item(Mine, Empty), Player, PlayerL, PlayerView, Pos)
 import qualified Player as Player
@@ -112,9 +111,7 @@ computeProbs view = Map.toList . foldl' f z . concatMap (posProbs view)
 playGreedy :: PlayerView -> [Pos] -> PlayerL [Pos]
 playGreedy view opened
   | null probs = playRandom view
-  | otherwise  = do
-    posInfo [(p, showProb prob) | (p, prob) <- probs]
-    randomGreedyMove
+  | otherwise  = randomGreedyMove
   where
     probs = computeProbs view opened
 
@@ -126,11 +123,6 @@ playGreedy view opened
       i <- Random.getRandomR (0, n - 1)
       let (p, _) = mins !! i
       playMove (OpenEmpty p)
-
-    showProb prob = show (numerator prob) ++ "/" ++ show (denominator prob)
-
-posInfo :: [(Pos, String)] -> PlayerL ()
-posInfo ps = pure $ unsafePerformIO $ print ps
 
 playRandom :: PlayerView -> PlayerL [Pos]
 playRandom view = do

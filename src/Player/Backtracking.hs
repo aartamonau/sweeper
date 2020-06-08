@@ -5,11 +5,13 @@ module Player.Backtracking
 import Control.Applicative ((<|>))
 import Data.List (sort, nub)
 import Data.Map (Map)
+import Data.Maybe (catMaybes)
 import qualified Data.Map as Map
 import Data.Set (Set, (\\))
 import qualified Data.Set as Set
 import Player (Item(Mine, Empty), Player, PlayerL, PlayerView, Pos)
 import qualified Player as Player
+import Utils.Random (getRandomR)
 
 player :: Player
 player = Player.makePlayer "backtracking" strategy
@@ -25,12 +27,42 @@ strategy start = do
 
 loop :: State -> PlayerL ()
 loop state =
-  case findMove state of
+  getMove >>= \case
     Just (pos, move) -> do
       ps <- doMove pos move
       state' <- updateState pos ps state
       loop state'
     Nothing -> return ()
+  where
+    getMove =
+      case findMove state of
+        m@(Just _) -> return m
+        Nothing -> guessMove state
+
+guessMove :: State -> PlayerL (Maybe (Pos, Move))
+guessMove (State {view, frontier}) = do
+  moves <- sequenceA $ map (guessOne view) [corners, edges, border]
+  case catMaybes moves of
+    [] -> return Nothing
+    (pos:_) -> return $ Just (pos, MoveEmpty)
+  where
+    (_, (h, w)) = Player.bounds view
+    corners = [(0, 0), (0, w), (h, 0), (h, w)]
+    edges =
+      concat $
+      [[(0, i), (h, i)] | i <- [1 .. w - 1]] ++
+      [[(i, 0), (i, w)] | i <- [1 .. h - 1]]
+    border = Set.toList frontier
+
+guessOne :: PlayerView -> [Pos] -> PlayerL (Maybe Pos)
+guessOne view ps =
+  if | n == 0 -> return Nothing
+     | otherwise -> do
+       i <- getRandomR (0, n-1)
+       return $ Just (unopened !! i)
+  where
+    unopened = filter (not . Player.isOpened view) ps
+    n = length unopened
 
 data Move
   = MoveMine

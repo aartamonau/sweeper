@@ -5,7 +5,6 @@ module Player.Backtracking
 import Control.Applicative ((<|>))
 import Data.List (sort, nub)
 import Data.Map (Map)
-import Data.Maybe (catMaybes)
 import qualified Data.Map as Map
 import Data.Set (Set, (\\))
 import qualified Data.Set as Set
@@ -40,11 +39,7 @@ loop state =
         Nothing -> guessMove state
 
 guessMove :: State -> PlayerL (Maybe (Pos, Move))
-guessMove (State {view, frontier}) = do
-  moves <- sequenceA $ map (guessOne view) [corners, edges, border]
-  case catMaybes moves of
-    [] -> return Nothing
-    (pos:_) -> return $ Just (pos, MoveEmpty)
+guessMove (State {view, frontier}) = go [corners, edges, border]
   where
     (_, (h, w)) = Player.bounds view
     corners = [(0, 0), (0, w), (h, 0), (h, w)]
@@ -53,6 +48,12 @@ guessMove (State {view, frontier}) = do
       [[(0, i), (h, i)] | i <- [1 .. w - 1]] ++
       [[(i, 0), (i, w)] | i <- [1 .. h - 1]]
     border = Set.toList frontier
+
+    go [] = return Nothing
+    go (ps:pps) =
+      guessOne view ps >>= \case
+        Nothing -> go pps
+        Just pos -> return $ Just (pos, MoveEmpty)
 
 guessOne :: PlayerView -> [Pos] -> PlayerL (Maybe Pos)
 guessOne view ps =

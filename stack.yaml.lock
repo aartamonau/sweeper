@@ -5,22 +5,22 @@
 
 packages:
 - completed:
-    hackage: blank-canvas-0.7@sha256:5161b0f68707ab11bb82de45bf744ef6a8f0aa057a1c7eeda4d66f9459875886,7885
+    hackage: blank-canvas-0.7.3@sha256:12e194ab9eeb0e7a1f0a2fbfb9c6bd464b09613005c0b05f79b709d9571fb42d,5103
     pantry-tree:
-      size: 5101
-      sha256: 363091be722b025fe8a76e789055ddbf592274c16b9236caa541361ad92ad70d
+      size: 1495
+      sha256: 4b33635a364cfbed45afbdd06b9fdf364532e1066af2fa13ab581af8522eaea9
   original:
-    hackage: blank-canvas-0.7
+    hackage: blank-canvas-0.7.3
 - completed:
-    hackage: kansas-comet-0.4@sha256:53f00220ecd7627b0c1ee18632c11be51efeb37c69ec3f2e030c6a9577b3af7b,1737
+    hackage: kansas-comet-0.4@sha256:72330f1953abed85fc306ace742d975296a3b3a806c9db90dc793161b60c2846,1737
     pantry-tree:
       size: 383
-      sha256: 245b994658203f011ae6b304718c7dfcfeba837dde7e52dfe720de4ea5465289
+      sha256: b93fb744a9979ae6e8638a02711f9222cfd1d0d7d8559a188ba8d87f80ec9313
   original:
     hackage: kansas-comet-0.4
 snapshots:
 - completed:
-    size: 488576
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/0.yaml
-    sha256: e4b6a87b47ec1cf63a7f1a0884a3b276fce2b0d174a10e8753c4f618e7983568
-  original: lts-15.0
+    size: 586923
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/9.yaml
+    sha256: 9f9fe35c949414146840a985fb228fd397c504d1781b834bfc9ab935f4d27df6
+  original: lts-18.9

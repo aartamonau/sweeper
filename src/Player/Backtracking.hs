@@ -9,7 +9,7 @@ import qualified Data.Map as Map
 import Data.Set (Set, (\\))
 import qualified Data.Set as Set
 import Player (Item(Mine, Empty), Player, PlayerL, PlayerView, Pos)
-import qualified Player as Player
+import qualified Player
 import Utils.Random (getRandomR)
 
 player :: Player

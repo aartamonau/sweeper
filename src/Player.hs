@@ -20,7 +20,7 @@ module Player
   ) where
 
 import Game (Game, Item(Mine, Empty), Pos)
-import qualified Game as Game
+import qualified Game
 import Utils.Random (MonadRandom)
 
 type Name = String

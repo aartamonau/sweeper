@@ -16,7 +16,7 @@ import Data.Bifunctor (first)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 
 import Game (Game, Pos)
-import qualified Game as Game
+import qualified Game
 import Player
   ( MonadPlayer(getPlayerView, markMine, openEmpty)
   , PlayerL

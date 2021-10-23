@@ -12,6 +12,7 @@ module UI.UI
   , runUI
   ) where
 
+import Data.Functor (void)
 import Control.Concurrent.Async (concurrently_)
 import Control.Concurrent (threadDelay)
 import Control.Monad (forM_)
@@ -29,7 +30,7 @@ import Graphics.Blank
 import Web.Browser (openBrowser)
 
 import Game (Item(Empty, Mine), Game, Pos)
-import qualified Game as Game
+import qualified Game
 import Stats (Stats)
 import qualified Stats
 
@@ -101,7 +102,7 @@ waitKeypress :: DeviceContext -> IO ()
 waitKeypress context = do
   ev <- wait context
   if likeEvent ev
-    then flush context >> return ()
+    then void $ flush context
     else waitKeypress context
   where
     likeEvent (Event {eType, eWhich})
@@ -253,7 +254,7 @@ withBoard game drawing =
     restrict rect drawing
 
 withInfoArea :: Draw () -> Draw ()
-withInfoArea drawing = restrict rect drawing
+withInfoArea = restrict rect
   where
     (mx, my, mw, _) = margins
     rect = (mx, 0, mw, my)

@@ -123,7 +123,7 @@ openEmpty game@(Game {field}) p
       Mine -> Left ErrorKilled
       Empty _ ->
         let ps = openEmptyLoop game p
-            game' = (foldl' doOpen game ps)
+            game' = foldl' doOpen game ps
          in Right (ps, game')
 
 openEmptyLoop :: Game -> Pos -> [Pos]

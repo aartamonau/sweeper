@@ -5,7 +5,7 @@ module Cli.Mode.Common
 import Cli.Config (Config)
 import qualified Cli.Config as Config
 import Game (Game)
-import qualified Game as Game
+import qualified Game
 import Utils.Random (MonadRandom, StdGen)
 import qualified Utils.Random as Random
 

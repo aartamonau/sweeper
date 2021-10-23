@@ -153,10 +153,10 @@ dimRect alpha =
     Blank.restore ()
 
 left :: Draw () -> Draw ()
-left drawing = restrict (0, 0, 0.5, 1) drawing
+left = restrict (0, 0, 0.5, 1)
 
 right :: Draw () -> Draw ()
-right drawing = restrict (0.5, 0, 0.5, 1) drawing
+right = restrict (0.5, 0, 0.5, 1)
 
 fillTriangle :: Point -> Point -> Point -> Draw ()
 fillTriangle pa pb pc = do

@@ -1,0 +1,2 @@
+- ignore: {name: "Redundant multi-way if"}
+- ignore: {name: "Redundant bracket"}

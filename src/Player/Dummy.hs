@@ -2,8 +2,10 @@ module Player.Dummy
   ( player
   ) where
 
+import Data.Functor (void)
+
 import Player (Player, PlayerL, Pos)
-import qualified Player as Player
+import qualified Player
 import Utils.Random (Coin(Heads, Tails))
 import qualified Utils.Random as Random
 
@@ -28,5 +30,5 @@ randomMove (rows, columns) = do
 
   let pos = (i, j)
   Random.coin >>= \case
-    Heads -> Player.openEmpty pos >> return ()
+    Heads -> void $ Player.openEmpty pos
     Tails -> Player.markMine pos

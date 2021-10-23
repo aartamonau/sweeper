@@ -36,7 +36,7 @@ import Cli.Mode.Type (Mode(Mode))
 -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#extension-DisambiguateRecordFields
 import qualified Cli.Mode.Type as Type (Mode(name, help, parse))
 import qualified Cli.Read as Read
-import qualified GameRunner as GameRunner
+import qualified GameRunner
 import Player (strategy)
 import Stats (Stats)
 import qualified Stats

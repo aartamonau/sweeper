@@ -32,7 +32,7 @@ import GameRunner
   ( GameResult(GameLost, GameWon)
   , TraceEvent(TraceMoveError, TraceMoveOk, TraceStart)
   )
-import qualified GameRunner as GameRunner
+import qualified GameRunner
 import Player (Player(name, strategy))
 import Stats (Stats)
 import qualified Stats

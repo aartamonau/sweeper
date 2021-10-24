@@ -90,6 +90,7 @@ run BenchCfg{numWorkers, numIters} cfg = do
     numCPUs <- getNumProcessors
     let numWorkers' = fromMaybe numCPUs numWorkers
 
+    putStrLn $ "Seed: " ++ show (Config.seed cfg)
     putStrLn $ "Number of iterations: " ++ show numIters
     putStrLn $ "Number of workers: " ++ show numWorkers'
 

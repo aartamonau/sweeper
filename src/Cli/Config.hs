@@ -4,6 +4,7 @@ module Cli.Config (
     startMove,
     buffer,
     player,
+    seed,
     getRandomGen,
     parse,
 ) where

@@ -61,7 +61,7 @@ data Config = Config
     }
 
 getRandomGen :: Config -> IO StdGen
-getRandomGen (Config{seed})
+getRandomGen Config{seed}
     | Nothing <- seed = Random.newStdGen
     | Just seed' <- seed = return $ Random.mkStdGen seed'
 

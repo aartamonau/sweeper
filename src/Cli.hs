@@ -18,10 +18,10 @@ import qualified Cli.Mode as Mode
 
 parse :: Parser (IO ())
 parse = do
-    cfg <- Config.parse
+    mkCfg <- Config.parse
     run <- Mode.parse
 
-    return $ run cfg
+    return $ run =<< mkCfg
 
 run :: IO ()
 run = join $ execParser parserInfo

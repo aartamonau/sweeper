@@ -57,13 +57,11 @@ data Config = Config
     , rawStartMove :: StartMove
     , buffer :: Int
     , player :: Player
-    , seed :: Maybe Int
+    , seed :: Int
     }
 
 getRandomGen :: Config -> IO StdGen
-getRandomGen Config{seed}
-    | Nothing <- seed = Random.newStdGen
-    | Just seed' <- seed = return $ Random.mkStdGen seed'
+getRandomGen Config{seed} = pure $ Random.mkStdGen seed
 
 fieldSpec :: Config -> (Int, Int, Int)
 fieldSpec = decode . rawFieldSpec
@@ -149,19 +147,20 @@ parseBufferZone =
             <> showDefault
             <> help "Number of empty cells surrounding start position"
 
-parseSeed :: Parser (Maybe Int)
+parseSeed :: Parser (IO Int)
 parseSeed =
-    option (Just <$> Read.int) $
+    option (pure <$> Read.int) $
         long "seed"
             <> metavar "SEED"
-            <> value Nothing
+            <> value Random.randomIO
             <> help "Override default random seed"
 
-parse :: Parser Config
-parse =
-    Config
-        <$> parseFieldSpec
-        <*> parseStartMove
-        <*> parseBufferZone
-        <*> parsePlayer
-        <*> parseSeed
+parse :: Parser (IO Config)
+parse = do
+    fieldSpec <- parseFieldSpec
+    startMove <- parseStartMove
+    bufferZone <- parseBufferZone
+    player <- parsePlayer
+    mkSeed <- parseSeed
+
+    pure $ Config fieldSpec startMove bufferZone player <$> mkSeed

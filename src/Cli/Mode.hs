@@ -14,5 +14,5 @@ parse :: Parser (Config -> IO ())
 parse = hsubparser $ mconcat $ map handleMode modes
   where
     modes = [Bench.mode, UI.mode]
-    handleMode (Mode{name, parse, help}) =
+    handleMode Mode{name, parse, help} =
         command name $ info parse (progDesc help)

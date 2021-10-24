@@ -86,7 +86,7 @@ parse = do
     return $ run (BenchCfg{numWorkers, numIters})
 
 run :: BenchCfg -> Config -> IO ()
-run (BenchCfg{numWorkers, numIters}) cfg = do
+run BenchCfg{numWorkers, numIters} cfg = do
     numCPUs <- getNumProcessors
     let numWorkers' = fromMaybe numCPUs numWorkers
 

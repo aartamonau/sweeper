@@ -93,10 +93,10 @@ random rows columns numMines start buffer = do
     isClose (si, sj) (i, j) = abs (si - i) <= buffer && abs (sj - j) <= buffer
 
 bounds :: Game -> (Pos, Pos)
-bounds (Game{numRows, numColumns}) = ((0, 0), (numRows - 1, numColumns - 1))
+bounds Game{numRows, numColumns} = ((0, 0), (numRows - 1, numColumns - 1))
 
 item :: Game -> Pos -> Maybe Item
-item game@(Game{field}) p
+item game@Game{field} p
     | isOpened game p = Just $ field ! p
     | otherwise = Nothing
 
@@ -114,7 +114,7 @@ neighbors' bounds p@(pi, pj) =
     ]
 
 openEmpty :: Game -> Pos -> PlayResult [Pos]
-openEmpty game@(Game{field}) p
+openEmpty game@Game{field} p
     | Just _ <- item game p = Left ErrorAlreadyPlayed
     | otherwise =
         case field ! p of
@@ -125,7 +125,7 @@ openEmpty game@(Game{field}) p
                  in Right (ps, game')
 
 openEmptyLoop :: Game -> Pos -> [Pos]
-openEmptyLoop game@(Game{field}) p = Set.toList (go Set.empty p)
+openEmptyLoop game@Game{field} p = Set.toList (go Set.empty p)
   where
     go :: Set Pos -> Pos -> Set Pos
     go acc p
@@ -144,7 +144,7 @@ openEmptyLoop game@(Game{field}) p = Set.toList (go Set.empty p)
         acc' = Set.insert p acc
 
 markMine :: Game -> Pos -> PlayResult ()
-markMine game@(Game{field}) p
+markMine game@Game{field} p
     | isOpened game p = Left ErrorAlreadyPlayed
     | Empty _ <- item = Left ErrorIncompetent
     | Mine <- item = Right ((), doOpen game p)
@@ -152,14 +152,14 @@ markMine game@(Game{field}) p
     item = field ! p
 
 isWon :: Game -> Bool
-isWon (Game{numRows, numColumns, numMines, numMinesMarked, numOpened}) =
+isWon Game{numRows, numColumns, numMines, numMinesMarked, numOpened} =
     numOpened == numRows * numColumns && numMinesMarked == numMines
 
 isOpened :: Game -> Pos -> Bool
-isOpened (Game{opened}) p = opened ! p
+isOpened Game{opened} p = opened ! p
 
 doOpen :: Game -> Pos -> Game
-doOpen game@(Game{field, opened, numOpened, numMinesMarked}) p
+doOpen game@Game{field, opened, numOpened, numMinesMarked} p
     | isOpened game p = game
     | otherwise =
         game
@@ -173,14 +173,14 @@ doOpen game@(Game{field, opened, numOpened, numMinesMarked}) p
         | otherwise = numMinesMarked
 
 unveil :: Pos -> Game -> Game
-unveil p game@(Game{opened}) = game{opened = opened // [(p, True)]}
+unveil p game@Game{opened} = game{opened = opened // [(p, True)]}
 
 unveilMines :: Game -> Game
-unveilMines game@(Game{field, opened}) = game{opened = opened'}
+unveilMines game@Game{field, opened} = game{opened = opened'}
   where
     mines = [(p, True) | (p, Mine) <- assocs field]
     opened' = accum (||) opened mines
 
 numUnopened :: Game -> Int
-numUnopened (Game{numRows, numColumns, numOpened}) =
+numUnopened Game{numRows, numColumns, numOpened} =
     numRows * numColumns - numOpened

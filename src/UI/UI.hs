@@ -68,7 +68,7 @@ display :: DeviceContext -> Draw () -> IO ()
 display context drawing = send context (runDraw context drawing)
 
 drawUI :: UI -> Draw ()
-drawUI (UI{playerName, stats, game}) = do
+drawUI UI{playerName, stats, game} = do
     drawBackground
     drawStats stats
     drawGameInfo game
@@ -104,7 +104,7 @@ waitKeypress context = do
         then void $ flush context
         else waitKeypress context
   where
-    likeEvent (Event{eType, eWhich})
+    likeEvent Event{eType, eWhich}
         | eType == "mousedown" = True
         | eType == "keydown" = eWhich == Just 32 -- space
         | otherwise = error "can't happen"

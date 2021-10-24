@@ -94,15 +94,15 @@ run :: UICfg -> Config -> IO ()
 run uiCfg = runUI . loop uiCfg
 
 draw :: Ctx -> Game -> Draw ()
-draw (Ctx{stats, cfg}) game = drawUI $ UI{game, stats, playerName}
+draw Ctx{stats, cfg} game = drawUI $ UI{game, stats, playerName}
   where
     playerName = name $ Config.player cfg
 
 present :: Ctx -> Draw () -> IO ()
-present ctx@(Ctx{deviceContext}) d = display deviceContext d >> wait ctx
+present ctx@Ctx{deviceContext} d = display deviceContext d >> wait ctx
 
 wait :: Ctx -> IO ()
-wait (Ctx{deviceContext, uiCfg})
+wait Ctx{deviceContext, uiCfg}
     | interactive uiCfg = waitKeypress deviceContext
     | otherwise = threadDelay (1000 * delay uiCfg)
 
@@ -120,7 +120,7 @@ loop uiCfg cfg deviceContext = do
             }
 
 iter :: Ctx -> StdGen -> IO Ctx
-iter ctx@(Ctx{cfg, stats}) gen = do
+iter ctx@Ctx{cfg, stats} gen = do
     result <- GameRunner.trace tracer runnerGen game (strategy player startMove)
     presentResult result
     return (ctx{stats = Stats.update result stats} :: Ctx)

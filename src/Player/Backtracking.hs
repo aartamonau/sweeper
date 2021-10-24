@@ -39,7 +39,7 @@ loop state =
             Nothing -> guessMove state
 
 guessMove :: State -> PlayerL (Maybe (Pos, Move))
-guessMove (State{view, frontier}) = go [corners, edges, border]
+guessMove State{view, frontier} = go [corners, edges, border]
   where
     (_, (h, w)) = Player.bounds view
     corners = [(0, 0), (0, w), (h, 0), (h, w)]
@@ -81,7 +81,7 @@ data State = State
     }
 
 updateState :: Pos -> [Pos] -> State -> PlayerL State
-updateState move opened (State{frontier}) = do
+updateState move opened State{frontier} = do
     view <- Player.getPlayerView
     let newUnopened = unopenedNeighbors view opened
     let frontier' = frontier \\ Set.fromList (move : opened)
@@ -103,7 +103,7 @@ maxNeighbors :: Int
 maxNeighbors = 20
 
 findMove :: State -> Maybe (Pos, Move)
-findMove state@(State{frontier}) =
+findMove state@State{frontier} =
     case concatMap find [0 .. maxDepth] of
         [] -> Nothing
         ((pos, move) : _) -> Just (pos, flipMove move)
@@ -114,7 +114,7 @@ findMove state@(State{frontier}) =
     find depth = filter (isInfeasible depth) moves
 
 frontierNeighborsDepth :: State -> Int -> Pos -> [Pos]
-frontierNeighborsDepth (State{view, frontier}) depth pos =
+frontierNeighborsDepth State{view, frontier} depth pos =
     tail $ go depth (Set.singleton pos) [pos]
   where
     expand ps seen =
@@ -133,7 +133,7 @@ isFeasibleMove state depth posMove =
 
 assessMove ::
     State -> Int -> (Pos, Move) -> a -> a -> (a -> a -> a) -> a
-assessMove state@(State{view}) depth (pos, move) z u f
+assessMove state@State{view} depth (pos, move) z u f
     | isFeasibleAssignment view moves = checkNeighbors moves neighbors
     | otherwise = z
   where
@@ -183,7 +183,7 @@ checkPosition view moves pos =
 
 checkNumMines :: PlayerView -> Pos -> Int -> Map Pos Move -> Bool
 checkNumMines view pos numMines moves =
-    numMarkedMines <= numMines && (numUnopened + numMarkedMines) >= numMines
+    numMarkedMines <= numMines && numUnopened + numMarkedMines >= numMines
   where
     getItem p = Player.item view p <|> convertMove <$> Map.lookup p moves
 

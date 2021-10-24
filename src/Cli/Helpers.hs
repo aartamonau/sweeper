@@ -1,6 +1,6 @@
-module Cli.Helpers
-  ( presentList
-  ) where
+module Cli.Helpers (
+    presentList,
+) where
 
 import Data.List (intercalate)
 
@@ -11,5 +11,5 @@ presentList options = intercalate ", " butLast ++ maybeLast
     (butLast, last) = splitAt (n - 1) options'
     options' = ["`" ++ option ++ "'" | option <- options]
     maybeLast
-      | [x] <- last = " or " ++ x
-      | otherwise = ""
+        | [x] <- last = " or " ++ x
+        | otherwise = ""

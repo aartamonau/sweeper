@@ -1,44 +1,43 @@
-module Player
-  ( Item(Mine, Empty)
-  , Name
-  , MonadPlayer(openEmpty, markMine, getPlayerView)
-  , Player(Player, name, strategy)
-  , PlayerL
-  , PlayerView
-  , Pos
-  , bounds
-  , isOpened
-  , item
-  , makePlayer
-  , makePlayerView
-  , neighbors
-  , numMines
-  , numMinesMarked
-  , numRows
-  , numColumns
-  , numUnopened
-  ) where
+module Player (
+    Item (Mine, Empty),
+    Name,
+    MonadPlayer (openEmpty, markMine, getPlayerView),
+    Player (Player, name, strategy),
+    PlayerL,
+    PlayerView,
+    Pos,
+    bounds,
+    isOpened,
+    item,
+    makePlayer,
+    makePlayerView,
+    neighbors,
+    numMines,
+    numMinesMarked,
+    numRows,
+    numColumns,
+    numUnopened,
+) where
 
-import Game (Game, Item(Mine, Empty), Pos)
+import Game (Game, Item (Empty, Mine), Pos)
 import qualified Game
 import Utils.Random (MonadRandom)
 
 type Name = String
-data Player =
-  Player
+data Player = Player
     { name :: Name
     , strategy :: Pos -> PlayerL ()
     }
 
-newtype PlayerView = PlayerView { unPlayerView :: Game }
+newtype PlayerView = PlayerView {unPlayerView :: Game}
 
 instance Show Player where
-  show = name
+    show = name
 
 class Monad m => MonadPlayer m where
-  openEmpty :: Pos -> m [Pos]
-  markMine :: Pos -> m ()
-  getPlayerView :: m PlayerView
+    openEmpty :: Pos -> m [Pos]
+    markMine :: Pos -> m ()
+    getPlayerView :: m PlayerView
 
 type PlayerL a = (forall m. (MonadPlayer m, MonadRandom m) => m a)
 

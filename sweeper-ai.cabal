@@ -23,6 +23,7 @@ executable sweeper-ai
                        GameRunner
                        Player
                        Player.Backtracking
+                       Player.CSP
                        Player.Dummy
                        Player.SinglePoint
                        Stats

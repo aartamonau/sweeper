@@ -28,6 +28,7 @@ import Cli.Helpers (presentList)
 import qualified Cli.Read as Read
 import Player (Player (name))
 import qualified Player.Backtracking as Backtracking
+import qualified Player.CSP as CSP
 import qualified Player.Dummy as Dummy
 import qualified Player.SinglePoint as SinglePoint
 import Utils.Random (StdGen)
@@ -81,7 +82,12 @@ startMove cfg = decode $ rawStartMove cfg
         (rows, columns, _) = fieldSpec cfg
 
 knownPlayers :: [Player]
-knownPlayers = [Dummy.player, SinglePoint.player, Backtracking.player]
+knownPlayers =
+    [ Dummy.player
+    , SinglePoint.player
+    , Backtracking.player
+    , CSP.player
+    ]
 
 defaultPlayer :: Player
 defaultPlayer = head knownPlayers

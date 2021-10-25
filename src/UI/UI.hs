@@ -8,14 +8,12 @@ module UI.UI (
     drawMsg,
     drawError,
     drawErrorMove,
-    drawPosInfo,
     waitKeypress,
     runUI,
 ) where
 
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (concurrently_)
-import Control.Monad (forM_)
 import Control.Monad.Extra (ifM, whenJust)
 import Data.Functor (void)
 import Data.Ix (range)
@@ -81,17 +79,6 @@ drawBackground :: Draw ()
 drawBackground = do
     setFillColor Color.darkgrey
     fillRect (0, 0, 1, 1)
-
-drawPosInfo :: Game -> [(Pos, String)] -> Draw ()
-drawPosInfo game ps = do
-    setFillColor Color.black
-    setStrokeColor Color.black
-
-    forM_ ps $ \(p, info) ->
-        withBoard game $
-            withCell game p $ do
-                setFont "monospace" 0.4
-                drawText info (0.5, 0.5)
 
 drawMsg :: String -> Draw ()
 drawMsg = drawMsgWithColor Color.lightgrey

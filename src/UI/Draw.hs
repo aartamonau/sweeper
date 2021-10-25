@@ -20,12 +20,13 @@ module UI.Draw (
     fillTriangle,
     left,
     right,
+    consoleLog,
 ) where
 
 import Control.Monad.Reader (ReaderT, asks, local, runReaderT)
 import Control.Monad.Trans (lift)
 
-import Data.Text (pack)
+import Data.Text (Text, pack)
 
 import Graphics.Blank (Canvas, DeviceContext)
 import qualified Graphics.Blank as Blank
@@ -171,3 +172,6 @@ fillTriangle pa pb pc = do
         Blank.lineTo c
         Blank.closePath ()
         Blank.fill ()
+
+consoleLog :: Text -> Draw ()
+consoleLog = lift . Blank.console_log

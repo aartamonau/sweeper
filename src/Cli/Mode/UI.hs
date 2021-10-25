@@ -31,7 +31,7 @@ import Game (Game)
 import qualified Game
 import GameRunner (
     GameResult (GameLost, GameWon),
-    TraceEvent (TraceMoveError, TraceMoveOk, TraceStart),
+    TraceEvent (TraceDebug, TraceMoveError, TraceMoveOk, TraceStart),
  )
 import qualified GameRunner
 import Player (Player (name, strategy))
@@ -41,6 +41,7 @@ import UI.UI (
     DeviceContext,
     Draw,
     UI (UI, game, playerName, stats),
+    consoleLog,
     display,
     drawError,
     drawErrorMove,
@@ -98,8 +99,11 @@ draw Ctx{stats, cfg} game = drawUI $ UI{game, stats, playerName}
   where
     playerName = name $ Config.player cfg
 
+presentAndWait :: Ctx -> Draw () -> IO ()
+presentAndWait ctx d = present ctx d >> wait ctx
+
 present :: Ctx -> Draw () -> IO ()
-present ctx@Ctx{deviceContext} d = display deviceContext d >> wait ctx
+present Ctx{deviceContext} = display deviceContext
 
 wait :: Ctx -> IO ()
 wait Ctx{deviceContext, uiCfg}
@@ -130,13 +134,13 @@ iter ctx@Ctx{cfg, stats} gen = do
 
     startMove = Config.startMove cfg
     player = Config.player cfg
-    presentGame game = present ctx (draw ctx game)
+    presentGame game = presentAndWait ctx (draw ctx game)
     presentGameError p game =
         let game' = Game.unveil p (Game.unveilMines game)
-         in present ctx (draw ctx game' >> drawErrorMove game' p)
+         in presentAndWait ctx (draw ctx game' >> drawErrorMove game' p)
 
-    showMsg msg = present ctx (drawMsg msg)
-    showError msg = present ctx (drawError msg)
+    showMsg msg = presentAndWait ctx (drawMsg msg)
+    showError msg = presentAndWait ctx (drawError msg)
 
     presentResult GameWon = showMsg "Player wins"
     presentResult GameLost = showError "Player loses"
@@ -144,3 +148,4 @@ iter ctx@Ctx{cfg, stats} gen = do
     tracer (TraceStart game) = presentGame game
     tracer (TraceMoveOk game) = presentGame game
     tracer (TraceMoveError p game) = presentGameError p game
+    tracer (TraceDebug text) = present ctx (consoleLog text)

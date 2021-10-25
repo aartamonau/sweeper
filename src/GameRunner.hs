@@ -1,6 +1,6 @@
 module GameRunner (
     GameResult (GameWon, GameLost),
-    TraceEvent (TraceStart, TraceMoveOk, TraceMoveError),
+    TraceEvent (TraceStart, TraceMoveOk, TraceMoveError, TraceDebug),
     run,
     trace,
 ) where
@@ -13,11 +13,12 @@ import Control.Monad.Reader (MonadReader, ReaderT, asks, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
 import Data.Bifunctor (first)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
+import Data.Text (Text)
 
 import Game (Game, Pos)
 import qualified Game
 import Player (
-    MonadPlayer (getPlayerView, markMine, openEmpty),
+    MonadPlayer (debug, getPlayerView, markMine, openEmpty),
     PlayerL,
     PlayerView,
     makePlayerView,
@@ -36,6 +37,7 @@ data TraceEvent
     = TraceStart Game
     | TraceMoveOk Game
     | TraceMoveError Pos Game
+    | TraceDebug Text
 
 data Env m = Env
     { game :: IORef Game
@@ -99,6 +101,7 @@ instance MonadIO m => MonadPlayer (Runner m) where
     openEmpty = doOpenEmpty
     markMine = doMarkMine
     getPlayerView = doGetPlayerView
+    debug = traceDebug
 
 traceEvent :: MonadIO m => TraceEvent -> Runner m ()
 traceEvent event = whenJustM (asks tracer) $ \f -> lift (f event)
@@ -111,6 +114,9 @@ traceMoveOk = traceEvent . TraceMoveOk
 
 traceMoveError :: MonadIO m => Pos -> Game -> Runner m ()
 traceMoveError pos game = traceEvent (TraceMoveError pos game)
+
+traceDebug :: MonadIO m => Text -> Runner m ()
+traceDebug = traceEvent . TraceDebug
 
 doOpenEmpty :: MonadIO m => Pos -> Runner m [Pos]
 doOpenEmpty p =

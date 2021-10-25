@@ -36,7 +36,9 @@ loop state =
     getMove =
         case findMove state of
             m@(Just _) -> return m
-            Nothing -> guessMove state
+            Nothing -> do
+                Player.debug "No moves found. Guessing."
+                guessMove state
 
 guessMove :: State -> PlayerL (Maybe (Pos, Move))
 guessMove State{view, frontier} = go [corners, edges, border]

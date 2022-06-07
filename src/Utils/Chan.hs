@@ -36,20 +36,20 @@ new :: IO (Chan a)
 new = Chan <$> newTVarIO False <*> newEmptyTMVarIO
 
 close :: Chan a -> IO ()
-close chan@(Chan {closed}) =
+close chan@Chan {closed} =
   atomically $ do
     errorIfClosed "Chan.close" chan
     writeTVar closed True
 
 put :: Chan a -> a -> Delay -> IO Bool
-put chan@(Chan {box}) value delay =
+put chan@Chan {box} value delay =
   atomically $ do
     errorIfClosed "Chan.put" chan
     (waitDelay delay >> return False)
       `orElse` (putTMVar box value >> return True)
 
 take :: Chan a -> IO (Maybe a)
-take chan@(Chan {box}) =
+take chan@Chan {box} =
   atomically $ tryTake `orElse` checkClosed
   where
     tryTake = Just <$> takeTMVar box

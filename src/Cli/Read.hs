@@ -1,14 +1,14 @@
-module Cli.Read (
-    int,
+module Cli.Read
+  ( int,
     nonNegativeInt,
     oneOf,
     positiveInt,
-) where
-
-import Control.Applicative ((<|>))
-import Options.Applicative (ReadM, auto, eitherReader, readerError)
+  )
+where
 
 import Cli.Helpers (presentList)
+import Control.Applicative ((<|>))
+import Options.Applicative (ReadM, auto, eitherReader, readerError)
 
 int :: ReadM Int
 int = readInt (const True) "must be an integer"
@@ -23,15 +23,15 @@ readInt :: (Int -> Bool) -> String -> ReadM Int
 readInt pred errorMsg = go <|> readerError errorMsg
   where
     go = do
-        value <- auto
-        if pred value
-            then return value
-            else fail ""
+      value <- auto
+      if pred value
+        then return value
+        else fail ""
 
 oneOf :: [(String, a)] -> ReadM a
 oneOf pairs = eitherReader doRead
   where
     doRead value
-        | Just x <- lookup value pairs = Right x
-        | otherwise = Left errorMsg
+      | Just x <- lookup value pairs = Right x
+      | otherwise = Left errorMsg
     errorMsg = "the value must be one of " ++ presentList (map fst pairs)

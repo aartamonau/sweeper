@@ -1,6 +1,7 @@
-module Cli.Mode.Common (
-    randomGame,
-) where
+module Cli.Mode.Common
+  ( randomGame,
+  )
+where
 
 import Cli.Config (Config)
 import qualified Cli.Config as Config

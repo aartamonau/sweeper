@@ -1,5 +1,5 @@
-module UI.Color (
-    Color,
+module UI.Color
+  ( Color,
     dimgrey,
     grey,
     black,
@@ -13,13 +13,12 @@ module UI.Color (
     lightgrey,
     darkgrey,
     lightcoral,
-) where
+  )
+where
 
 import Data.Colour (Colour)
-import Data.Colour.SRGB (sRGB24show)
-
 import qualified Data.Colour.Names as Names
-
+import Data.Colour.SRGB (sRGB24show)
 import Data.Text (Text, pack)
 
 type Color = Text

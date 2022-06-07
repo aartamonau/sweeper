@@ -1,18 +1,18 @@
-module Cli.Mode (
-    parse,
-) where
-
-import Options.Applicative (Parser, command, hsubparser, info, progDesc)
+module Cli.Mode
+  ( parse,
+  )
+where
 
 import Cli.Config (Config)
 import qualified Cli.Mode.Bench as Bench
 import Cli.Mode.Type (Mode (Mode))
 import qualified Cli.Mode.Type as Mode
 import qualified Cli.Mode.UI as UI
+import Options.Applicative (Parser, command, hsubparser, info, progDesc)
 
 parse :: Parser (Config -> IO ())
 parse = hsubparser $ mconcat $ map handleMode modes
   where
     modes = [Bench.mode, UI.mode]
-    handleMode Mode{name, parse, help} =
-        command name $ info parse (progDesc help)
+    handleMode Mode {name, parse, help} =
+      command name $ info parse (progDesc help)

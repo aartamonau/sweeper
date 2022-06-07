@@ -1,6 +1,7 @@
-module Player.CSP (
-    player,
-) where
+module Player.CSP
+  ( player,
+  )
+where
 
 import Data.Functor (void)
 import Player (Player, PlayerL, Pos)

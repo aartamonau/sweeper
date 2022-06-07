@@ -1,5 +1,5 @@
-module Player (
-    Item (Mine, Empty),
+module Player
+  ( Item (Mine, Empty),
     Name,
     MonadPlayer (openEmpty, markMine, getPlayerView, debug),
     Player (Player, name, strategy),
@@ -17,30 +17,31 @@ module Player (
     numRows,
     numColumns,
     numUnopened,
-) where
+  )
+where
 
 import Data.Text (Text)
-
 import Game (Game, Item (Empty, Mine), Pos)
 import qualified Game
 import Utils.Random (MonadRandom)
 
 type Name = String
+
 data Player = Player
-    { name :: Name
-    , strategy :: Pos -> PlayerL ()
-    }
+  { name :: Name,
+    strategy :: Pos -> PlayerL ()
+  }
 
 newtype PlayerView = PlayerView {unPlayerView :: Game}
 
 instance Show Player where
-    show = name
+  show = name
 
 class Monad m => MonadPlayer m where
-    openEmpty :: Pos -> m [Pos]
-    markMine :: Pos -> m ()
-    getPlayerView :: m PlayerView
-    debug :: Text -> m ()
+  openEmpty :: Pos -> m [Pos]
+  markMine :: Pos -> m ()
+  getPlayerView :: m PlayerView
+  debug :: Text -> m ()
 
 type PlayerL a = (forall m. (MonadPlayer m, MonadRandom m) => m a)
 

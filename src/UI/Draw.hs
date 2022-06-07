@@ -1,5 +1,5 @@
-module UI.Draw (
-    Draw,
+module UI.Draw
+  ( Draw,
     Point,
     Rect,
     runDraw,
@@ -21,19 +21,18 @@ module UI.Draw (
     left,
     right,
     consoleLog,
-) where
+  )
+where
 
 import Control.Monad.Reader (ReaderT, asks, local, runReaderT)
 import Control.Monad.Trans (lift)
-
 import Data.Text (Text, pack)
-
 import Graphics.Blank (Canvas, DeviceContext)
 import qualified Graphics.Blank as Blank
-
 import UI.Color (Color)
 
 type Point = (Double, Double)
+
 type Rect = (Double, Double, Double, Double)
 
 type Transform = Point -> Point
@@ -55,8 +54,8 @@ restrict (rx, ry, rw, rh) = local (. trans)
 
 aspectRatio :: Draw Double
 aspectRatio = do
-    (_, _, x, y) <- transRect (0, 0, 1, 1)
-    return (x / y)
+  (_, _, x, y) <- transRect (0, 0, 1, 1)
+  return (x / y)
 
 setStrokeColor :: Color -> Draw ()
 setStrokeColor = lift . Blank.strokeStyle
@@ -69,10 +68,10 @@ transPoint p = asks ($ p)
 
 transRect :: Rect -> Draw Rect
 transRect (tx, ty, w, h) = do
-    (tx', ty') <- transPoint (tx, ty)
-    (bx', by') <- transPoint (tx + w, ty + h)
+  (tx', ty') <- transPoint (tx, ty)
+  (bx', by') <- transPoint (tx + w, ty + h)
 
-    return (tx', ty', bx' - tx', by' - ty')
+  return (tx', ty', bx' - tx', by' - ty')
 
 liftCanvas :: (a -> Draw a) -> (a -> Canvas b) -> a -> Draw b
 liftCanvas trans op x = trans x >>= lift . op
@@ -97,61 +96,61 @@ fill = fillRect (0, 0, 1, 1)
 
 setFont :: String -> Double -> Draw ()
 setFont font sz = do
-    (_, _, _, y) <- transRect (0, 0, 0, sz)
+  (_, _, _, y) <- transRect (0, 0, 0, sz)
 
-    let px = round y :: Int
-    let fontSpec = pack $ show px ++ "px " ++ font
-    lift $ Blank.font fontSpec
+  let px = round y :: Int
+  let fontSpec = pack $ show px ++ "px " ++ font
+  lift $ Blank.font fontSpec
 
 drawText :: String -> Point -> Draw ()
 drawText text =
-    liftPoint $ \(x, y) -> do
-        Blank.textBaseline Blank.MiddleBaseline
-        Blank.textAlign Blank.CenterAnchor
-        Blank.lineWidth 1
-        Blank.fillText (pack text, x, y)
-        Blank.strokeText (pack text, x, y)
+  liftPoint $ \(x, y) -> do
+    Blank.textBaseline Blank.MiddleBaseline
+    Blank.textAlign Blank.CenterAnchor
+    Blank.lineWidth 1
+    Blank.fillText (pack text, x, y)
+    Blank.strokeText (pack text, x, y)
 
 fillCircle :: Rect -> Draw ()
 fillCircle =
-    liftRect $ \(x, y, w, h) -> do
-        let rx = w / 2
-        let ry = h / 2
-        let cx = x + rx
-        let cy = y + ry
-        let r = min rx ry
+  liftRect $ \(x, y, w, h) -> do
+    let rx = w / 2
+    let ry = h / 2
+    let cx = x + rx
+    let cy = y + ry
+    let r = min rx ry
 
-        Blank.beginPath ()
-        Blank.arc (cx, cy, r, 0, 360, False)
-        Blank.fill ()
-        Blank.closePath ()
+    Blank.beginPath ()
+    Blank.arc (cx, cy, r, 0, 360, False)
+    Blank.fill ()
+    Blank.closePath ()
 
 setLineWidth :: Double -> Draw ()
 setLineWidth w = do
-    (_, _, x, y) <- transRect (0, 0, w, w)
-    lift $ Blank.lineWidth (min x y)
+  (_, _, x, y) <- transRect (0, 0, w, w)
+  lift $ Blank.lineWidth (min x y)
 
 strokeLine :: Point -> Point -> Draw ()
 strokeLine start end = do
-    start' <- transPoint start
-    end' <- transPoint end
+  start' <- transPoint start
+  end' <- transPoint end
 
-    lift $ do
-        Blank.beginPath ()
-        Blank.lineCap "round"
-        Blank.moveTo start'
-        Blank.lineTo end'
-        Blank.stroke ()
-        Blank.closePath ()
+  lift $ do
+    Blank.beginPath ()
+    Blank.lineCap "round"
+    Blank.moveTo start'
+    Blank.lineTo end'
+    Blank.stroke ()
+    Blank.closePath ()
 
 dimRect :: Double -> Rect -> Draw ()
 dimRect alpha =
-    liftRect $ \rect -> do
-        Blank.save ()
-        Blank.fillStyle "black"
-        Blank.globalAlpha alpha
-        Blank.fillRect rect
-        Blank.restore ()
+  liftRect $ \rect -> do
+    Blank.save ()
+    Blank.fillStyle "black"
+    Blank.globalAlpha alpha
+    Blank.fillRect rect
+    Blank.restore ()
 
 left :: Draw () -> Draw ()
 left = restrict (0, 0, 0.5, 1)
@@ -161,17 +160,17 @@ right = restrict (0.5, 0, 0.5, 1)
 
 fillTriangle :: Point -> Point -> Point -> Draw ()
 fillTriangle pa pb pc = do
-    a <- transPoint pa
-    b <- transPoint pb
-    c <- transPoint pc
+  a <- transPoint pa
+  b <- transPoint pb
+  c <- transPoint pc
 
-    lift $ do
-        Blank.beginPath ()
-        Blank.moveTo a
-        Blank.lineTo b
-        Blank.lineTo c
-        Blank.closePath ()
-        Blank.fill ()
+  lift $ do
+    Blank.beginPath ()
+    Blank.moveTo a
+    Blank.lineTo b
+    Blank.lineTo c
+    Blank.closePath ()
+    Blank.fill ()
 
 consoleLog :: Text -> Draw ()
 consoleLog = lift . Blank.console_log

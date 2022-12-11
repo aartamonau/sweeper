@@ -7,12 +7,7 @@ import Cli.Config (Config)
 import qualified Cli.Config as Config
 import Cli.Mode.Common (randomGame)
 import Cli.Mode.Type (Mode (Mode))
--- Cli.Mode.Type is imported qualified only for Mode's record fields, which,
--- somewhat confusingly, can be used unqualified in conjunction with
--- -XDisambiguateRecordFields.
---
--- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#extension-DisambiguateRecordFields
-import qualified Cli.Mode.Type as Type (Mode (help, name, parse))
+import qualified Cli.Mode.Type as Mode (Mode (help, name, parse))
 import qualified Cli.Read as Read
 import Control.Concurrent.Async
   ( Concurrently (Concurrently),

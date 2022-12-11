@@ -7,12 +7,7 @@ import Cli.Config (Config)
 import qualified Cli.Config as Config
 import Cli.Mode.Common (randomGame)
 import Cli.Mode.Type (Mode (Mode))
--- Cli.Mode.Type is imported qualified only for Mode's record fields, which,
--- somewhat confusingly, can be used unqualified in conjunction with
--- -XDisambiguateRecordFields.
---
--- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#extension-DisambiguateRecordFields
-import qualified Cli.Mode.Type as Type (Mode (help, name, parse))
+import qualified Cli.Mode.Type as Mode (Mode (help, name, parse))
 import qualified Cli.Read as Read
 import Control.Concurrent (threadDelay)
 import Control.Monad (foldM_)
@@ -123,10 +118,10 @@ loop uiCfg cfg deviceContext = do
         }
 
 iter :: Ctx -> StdGen -> IO Ctx
-iter ctx@Ctx {cfg, stats} gen = do
+iter ctx@Ctx {cfg, stats, ..} gen = do
   result <- GameRunner.trace tracer runnerGen game (strategy player startMove)
   presentResult result
-  return (ctx {stats = Stats.update result stats} :: Ctx)
+  return $ Ctx {stats = Stats.update result stats, ..}
   where
     (gameGen, runnerGen) = Random.split gen
     game = randomGame gameGen cfg

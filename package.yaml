@@ -53,7 +53,6 @@ ghc-prof-options:
 default-extensions:
 - ApplicativeDo
 - BangPatterns
-- DuplicateRecordFields
 - GeneralizedNewtypeDeriving
 - LambdaCase
 - MultiParamTypeClasses
@@ -62,6 +61,7 @@ default-extensions:
 - NumDecimals
 - OverloadedStrings
 - Rank2Types
+- RecordWildCards
 - StandaloneDeriving
 - TupleSections
 

@@ -51,20 +51,17 @@ ghc-options:
 ghc-prof-options:
 - -fprof-auto
 
+default-language: GHC2021
+
 default-extensions:
 - ApplicativeDo
-- BangPatterns
+- DeepSubsumption
 - GeneralizedNewtypeDeriving
 - LambdaCase
-- MultiParamTypeClasses
 - MultiWayIf
-- NamedFieldPuns
 - NumDecimals
 - OverloadedStrings
-- Rank2Types
 - RecordWildCards
-- StandaloneDeriving
-- TupleSections
 
 executables:
   sweeper:

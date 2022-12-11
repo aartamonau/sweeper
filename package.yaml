@@ -42,6 +42,7 @@ dependencies:
 ghc-options:
 - -threaded
 - -Wall
+- -Werror
 - -O2
 - -fno-warn-name-shadowing
 - -rtsopts

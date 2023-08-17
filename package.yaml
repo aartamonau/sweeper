@@ -51,7 +51,7 @@ ghc-options:
 ghc-prof-options:
 - -fprof-auto
 
-default-language: GHC2021
+language: GHC2021
 
 default-extensions:
 - ApplicativeDo
